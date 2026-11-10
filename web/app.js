@@ -1,4 +1,4 @@
-/* 产品参数校验 · 前端（无框架，hash 路由） */
+/* 质检实时录入 · 管理后台前端（无框架，hash 路由） */
 'use strict';
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -18,6 +18,8 @@ const ICON = {
   dl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14"/></svg>',
   back: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>',
   arrow: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>',
+  check: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  x: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
 };
 
 /* ---------------- 接口 ---------------- */
@@ -318,7 +320,7 @@ async function pageEntry(ht, kind) {
           <div class="formgrid">
           ${fl.map(f => f.type === 'text'
             ? `<div style="grid-column:1/-1">${fieldHTML(f.name, f.label, '', '', { text: true, ph: f.numeric_list ? '例如：98,97,96' : '自由文本，不参与校验', hint: '最长 ' + (f.max_len || 255) + ' 字' })}</div>`
-            : fieldHTML(f.name, f.label, f.unit, '', { num: true, ph: '0.00', rule: rangeText(ruleOf(table, f.name)) })).join('')}
+            : fieldHTML(f.name, f.label, f.unit, '', { num: true, ph: '未填写', rule: rangeText(ruleOf(table, f.name)) })).join('')}
           </div>
           <div class="actions"><button class="btn ghost" type="button" id="clr">清空</button><span class="sp"></span><a class="btn ghost" href="#/c/${enc}">取消</a><button class="btn pri" type="submit">提交并校验</button></div>
         </form>
@@ -366,10 +368,10 @@ function showVerdict(r, enc, kind) {
     el.innerHTML = `<div class="verdict wait"><div class="big">已保存，校验未完成</div><div style="margin-top:8px;color:var(--tx2)">${esc(r.warning || '')}</div>
       <div class="after"><a class="btn" href="#/rules">去补跑校验</a><a class="btn ghost" href="#/c/${enc}">查看合同</a></div></div>`;
   } else if (v.is_qualified === 1) {
-    el.innerHTML = `<div class="verdict ok"><div class="big">✓ 合格</div><div style="margin-top:8px;color:var(--tx2)">记录 #${r.record.id} 已保存 · ${esc(cs)}</div>
+    el.innerHTML = `<div class="verdict ok"><div class="big">${ICON.check}合格</div><div style="margin-top:8px;color:var(--tx2)">记录 #${r.record.id} 已保存 · ${esc(cs)}</div>
       <div class="after"><a class="btn pri" href="#/c/${enc}">查看合同</a>${Object.keys(KINDS).filter(k => k !== kind).map(k => `<a class="btn" href="#/c/${enc}/${k}">录入${KIND_LABEL[k]}</a>`).join('')}</div></div>`;
   } else {
-    el.innerHTML = `<div class="verdict ng"><div class="big">✕ 不合格</div>
+    el.innerHTML = `<div class="verdict ng"><div class="big">${ICON.x}不合格</div>
       <ul>${v.failures.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
       <div style="margin-top:12px;color:var(--tx2);font-size:13px">记录 #${r.record.id} 已入库，不会导出。复测后重新录入，最新一条生效 · ${esc(cs)}</div>
       <div class="after"><button class="btn" onclick="window.scrollTo({top:0,behavior:'smooth'});document.querySelector('#f input:not([readonly])').focus()">复测并重新录入</button><a class="btn ghost" href="#/c/${enc}">查看合同</a></div></div>`;
