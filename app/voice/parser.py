@@ -59,7 +59,7 @@ def _keyword_hits(clause: str, forms: dict) -> list[dict]:
     exact = []
     exact_keywords = set()
     for form, field, keyword in definitions:
-        for match in re.finditer(re.escape(keyword), clause):
+        for match in re.finditer(re.escape(keyword), clause, flags=re.IGNORECASE):
             if len(keyword) == 1 and not _NUMBER_START.match(clause, match.end()):
                 continue
             exact_keywords.add(keyword)
@@ -160,9 +160,12 @@ def _parse_value(s: str, field: str, definition: dict, keyword: str, today: date
     kind = definition["type"]
     if kind == "text":
         strict = definition.get("strict_keywords")
-        if not s or (strict and keyword not in strict and not re.search(r"[a-z0-9]", s)):
+        if not s or (strict and keyword not in strict
+                     and not re.search(r"[a-z0-9]", s, flags=re.IGNORECASE)):
             return None, None, "没有内容"
         return s[:128 if field == "name" else 255], None, None
+    # 仅对非文本字段统一大小写，沿用合同号、日期和数值的解析行为。
+    s = s.lower()
     if not s:
         return None, None, "没有说出数值"
     if kind == "ht_code":
@@ -214,8 +217,8 @@ def parse_text(text: str, form: str, today: date) -> dict:
         raise ValueError("不支持的表单类型")
     corrected = text
     for wrong, right in sorted(config["corrections"].items(), key=lambda item: -len(item[0])):
-        corrected = corrected.replace(wrong, right)
-    corrected = unicodedata.normalize("NFKC", corrected).lower()
+        corrected = re.sub(re.escape(wrong), lambda match: right, corrected, flags=re.IGNORECASE)
+    corrected = unicodedata.normalize("NFKC", corrected)
     result = {"text": text, "corrected": corrected, "fields": {}, "notes": {},
               "matched": [], "rejected": [], "message": None}
     last_field = None
@@ -237,7 +240,8 @@ def parse_text(text: str, form: str, today: date) -> dict:
     for clause in re.split(r"[，,。；;！!？?、\n]", corrected):
         if not clause.strip():
             continue
-        retracts = [word for word in config["retract_words"] if word in clause]
+        retracts = [word for word in config["retract_words"]
+                    if re.search(re.escape(word), clause, flags=re.IGNORECASE)]
         if retracts:
             retract_pending = True
         hits = _keyword_hits(clause, config["forms"])
@@ -253,7 +257,7 @@ def parse_text(text: str, form: str, today: date) -> dict:
         elif retract_pending and last_field and find_number(clause) is not None:
             said = clause
             for word in sorted(config["retract_words"], key=len, reverse=True):
-                said = said.replace(word, "")
+                said = re.sub(re.escape(word), "", said, flags=re.IGNORECASE)
             assign(last_field, last_keyword, _clean_value(said), "retract")
             retract_pending = False
         elif not retracts:
