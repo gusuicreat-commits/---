@@ -7,3 +7,7 @@ exports/
 logs/
 .DS_Store
 models/
+端到端截图/
+tools/e2e/*.png
+tools/e2e/*.xlsx
+exports-e2e/
