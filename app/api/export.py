@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app import htcode
 from app.db import get_session
 from app.errors import AppError, NotFound
+from app.events import bus
 from app.services import export
 from app.storage import get_storage
 
@@ -18,13 +19,19 @@ XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
 @router.post("/contracts/{ht_code}/export")
-def export_one(ht_code: str, session: Session = Depends(get_session)):
-    return export.export_one(session, ht_code)
+def export_one(ht_code: str, session: Session = Depends(get_session), source: str | None = None):
+    result = export.export_one(session, ht_code)
+    bus.publish("export", {"action": "one", **{key: result[key] for key in
+                                             ("ht_code", "file", "sheets")}}, source)
+    return result
 
 
 @router.post("/export/all")
-def export_all(session: Session = Depends(get_session)):
-    return export.export_all(session)
+def export_all(session: Session = Depends(get_session), source: str | None = None):
+    result = export.export_all(session)
+    bus.publish("export", {"action": "batch", "succeeded": len(result["succeeded"]),
+                           "failed": len(result["failed"]), "skipped": result["skipped"]}, source)
+    return result
 
 
 @router.get("/exports")

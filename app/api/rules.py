@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db import get_session
+from app.events import bus
 from app.services import rules
 
 router = APIRouter(prefix="/api/rules")
@@ -21,5 +22,8 @@ def list_rules(session: Session = Depends(get_session)):
 
 
 @router.put("/{id}")
-def update_rule(id: int, body: RuleInput, session: Session = Depends(get_session)):
-    return rules.update_rule(session, id, body.min, body.max)
+def update_rule(id: int, body: RuleInput, session: Session = Depends(get_session),
+                source: str | None = None):
+    result = rules.update_rule(session, id, body.min, body.max)
+    bus.publish("rules", {"rule": result}, source)
+    return result
