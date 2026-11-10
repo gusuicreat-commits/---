@@ -147,6 +147,7 @@ main{max-width:1240px;margin:0 auto;padding:36px 28px 80px}
 .vp .vs.ng{color:var(--red)}
 .vp .tm{font-family:var(--mono);font-size:24px;font-weight:300;color:var(--red)}
 #wave{width:100%;height:42px;display:block}
+#wave[hidden],.tm[hidden]{display:none}
 .said{width:100%;text-align:left;border-top:1px solid var(--line);padding-top:16px}
 .said p{font-size:16px;line-height:1.6;margin-top:6px;word-break:break-all}
 .said p mark{background:none;color:var(--violet);border-bottom:1px solid rgba(170,156,255,.5)}
