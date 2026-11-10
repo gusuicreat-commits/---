@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>质检实时录入 · 产品参数校验</title>
 <style>
-:root{--tx:#f3f3f5;--tx2:#a3a3ad;--tx3:#66666f;--line:rgba(255,255,255,.08);--lime:#4cbf86;--acc:#5b8def;
+:root{--tx:#f3f3f5;--tx2:#a3a3ad;--tx3:#66666f;--line:rgba(255,255,255,.08);--lime:#4cbf86;--acc:#5b8def; --acc-fill:#2f6fe4; --acc-fill-h:#3d7cf0;
   --sans:-apple-system,"SF Pro Text","PingFang SC","Helvetica Neue",sans-serif;--disp:"SF Pro Display",-apple-system,"PingFang SC",sans-serif;--mono:"SF Mono",ui-monospace,Menlo,monospace}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{min-height:100%}
@@ -25,7 +25,7 @@ a.card:hover{border-color:rgba(91,141,239,.45);transform:translateY(-2px);backgr
 .card .go{position:absolute;right:28px;top:28px;font:20px var(--mono);color:var(--tx3);transition:color .25s,transform .25s}
 a.card:hover .go{color:var(--acc);transform:translate(3px,-3px)}
 .card .f{margin-top:22px;font:12px var(--mono);color:var(--tx3)}
-.both{display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 22px;border-radius:12px;background:var(--acc);color:#fff;font-weight:600;font-size:15px;border:0;cursor:pointer}
+.both{display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 22px;border-radius:12px;background:var(--acc-fill);color:#fff;font-weight:600;font-size:15px;border:0;cursor:pointer}
 .both:hover{filter:brightness(1.06)}
 .row{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
 .row span{color:var(--tx3);font-size:13px}
@@ -39,6 +39,7 @@ code{font:12.5px var(--mono);color:var(--acc);background:rgba(91,141,239,.08);pa
 @media (max-width:760px){.cards,.notes{grid-template-columns:1fr}.notes div+div{padding-left:0;border-left:0}}
 .st{display:flex;gap:18px;flex-wrap:wrap;margin-top:22px;font-size:13px;color:var(--tx3)}.st i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#38383f;margin-right:7px}.st .on i{background:var(--lime)}.st .off i{background:#ffb547}
 @media (max-width:900px){.cards{grid-template-columns:1fr}}
+.both:hover{background:var(--acc-fill-h)}
 </style>
 </head>
 <body>
