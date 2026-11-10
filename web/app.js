@@ -459,7 +459,7 @@ function mountVoice(form, f, lockFields) {
     fd.append('form', form);
     try { apply(await api('POST', '/voice/parse', fd, true)); }
     catch (e) { status(e.message || '识别失败，请手动填写', true); }
-    busy = false; mic.classList.remove('busy'); syncAvail();
+    busy = false; mic.classList.remove('busy'); mic.disabled = !G.voice.available; // 保留识别结果提示，不重置状态文字
   }
   async function typed(text) {
     if (!text.trim()) return;
@@ -481,7 +481,7 @@ function mountVoice(form, f, lockFields) {
     const den = r.asr?.denoise;
     said.hidden = false;
     said.innerHTML = `<div class="micro">识别原文</div><p>${txt || '<span style="color:var(--tx3)">（空）</span>'}</p>
-      ${r.corrected && r.text && r.corrected !== r.text ? `<div class="dn">纠错前：${esc(r.text)}</div>` : ''}
+      ${r.corrected && r.text && r.corrected.toLowerCase() !== r.text.normalize('NFKC').toLowerCase() ? `<div class="dn">纠错前：${esc(r.text)}</div>` : ''}
       ${(r.rejected || []).map(x => `<div class="dn" style="color:var(--amber)">「${esc(x.said || x.field)}」没有填入：${esc(x.reason)}</div>`).join('')}
       ${r.asr ? `<div class="dn">${r.asr.duration_s ?? '?'} 秒音频 · 识别 ${r.asr.elapsed_ms ?? '?'} ms · 降噪 ${den ? denoiseText(den) : '—'}</div>` : ''}`;
     if (!names.length) status(r.message || '未识别到参数', true);
