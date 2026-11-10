@@ -81,7 +81,11 @@ def test_duplicate_and_bj_suggestion(client, monkeypatch):
             assert client.post("/api/contracts", json=body).json()["date"] == "2026-11-11"
             error = assert_error(client.post("/api/contracts", json=body), 409, "DUPLICATE", "合同号已存在")
             assert error["suggestion"] == "20261111-20"
-            client.post("/api/contracts", json={**body, "ht_code": "20261111-90"})
+            assert client.post("/api/contracts", json={**body, "ht_code": "20261111-90"}).status_code == 201
+            assert client.get("/api/contracts/suggest").json() == {"ht_code": "20261111-20"}
+            for number in range(20, 90, 10):
+                assert client.post("/api/contracts", json={
+                    **body, "ht_code": f"20261111-{number}"}).status_code == 201
             assert client.get("/api/contracts/suggest").json() == {"ht_code": None}
     finally:
         if hasattr(time, "tzset"):

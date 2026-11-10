@@ -31,7 +31,9 @@ def check(code: str) -> HtCodeError | None:
 
 def suggest(existing_codes: list[str], today: date) -> str | None:
     prefix = today.strftime("%Y%m%d")
-    sequences = [int(code.split("-")[1]) for raw in existing_codes
-                 if check(code := normalize(raw)) is None and code.split("-")[0] == prefix]
+    sequences = {int(code.split("-")[1]) for raw in existing_codes
+                 if check(code := normalize(raw)) is None and code.split("-")[0] == prefix}
     seq = max(sequences, default=0) + 10
-    return f"{prefix}-{seq}" if seq <= 90 else None
+    if seq > 90:
+        seq = next((number for number in range(10, 100, 10) if number not in sequences), None)
+    return f"{prefix}-{seq}" if seq is not None else None
