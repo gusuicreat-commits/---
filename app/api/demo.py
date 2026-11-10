@@ -1,4 +1,4 @@
-"""一键演示的启动、停止和进度接口。"""
+"""一键演示的启动、停止、重置和进度接口。"""
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
@@ -18,6 +18,11 @@ def start(body: StartRequest, request: Request):
 @router.post("/stop")
 def stop(request: Request):
     return request.app.state.demo.stop()
+
+
+@router.post("/reset")
+def reset(request: Request):
+    return request.app.state.demo.reset()
 
 
 @router.get("/status")
