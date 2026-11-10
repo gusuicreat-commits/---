@@ -9,7 +9,7 @@ from sqlalchemy.exc import OperationalError
 from starlette.exceptions import HTTPException
 
 from app import backup
-from app.api import contracts, export, records, rules, validation, voice
+from app.api import contracts, events, export, records, rules, validation, voice
 from app.config import get_settings
 from app.db import get_engine, init_db
 from app.errors import AppError
@@ -60,7 +60,7 @@ def create_app() -> FastAPI:
         return load_fields()
 
     for router in (contracts.router, records.router, rules.router, validation.router,
-                   export.router, voice.router):
+                   export.router, voice.router, events.router):
         application.include_router(router)
     web_dir = get_settings().web_dir
     if web_dir.exists():

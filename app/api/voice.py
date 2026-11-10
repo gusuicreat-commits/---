@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from app.config import get_settings
 from app.errors import AppError, Invalid
+from app.events import bus
 from app.timeutil import today_bj
 from app.voice import parser
 
@@ -40,16 +41,27 @@ def status():
 class TextRequest(BaseModel):
     text: str
     form: str
+    ht_code: str | None = None
+    source: str | None = None
+
+
+@router.get("/config")
+def config():
+    settings = parser.load_voice_config()
+    return {key: settings[key] for key in ("forms", "corrections", "hotwords", "retract_words")}
 
 
 @router.post("/parse-text")
 def parse_text(body: TextRequest):
     _check_form(body.form)
-    return {**parser.parse_text(body.text, body.form, today_bj()), "asr": None}
+    result = {**parser.parse_text(body.text, body.form, today_bj()), "asr": None}
+    bus.publish("voice", {**result, "form": body.form, "ht_code": body.ht_code}, body.source)
+    return result
 
 
 @router.post("/parse")
-def parse(audio: UploadFile = File(...), form: str = Form(...)):
+def parse(audio: UploadFile = File(...), form: str = Form(...),
+          ht_code: str | None = Form(None), source: str | None = Form(None)):
     _check_form(form)
     settings = get_settings()
     try:
@@ -70,6 +82,8 @@ def parse(audio: UploadFile = File(...), form: str = Form(...)):
         raise _unavailable()
     if not isinstance(body, dict) or not isinstance(body.get("text"), str):
         raise _unavailable()
-    return {**parser.parse_text(body["text"], form, today_bj()),
-            "asr": {key: body.get(key) for key in
-                    ("text", "duration_s", "elapsed_ms", "denoise", "truncated")}}
+    result = {**parser.parse_text(body["text"], form, today_bj()),
+              "asr": {key: body.get(key) for key in
+                      ("text", "duration_s", "elapsed_ms", "denoise", "truncated")}}
+    bus.publish("voice", {**result, "form": form, "ht_code": ht_code}, source)
+    return result

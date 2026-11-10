@@ -5,6 +5,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db import get_session
+from app.events import bus
+from app.htcode import normalize
 from app.services import contracts, records, rules
 from app.services.status import latest_records, status_from_latest
 from app.fields import table_by_kind
@@ -30,8 +32,10 @@ def suggest(session: Session = Depends(get_session)):
 
 
 @router.post("", status_code=201)
-def create(body: CreateContract, session: Session = Depends(get_session)):
-    return contracts.create(session, **body.model_dump())
+def create(body: CreateContract, session: Session = Depends(get_session), source: str | None = None):
+    result = contracts.create(session, **body.model_dump())
+    bus.publish("contract", {"action": "created", "contract": result}, source)
+    return result
 
 
 @router.get("")
@@ -54,11 +58,15 @@ def detail(ht_code: str, session: Session = Depends(get_session)):
 
 
 @router.patch("/{ht_code}")
-def update(ht_code: str, body: UpdateContract, session: Session = Depends(get_session)):
-    return contracts.update(session, ht_code, name=body.name, date=body.date, new_ht_code=body.ht_code)
+def update(ht_code: str, body: UpdateContract, session: Session = Depends(get_session),
+           source: str | None = None):
+    result = contracts.update(session, ht_code, name=body.name, date=body.date, new_ht_code=body.ht_code)
+    bus.publish("contract", {"action": "updated", "contract": result}, source)
+    return result
 
 
 @router.delete("/{ht_code}", status_code=204)
-def delete(ht_code: str, session: Session = Depends(get_session)):
+def delete(ht_code: str, session: Session = Depends(get_session), source: str | None = None):
     contracts.delete(session, ht_code)
+    bus.publish("contract", {"action": "deleted", "contract": {"ht_code": normalize(ht_code)}}, source)
     return Response(status_code=204)
