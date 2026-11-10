@@ -33,7 +33,7 @@ def test_script_real_workflow(configured, session, tmp_path, demo_environment):
     assert contract_status(session, contract["ht_code"])["status"] == "合格"
     assert len(list((tmp_path / "exports").rglob("*.xlsx"))) == 1
     reviews = session.scalars(select(VoiceLog).where(VoiceLog.status == "review")).all()
-    assert len(reviews) == 1 and reviews[0].text == "厚度等一下再测"
+    assert len(reviews) == 1 and reviews[0].text == "厚度恁等一下，俺再量量"
     all_events = demo_environment.since(0, 1000)
     progress = [item["data"] for item in all_events if item["type"] == "demo"]
     assert [item["index"] for item in progress if item["state"] == "step"] == list(range(len(steps)))

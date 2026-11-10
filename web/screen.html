@@ -605,15 +605,29 @@ function trHTML(p) {
   // 原话 → 纠错后：纠错表命中的词用 ruby 标出原词；命中关键词下划线；拒收的片段标黄
   const vc = S.vcfg?.corrections || {};
   let t = esc(p.corrected || p.text || '');
-  Object.entries(vc).forEach(([bad, good]) => { if ((p.text || '').includes(bad) && t.includes(esc(good))) t = t.split(esc(good)).join(`<ruby><b>${esc(good)}</b><rt>${esc(bad)}</rt></ruby>`); });
+  const fx = fixesOf(p);
+  if (fx) { t = fx.map(([a, b]) => a === b ? esc(a) : `<ruby><b>${esc(b)}</b><rt>${esc(a)}</rt></ruby>`).join(''); }
+  else Object.entries(vc).forEach(([bad, good]) => { if ((p.text || '').includes(bad) && t.includes(esc(good))) t = t.split(esc(good)).join(`<ruby><b>${esc(good)}</b><rt>${esc(bad)}</rt></ruby>`); });
   (p.matched || []).forEach(m => { if (m.via === 'exact' && !Object.values(vc).includes(m.keyword)) t = t.split(esc(m.keyword)).join(`<mark>${esc(m.keyword)}</mark>`); });
   (p.rejected || []).forEach(r => { if (r.said && r.said.length > 1) t = t.split(esc(r.said)).join(`<span class="rj">${esc(r.said)}</span>`); });
   return t || '（没有识别到内容）';
 }
+function fixesOf(p) {
+  const norm = x => (x || '').replace(/，/g, ',').replace(/。/g, '').replace(/；/g, ';').replace(/！/g, '!').replace(/？/g, '?').replace(/、/g, ',');
+  const a = norm(p.text), b = norm(p.corrected);
+  if (!a || !b || a.length !== b.length || a === b) return null;
+  const out = []; let i = 0;
+  while (i < a.length) { let j = i; const same = a[i] === b[i]; while (j < a.length && (a[j] === b[j]) === same) j++; out.push([a.slice(i, j), b.slice(i, j)]); i = j; }
+  return out;
+}
 function cnHTML(p) {
   const vc = S.vcfg?.corrections || {}, out = [];
   Object.entries(vc).forEach(([bad, good]) => { if ((p.text || '').includes(bad)) out.push(`<span class="tb">纠错表 ${esc(bad)}→${esc(good)}</span>`); });
-  (p.matched || []).forEach(m => out.push(`<span class="${m.via === 'pinyin' ? '' : 'okk'}">${m.via === 'pinyin' ? '拼音纠偏' : '命中'} ${esc(m.keyword)} = ${esc(m.value)}</span>`));
+  const fx = (fixesOf(p) || []).filter(([a, b]) => a !== b && !vc[a]);
+  (p.matched || []).forEach(m => {
+    if (m.fuzzy || m.via === 'fuzzy') { const f = fx.find(([, b]) => b === m.keyword); out.push(`<span class="tb">口音纠正 ${f ? esc(f[0]) + '→' : ''}${esc(m.keyword)} = ${esc(m.value)}</span>`); }
+    else out.push(`<span class="${m.via === 'pinyin' ? '' : 'okk'}">${m.via === 'pinyin' ? '拼音纠偏' : '命中'} ${esc(m.keyword)} = ${esc(m.value)}</span>`);
+  });
   Object.entries(p.notes || {}).forEach(([k, v]) => out.push(`<span class="hm">${esc(QC.fieldMeta(p.form, k)?.label || k)}：${esc(v)}</span>`));
   (p.rejected || []).forEach(r => out.push(`<span class="bad">拒收「${esc(r.said || r.field)}」${esc(r.reason)}</span>`));
   if (p.message) out.push(`<span class="bad">${esc(p.message)}</span>`);

@@ -16,7 +16,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   // 1) 一键演示（2 倍速）
   await S.selectOption('#dmSpd', '2'); await S.click('#dmBtn');
-  const shots = { 2: '演示_超上限', 4: '演示_口音纠错', 5: '演示_转复核', 9: '演示_大车不合格' };
+  const shots = { 2: '演示_超上限', 3: '演示_子径口音', 4: '演示_口音纠错', 5: '演示_转复核', 8: '演示_噪声超标', 9: '演示_大车不合格', 10: '演示_得劲复测' };
   const seen = new Set();
   for (let t = 0; t < 120; t++) {
     const cap = await S.textContent('#cap').catch(() => '');
