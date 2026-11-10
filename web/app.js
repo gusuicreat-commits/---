@@ -335,7 +335,7 @@ async function pageEntry(ht, kind) {
       if (fd.type !== 'text' && v !== '') {
         const n = v.replace(/[０-９．]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
         if (!/^-?\d+(\.\d+)?$/.test(n)) { setErr(f, fd.name, fd.label + '必须是数字'); bad = true; continue; }
-        if (/\.\d{3,}$/.test(n)) { setErr(f, fd.name, fd.label + '最多两位小数'); bad = true; continue; }
+        if (((n.split('.')[1] || '').replace(/0+$/, '')).length > 2) { setErr(f, fd.name, fd.label + '最多两位小数'); bad = true; continue; }
         body[fd.name] = n;
       } else body[fd.name] = v === '' ? null : v;
     }
