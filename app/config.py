@@ -14,6 +14,7 @@ class Settings:
         self.db_path: Path = _path("QC_DB_PATH", ROOT / "data" / "qc.sqlite3")
         self.export_dir: Path = _path("QC_EXPORT_DIR", ROOT / "exports")
         self.audio_dir: Path = _path("QC_AUDIO_DIR", ROOT / "data" / "audio")
+        self.demo_audio_dir: Path = _path("QC_DEMO_AUDIO_DIR", ROOT / "data" / "demo-audio")
         self.asr_url: str = os.environ.get("QC_ASR_URL", "http://127.0.0.1:8601")
         self.web_dir: Path = _path("QC_WEB_DIR", ROOT / "web")
         self.tz: str = os.environ.get("QC_TZ", "Asia/Shanghai")
