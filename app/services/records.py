@@ -8,6 +8,7 @@ from app.dec import fmt, to_dec2
 from app.errors import BadNumber, Invalid, TooManyDecimals
 from app.fields import load_fields, table_by_kind
 from app.models import MODEL_BY_TABLE
+from app.readings import normalize_readings
 from app.services import contracts, validation
 from app.services.status import contract_status
 
@@ -37,7 +38,14 @@ def submit(session, kind, ht_code, payload: dict) -> SubmitResult:
     for field in load_fields()[table]["fields"]:
         name, label = field["name"], field["label"]
         raw = payload.get(name)
-        if field["type"] == "number":
+        if field.get("numeric_list"):
+            try:
+                values[name] = normalize_readings(raw)
+                if values[name] and len(values[name]) > field['max_len']:
+                    raise ValueError('测点内容最多 255 个字符')
+            except ValueError as exc:
+                errors[name] = str(exc)
+        elif field["type"] == "number":
             try:
                 values[name] = to_dec2(raw)
             except BadNumber:

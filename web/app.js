@@ -6,8 +6,8 @@ const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
 
-const KINDS = { drum: 'drum_param', travel_drive: 'travel_drive_param' };
-const KIND_LABEL = { drum: '卷筒', travel_drive: '大车传动' };
+const KINDS = { drum: 'drum_param', travel_drive: 'travel_drive_param', control_cabinet: 'control_cabinet_param', travel_paint: 'travel_paint_param' };
+const KIND_LABEL = { drum: '卷筒', travel_drive: '大车传动', control_cabinet: '控制柜', travel_paint: '大车油漆' };
 const STATUS_CLS = { '合格': 'ok', '不合格': 'ng', '待校验': 'wait', '未录全': 'part' };
 const STATUSES = ['未录全', '待校验', '不合格', '合格'];
 
@@ -61,8 +61,8 @@ function confirmBox(title, text, okText = '确定', danger = false) {
 
 /* ---------------- 公共数据 ---------------- */
 const G = { fields: null, rules: null, voice: { available: false } };
-async function loadFields() { if (!G.fields) G.fields = await api('GET', '/fields'); return G.fields; }
-async function loadRules() { G.rules = await api('GET', '/rules'); return G.rules; }
+async function loadFields() { if (!G.fields) G.fields = await api('GET', '/fields'); QC.G.fields=G.fields; return G.fields; }
+async function loadRules() { G.rules = await api('GET', '/rules'); QC.G.rules=G.rules; return G.rules; }
 function ruleOf(table, name) { return (G.rules?.items || []).find(r => r.table_name === table && r.name === name); }
 function rangeText(r) {
   if (!r || r.min == null || r.max == null || r.min === '' || r.max === '') return '规则未配置';
@@ -98,7 +98,7 @@ const routes = [
   [/^#\/exports$/, pageExports],
   [/^#\/c\/([^/]+)$/, m => pageDetail(decodeURIComponent(m[1]))],
   [/^#\/c\/([^/]+)\/edit$/, m => pageContractForm(decodeURIComponent(m[1]))],
-  [/^#\/c\/([^/]+)\/(drum|travel_drive)$/, m => pageEntry(decodeURIComponent(m[1]), m[2])],
+  [/^#\/c\/([^/]+)\/(drum|travel_drive|control_cabinet|travel_paint)$/, m => pageEntry(decodeURIComponent(m[1]), m[2])],
 ];
 let cleanup = null;
 async function route() {
@@ -126,12 +126,12 @@ async function pageList() {
   const [all, rules] = await Promise.all([api('GET', '/contracts'), loadRules()]);
   const counts = {}; all.items.forEach(c => counts[c.status] = (counts[c.status] || 0) + 1);
   app.innerHTML = `
-    <div class="ph"><div><h1>合同</h1><div class="sub">按合同号录入卷筒与大车传动参数，自动判定是否合格</div></div><span class="sp"></span>
+    <div class="ph"><div><h1>合同</h1><div class="sub">按合同号录入卷筒、大车传动、控制柜与大车油漆参数，自动判定是否合格</div></div><span class="sp"></span>
       <a class="btn pri" href="#/new">${ICON.plus}新建合同</a></div>
     ${rules.configured < rules.total ? `<div class="note amb">规则已配置 ${rules.configured}/${rules.total}：未配置的参数会被判为不合格。<a href="#/rules">去配置规则</a></div>` : ''}
     <div class="grid4">
       <div class="kpi"><div class="micro">合同总数</div><b>${all.items.length}</b><span>全部</span></div>
-      <div class="kpi"><div class="micro">可导出</div><b style="color:var(--lime)">${counts['合格'] || 0}</b><span>两类参数最新记录均合格</span></div>
+      <div class="kpi"><div class="micro">可导出</div><b style="color:var(--lime)">${counts['合格'] || 0}</b><span>四类参数最新记录均合格</span></div>
       <div class="kpi"><div class="micro">不合格</div><b style="color:var(--red)">${counts['不合格'] || 0}</b><span>需复测后重新录入</span></div>
       <div class="kpi"><div class="micro">未完成</div><b style="color:var(--amber)">${(counts['未录全'] || 0) + (counts['待校验'] || 0)}</b><span>未录全 ${counts['未录全'] || 0} · 待校验 ${counts['待校验'] || 0}</span></div>
     </div>
@@ -172,13 +172,13 @@ async function pageContractForm(ht) {
   }
   app.innerHTML = `
     <a class="crumb" href="${edit ? '#/c/' + encodeURIComponent(ht) : '#/'}">${ICON.back}${edit ? '返回合同详情' : '合同列表'}</a>
-    <div class="ph"><div><h1>${edit ? '编辑合同' : '新建合同'}</h1><div class="sub">${edit ? '合同号不能修改；客户名称和录入日期可以改' : '合同号已按「今天日期-下一个序号」自动填好，可以修改'}</div></div></div>
+    <div class="ph"><div><h1>${edit ? '编辑合同' : '新建合同'}</h1><div class="sub">${edit ? '合同号不能修改；客户名称和录入日期可以改' : '合同号已按「年份＋4位随机数字」自动填好，可以修改'}</div></div></div>
     <div class="grid2 entry-wrap" style="grid-template-columns:1.35fr 1fr;align-items:start">
       <div class="card">
         <form class="form" id="f" novalidate>
-          ${fieldHTML('ht_code', '合同号', '', c.ht_code, { mono: true, ro: edit, ph: '20261110-10', hint: edit ? '合同号是参数记录的关联依据，不能修改' : '格式：日期-序号，序号为 10、20…90' })}
+          ${fieldHTML('ht_code', '合同号', '', c.ht_code, { mono: true, ro: edit, ph: '20264827', hint: edit ? '合同号是参数记录的关联依据，不能修改' : '格式：4位年份＋4位数字，例如 20264827；随机部分可含前导零' })}
           ${fieldHTML('name', '客户名称', '', c.name, { text: true, ph: '例如：某某重工有限公司' })}
-          ${fieldHTML('date', '录入日期', '', c.date, { mono: true, ph: 'YYYY-MM-DD', hint: '默认今天，可以修改；与合同号里的日期互不影响' })}
+          ${fieldHTML('date', '录入日期', '', c.date, { mono: true, ph: 'YYYY-MM-DD', hint: '默认今天，可以修改；合同号不再包含月日' })}
           <div class="actions"><span class="sp"></span><a class="btn ghost" href="${edit ? '#/c/' + encodeURIComponent(ht) : '#/'}">取消</a><button class="btn pri" type="submit">${edit ? '保存' : '创建合同'}</button></div>
         </form>
       </div>
@@ -201,7 +201,7 @@ async function pageContractForm(ht) {
         toast('合同已创建', 'ok'); location.hash = '#/c/' + encodeURIComponent(r.ht_code);
       }
     } catch (err) {
-      if (['FORMAT', 'DATE_LEN', 'DATE_INVALID', 'SEQ_INVALID', 'DUPLICATE'].includes(err.code)) {
+      if (['FORMAT', 'YEAR_INVALID', 'DATE_LEN', 'DATE_INVALID', 'SEQ_INVALID', 'DUPLICATE'].includes(err.code)) {
         setErr(f, 'ht_code', err.message + (err.suggestion ? `，可用：${err.suggestion}` : ''));
         if (err.suggestion) { f.ht_code.value = err.suggestion; }
       } else if (err.code?.startsWith('NAME')) setErr(f, 'name', err.message);
@@ -230,7 +230,7 @@ function clearErrs(f) { $$('.fld.err', f).forEach(d => { d.classList.remove('err
 async function pageDetail(ht) {
   const [d, fields] = await Promise.all([api('GET', '/contracts/' + encodeURIComponent(ht)), loadFields(), loadRules()]);
   const c = d.contract, enc = encodeURIComponent(c.ht_code);
-  const hasRec = d.latest.drum || d.latest.travel_drive;
+  const hasRec = Object.values(d.latest).some(Boolean);
   app.innerHTML = `
     <a class="crumb" href="#/">${ICON.back}合同列表</a>
     <div class="chead">
@@ -243,13 +243,13 @@ async function pageDetail(ht) {
     ${d.rules.configured < d.rules.total ? `<div class="note amb">规则已配置 ${d.rules.configured}/${d.rules.total}：未配置的参数会被判为不合格，这不是参数本身的问题。<a href="#/rules">去配置规则</a></div>` : ''}
     <div class="gate">
       ${pill(d.status)}
-      <div class="t">${d.status === '合格' ? '两类参数最新记录均合格，可以导出' : esc(d.status_reason)}<small>只有「合格」的合同可以导出 Excel；每类参数以最新一条为准</small></div>
+      <div class="t">${d.status === '合格' ? '四类参数最新记录均合格，可以导出' : esc(d.status_reason)}<small>只有「合格」的合同可以导出 Excel；每类参数以最新一条为准</small></div>
       <span class="sp"></span>
       <button class="btn sm ghost" id="reval" title="按当前规则重新判定该合同的全部记录">重新校验</button>
       <button class="btn pri" id="exp" ${d.status === '合格' ? '' : 'disabled'}>${ICON.dl}导出 Excel</button>
     </div>
     <div id="expres"></div>
-    <div class="grid2">${['drum', 'travel_drive'].map(k => paramCardHTML(k, d.latest[k], fields)).join('')}</div>`;
+    <div class="grid2">${Object.keys(KINDS).map(k => paramCardHTML(k, d.latest[k], fields)).join('')}</div>`;
 
   $$('[data-hist]').forEach(b => b.onclick = async () => {
     const k = b.dataset.hist, box = $('#hist-' + k);
@@ -286,7 +286,8 @@ function paramCardHTML(kind, rec, fields) {
   return `<div class="card pcard">${head}<div class="meas">
     ${fl.map(f => {
       const v = rec[f.name];
-      if (f.type === 'text') return `<div class="m txt"><span class="k">${esc(f.label)}</span><span class="v">${v ? esc(v) : '<span style="color:var(--tx3)">—</span>'}</span><span class="rg">不校验</span></div>`;
+      if (f.type === 'text' && !f.numeric_list) return `<div class="m txt"><span class="k">${esc(f.label)}</span><span class="v">${v ? esc(v) : '<span style="color:var(--tx3)">—</span>'}</span><span class="rg">不校验</span></div>`;
+      if (f.numeric_list) { const j=QC.prejudge(kind,f.name,v); return `<div class="m ${j.cls==='ng'?'bad':''}"><span class="k">${esc(f.label)}</span><span class="v">${esc(v??'—')}</span><span class="rg" style="white-space:normal">${esc(j.verdict)}</span></div>`; }
       const r = ruleOf(table, f.name), ok = inRange(v, r);
       return `<div class="m ${ok === false || v == null ? 'bad' : ''}"><span class="k">${esc(f.label)}</span><span class="v">${v != null && v !== '' ? esc(v) : '—'}<small>${esc(f.unit || '')}</small></span><span class="rg">${esc(rangeText(r))}</span></div>`;
     }).join('')}</div>
@@ -312,11 +313,11 @@ async function pageEntry(ht, kind) {
     <div id="verdict"></div>
     <div class="grid2 entry-wrap" style="grid-template-columns:1.35fr 1fr;align-items:start">
       <div class="card">
-        <div class="hd"><h3>合同号 <span class="mono" style="font-weight:400;color:var(--tx2)">${esc(c.ht_code)}</span></h3><span class="sp"></span><span class="micro">${kind === 'drum' ? 'DRUM' : 'TRAVEL DRIVE'}</span></div>
+        <div class="hd"><h3>合同号 <span class="mono" style="font-weight:400;color:var(--tx2)">${esc(c.ht_code)}</span></h3><span class="sp"></span><span class="micro">${esc(KIND_LABEL[kind])}</span></div>
         <form class="form" id="f" novalidate>
           <div class="formgrid">
           ${fl.map(f => f.type === 'text'
-            ? `<div style="grid-column:1/-1">${fieldHTML(f.name, f.label, '', '', { text: true, ph: '自由文本，不参与校验', hint: '最长 ' + (f.max_len || 255) + ' 字' })}</div>`
+            ? `<div style="grid-column:1/-1">${fieldHTML(f.name, f.label, '', '', { text: true, ph: f.numeric_list ? '例如：98,97,96' : '自由文本，不参与校验', hint: '最长 ' + (f.max_len || 255) + ' 字' })}</div>`
             : fieldHTML(f.name, f.label, f.unit, '', { num: true, ph: '0.00', rule: rangeText(ruleOf(table, f.name)) })).join('')}
           </div>
           <div class="actions"><button class="btn ghost" type="button" id="clr">清空</button><span class="sp"></span><a class="btn ghost" href="#/c/${enc}">取消</a><button class="btn pri" type="submit">提交并校验</button></div>
@@ -326,6 +327,13 @@ async function pageEntry(ht, kind) {
     </div>`;
   const f = $('#f');
   cleanup = mountVoice(kind, f, []);
+  QC.G.fields = fields; QC.G.rules = G.rules;
+  fl.filter(fd=>fd.numeric_list).forEach(fd=>{
+    const input=f[fd.name], wrap=input.closest('.fld');
+    input.addEventListener('input',()=>{const j=QC.prejudge(kind,fd.name,input.value);wrap.classList.toggle('err',j.cls==='ng');wrap.querySelector('.hint').textContent=j.verdict;});
+    wrap.querySelector('.hint').textContent='多个测点用逗号分隔，逐个校验：'+rangeText(ruleOf(table,fd.name));
+  });
+
   $('#clr').onclick = () => { $$('input', f).forEach(i => i.value = ''); $$('.fld', f).forEach(dv => { dv.classList.remove('voice', 'key', 'err'); $('.hint', dv).textContent = $('.hint', dv).dataset.base; }); };
   f.onsubmit = async e => {
     e.preventDefault(); clearErrs(f);
@@ -359,7 +367,7 @@ function showVerdict(r, enc, kind) {
       <div class="after"><a class="btn" href="#/rules">去补跑校验</a><a class="btn ghost" href="#/c/${enc}">查看合同</a></div></div>`;
   } else if (v.is_qualified === 1) {
     el.innerHTML = `<div class="verdict ok"><div class="big">✓ 合格</div><div style="margin-top:8px;color:var(--tx2)">记录 #${r.record.id} 已保存 · ${esc(cs)}</div>
-      <div class="after"><a class="btn pri" href="#/c/${enc}">查看合同</a>${kind === 'drum' ? `<a class="btn" href="#/c/${enc}/travel_drive">继续录大车传动</a>` : `<a class="btn" href="#/c/${enc}/drum">继续录卷筒</a>`}</div></div>`;
+      <div class="after"><a class="btn pri" href="#/c/${enc}">查看合同</a>${Object.keys(KINDS).filter(k => k !== kind).map(k => `<a class="btn" href="#/c/${enc}/${k}">录入${KIND_LABEL[k]}</a>`).join('')}</div></div>`;
   } else {
     el.innerHTML = `<div class="verdict ng"><div class="big">✕ 不合格</div>
       <ul>${v.failures.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
@@ -371,8 +379,10 @@ function showVerdict(r, enc, kind) {
 
 /* ================= 语音面板 ================= */
 const EXAMPLES = {
-  contract: ['合同号二零二六一一一零杠三零', '客户样例重工，日期今天', '合同二十'],
+  contract: ['合同号二零二六四八二七', '客户样例重工，日期今天', '合同号20260007'],
   drum: ['直径一千二百五十，长度三米', '厚度十二点五毫米，光段三百', '直径1250，不对，1252'],
+  control_cabinet: ['绝缘电阻五百兆欧，控制线力矩一点二牛米', '电气间隙八毫米'],
+  travel_paint: ['底漆九十八、九十七、九十六', '面漆99%，附着力百分之一'],
   travel_drive: ['噪音八十二分贝', '电机铭牌 YZR160M2-6', '减速机ZQ500，噪声78'],
 };
 function voicePanelHTML(form) {
@@ -474,6 +484,7 @@ function mountVoice(form, f, lockFields) {
       f[k].value = r.fields[k];
       d.classList.remove('err'); d.classList.add('voice'); d.classList.toggle('key', k === 'ht_code');
       $('.hint', d).textContent = r.notes?.[k] ? `${r.notes[k]}，请核对` : (k === 'ht_code' ? '语音填入的合同号，请重点核对' : '语音填入，请核对');
+      f[k].dispatchEvent(new Event('input'));
       d.animate([{ transform: 'scale(1.015)' }, { transform: 'none' }], { duration: 260 });
     });
     let txt = esc(r.corrected || r.text || '');

@@ -53,7 +53,24 @@ class Rule(Base):
     max: Mapped[Decimal | None] = mapped_column(Dec2())
 
 
-MODEL_BY_TABLE = {"drum_param": DrumParam, "travel_drive_param": TravelDriveParam}
+class ControlCabinetParam(ParameterMixin, Base):
+    __tablename__ = "control_cabinet_param"
+    insulation_resistance: Mapped[Decimal | None] = mapped_column(Dec2())
+    control_wire_torque: Mapped[Decimal | None] = mapped_column(Dec2())
+    electrical_clearance: Mapped[Decimal | None] = mapped_column(Dec2())
+
+
+class TravelPaintParam(ParameterMixin, Base):
+    __tablename__ = "travel_paint_param"
+    primer_thickness_ratio: Mapped[str | None] = mapped_column(String(255))
+    total_thickness_ratio: Mapped[Decimal | None] = mapped_column(Dec2())
+    adhesion_loss_ratio: Mapped[Decimal | None] = mapped_column(Dec2())
+
+
+MODEL_BY_TABLE = {
+    "drum_param": DrumParam, "travel_drive_param": TravelDriveParam,
+    "control_cabinet_param": ControlCabinetParam, "travel_paint_param": TravelPaintParam,
+}
 
 
 class VoiceLog(Base):

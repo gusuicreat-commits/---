@@ -40,7 +40,7 @@ def test_contract_crud_and_search(client):
     for q in ["61110", "客户甲", "2020-01"]:
         items = client.get("/api/contracts", params={"q": q, "status": "未录全"}).json()["items"]
         assert len(items) == 1
-        assert items[0]["status_reason"] == "缺少卷筒参数和大车传动参数"
+        assert items[0]["status_reason"] == "缺少卷筒参数和大车传动参数和控制柜参数和大车油漆参数"
     assert client.get("/api/contracts", params={"q": "%"}).json()["items"] == []
     assert client.get("/api/contracts", params={"status": "合格"}).json()["items"] == []
     assert_error(client.get("/api/contracts?status=未知"), 422, "BAD_REQUEST")
@@ -49,8 +49,8 @@ def test_contract_crud_and_search(client):
     assert response.json()["name"] == "客户乙"
     detail = client.get("/api/contracts/ ２０２６１１１０－１０ ").json()
     assert detail["contract"]["date"] == "2026-11-11"
-    assert detail["latest"] == {"drum": None, "travel_drive": None}
-    assert detail["rules"] == {"configured": 0, "total": 5}
+    assert detail["latest"] == {"drum": None, "travel_drive": None, "control_cabinet": None, "travel_paint": None}
+    assert detail["rules"] == {"configured": 0, "total": 11}
     response = client.delete("/api/contracts/２０２６１１１０－１０")
     assert response.status_code == 204 and response.content == b""
     for method in ["get", "patch", "delete"]:
@@ -59,7 +59,7 @@ def test_contract_crud_and_search(client):
 
 
 @pytest.mark.parametrize("body,code,message", [
-    ({"ht_code": "错误", "name": "客户"}, "FORMAT", "合同号格式应为「日期-序号」，例如 20261110-10"),
+    ({"ht_code": "错误", "name": "客户"}, "FORMAT", "合同号格式应为「4位年份＋4位数字」，例如 20264827"),
     ({"ht_code": "20261110-10", "name": " "}, "NAME_EMPTY", "客户名称不能为空"),
     ({"ht_code": "20261110-10", "name": "字" * 129}, "NAME_TOO_LONG", "客户名称最多 128 个字"),
 ])
@@ -76,17 +76,14 @@ def test_duplicate_and_bj_suggestion(client, monkeypatch):
                 time.tzset()
             clock_patch.setattr(timeutil, "now_bj", lambda: fixed)
             assert fixed.astimezone(ZoneInfo("UTC")).date() == date(2026, 11, 10)
-            assert client.get("/api/contracts/suggest").json() == {"ht_code": "20261111-10"}
-            body = {"ht_code": "20261111-10", "name": "客户"}
+            monkeypatch.setattr("app.htcode.secrets.choice", lambda pool: pool[0])
+            assert client.get("/api/contracts/suggest").json() == {"ht_code": "20260000"}
+            body = {"ht_code": "20260000", "name": "客户"}
             assert client.post("/api/contracts", json=body).json()["date"] == "2026-11-11"
             error = assert_error(client.post("/api/contracts", json=body), 409, "DUPLICATE", "合同号已存在")
-            assert error["suggestion"] == "20261111-20"
-            assert client.post("/api/contracts", json={**body, "ht_code": "20261111-90"}).status_code == 201
-            assert client.get("/api/contracts/suggest").json() == {"ht_code": "20261111-20"}
-            for number in range(20, 90, 10):
-                assert client.post("/api/contracts", json={
-                    **body, "ht_code": f"20261111-{number}"}).status_code == 201
-            assert client.get("/api/contracts/suggest").json() == {"ht_code": None}
+            assert error["suggestion"] == "20260001"
+            assert client.post("/api/contracts", json={**body, "ht_code": "20260001"}).status_code == 201
+            assert client.get("/api/contracts/suggest").json() == {"ht_code": "20260002"}
     finally:
         if hasattr(time, "tzset"):
             time.tzset()
@@ -101,7 +98,8 @@ def test_bad_body(client, path, body):
     assert_error(client.post(path, content="{", headers={"Content-Type": "application/json"}), 422, "BAD_REQUEST")
 
 
-def test_record_api(client, contract, good_drum):
+def test_record_api(client, contract, good_drum, complete_new_parameters):
+    complete_new_parameters(contract)
     response = client.post(f"/api/contracts/ ２０２６１１１０－１０ /records/drum", json={**good_drum, "diameter": 1260.0, "unknown": "忽略", "is_qualified": 0})
     assert response.status_code == 201
     result = response.json()
@@ -139,8 +137,8 @@ def test_field_errors(client, contract, session, kind, payload, field, message):
 
 def test_rules_api(client, session):
     data = client.get("/api/rules").json()
-    assert data["configured"] == 0 and data["total"] == 5
-    assert [item["name"] for item in data["items"]] == ["diameter", "length", "thick", "light", "noise"]
+    assert data["configured"] == 0 and data["total"] == 11
+    assert [item["name"] for item in data["items"]] == [field["name"] for meta in load_fields().values() for field in meta["fields"] if field["validate"]]
     rule_id = data["items"][0]["id"]
     path = f"/api/rules/{rule_id}"
     assert client.put(path, json={"min": "1240", "max": "1260"}).json()["configured"] is True
@@ -190,7 +188,7 @@ def test_init_db_idempotent(session):
     init_db()
     init_db()
     session.expire_all()
-    assert len(session.scalars(select(Rule)).all()) == 5
+    assert len(session.scalars(select(Rule)).all()) == 11
     assert session.get(Rule, rule.id).min == 1
     assert session.scalar(select(Rule).where(Rule.name == "noise")).min is None
 
@@ -223,7 +221,7 @@ def test_static_mounted_after_api(client, tmp_path, monkeypatch):
     with TestClient(create_app()) as static_client:
         assert "测试页面" in static_client.get("/").text
         assert static_client.get("/api/health").json() == {"ok": True}
-        assert static_client.get("/api/rules").json()["total"] == 5
+        assert static_client.get("/api/rules").json()["total"] == 11
 
 
 def test_seed_demo_idempotent(client, session, capsys):

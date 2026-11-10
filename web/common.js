@@ -2,8 +2,8 @@
 'use strict';
 (function () {
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const KINDS = { drum: 'drum_param', travel_drive: 'travel_drive_param' };
-  const KIND_LABEL = { drum: '卷筒', travel_drive: '大车传动', contract: '合同' };
+  const KINDS = { drum: 'drum_param', travel_drive: 'travel_drive_param', control_cabinet: 'control_cabinet_param', travel_paint: 'travel_paint_param' };
+  const KIND_LABEL = { drum: '卷筒', travel_drive: '大车传动', control_cabinet: '控制柜', travel_paint: '大车油漆', contract: '合同' };
   const STATUS_CLS = { '合格': 'ok', '不合格': 'ng', '待校验': 'warn', '未录全': 'dim' };
   const load = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
   const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
@@ -40,7 +40,16 @@
   /* 按当前规则预判一个字段（只用于提示，最终以后端判定为准） */
   function prejudge(kind, name, value) {
     const f = fieldMeta(kind, name); if (!f) return null;
-    if (f.type === 'text') return { cls: 'dim', verdict: '已记录 · 不校验', calc: '', src: '铭牌只存储，不参与校验' };
+    if (f.numeric_list) {
+      const r = ruleOf(kind, name), parts = String(value ?? '').normalize('NFKC').trim().split(/[,，、;；\s]+/);
+      if (!String(value ?? '').trim()) return {cls:'dim', verdict:'未填写', calc:''};
+      if (parts.some(v => !/^-?\d+(\.\d{1,2})?$/.test(v))) return {cls:'ng', verdict:'请用逗号分隔数字（最多两位小数）', calc:'', invalid:true};
+      if (!configured(r)) return {cls:'warn', verdict:'规则未配置', calc:''};
+      const bad = parts.map((v,i)=>({v,i})).filter(x=>Number(x.v)<Number(r.min)||Number(x.v)>Number(r.max));
+      const detail = bad.map(x=>`第${x.i+1}个测点 ${x.v} 不合格，超出 ${r.min}～${r.max}`).join('；');
+      return {cls:bad.length?'ng':'ok', verdict:detail||'全部测点合格', calc:detail, src:`逐点校验 ${r.min}～${r.max}`};
+    }
+    if (f.type === 'text') return { cls: 'dim', verdict: '已记录 · 不校验', calc: '', src: `${f.label}仅记录文本，不参与校验` };
     const r = ruleOf(kind, name), v = Number(value);
     const src = configured(r) ? `规则  ${f.label} ${r.min}～${r.max} ${f.unit || ''}` : '规则未配置';
     if (value == null || value === '') return { cls: 'dim', verdict: '未填写', calc: '', src };
@@ -51,7 +60,7 @@
   }
 
   /* 回读文案（屏幕显示 + 可选语音播报） */
-  const unitWord = u => ({ mm: '毫米', dB: '分贝' }[u] || u || '');
+  const unitWord = u => ({ mm: '毫米', dB: '分贝', 'MΩ': '兆欧', 'N·m': '牛米', '%': '百分比' }[u] || u || '');
   function readbackVoice(p, kind) {
     const names = Object.keys(p.fields || {});
     if (!names.length) return p.message ? `${p.message}。请再说一次，或者用键盘输入。` : '没有识别到参数。';
@@ -60,10 +69,10 @@
       if (n === 'name') return `客户 ${p.fields[n]}`;
       if (n === 'date') return `日期 ${p.fields[n]}`;
       const f = fieldMeta(kind, n); if (!f) return '';
-      if (f.type === 'text') return `${f.label} ${p.fields[n]}`;
+      if (f.type === 'text' && !f.numeric_list) return `${f.label} ${p.fields[n]}`;
       const j = prejudge(kind, n, p.fields[n]);
       const note = p.notes?.[n] ? `（${p.notes[n]}）` : '';
-      return `${f.label} ${p.fields[n]} ${unitWord(f.unit)}${note}${j && j.cls === 'ng' ? `，超出 ${rangeText(ruleOf(kind, n))}` : ''}`;
+      return `${f.label} ${f.unit === '%' ? '百分之' : ''}${p.fields[n]} ${f.unit === '%' ? '' : unitWord(f.unit)}${note}${j && j.cls === 'ng' ? `，超出 ${rangeText(ruleOf(kind, n))}` : ''}`;
     }).filter(Boolean);
     const rej = (p.rejected || []).map(x => `「${x.said || x.field}」${x.reason}`);
     return parts.join('，') + '。' + (rej.length ? `另外 ${rej.join('，')}。` : '') + '不对请直接说更正。';

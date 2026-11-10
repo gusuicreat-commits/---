@@ -30,7 +30,9 @@ def session(client):
 @pytest.fixture
 def configured(client):
     limits = {"diameter": (1240, 1260), "length": (2990, 3010),
-              "thick": (18, 22), "light": (300, 320), "noise": (0, 85)}
+              "thick": (18, 22), "light": (300, 320), "noise": (0, 85), "insulation_resistance": (1, 1000), "control_wire_torque": (0.5, 2.5),
+                        "electrical_clearance": (8, 20), "primer_thickness_ratio": (95, 100),
+                        "total_thickness_ratio": (95, 100), "adhesion_loss_ratio": (0, 5),}
     for rule in client.get("/api/rules").json()["items"]:
         lower, upper = limits[rule["name"]]
         assert client.put(f"/api/rules/{rule['id']}", json={"min": lower, "max": upper}).status_code == 200
@@ -47,3 +49,17 @@ def contract(configured):
 @pytest.fixture
 def good_drum():
     return {"diameter": "1250", "length": "3000", "thick": "20", "light": "310"}
+
+
+@pytest.fixture
+def complete_new_parameters(client):
+    """旧两类业务用例显式补齐新增必检项，使用测试阈值。"""
+    def complete(code):
+        for kind, values in {
+            "control_cabinet": {"insulation_resistance": 500, "control_wire_torque": 1.2, "electrical_clearance": 8},
+            "travel_paint": {"primer_thickness_ratio": "98", "total_thickness_ratio": 99, "adhesion_loss_ratio": 1},
+        }.items():
+            response = client.post(f"/api/contracts/{code}/records/{kind}", json=values)
+            assert response.status_code == 201
+            assert response.json()["record"]["is_qualified"] == 1
+    return complete

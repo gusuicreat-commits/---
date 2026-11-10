@@ -1,0 +1,346 @@
+{
+  "name": "同规格卷筒、配套控制柜及大车油漆检验（演示工艺卡）",
+  "sample_only": true,
+  "description": "用于模拟检验流程与状态展示；不是企业正式验收标准。保留已配置规则，只补未配置上下限。实际使用须按图纸、端子规格、涂装工艺卡确认。",
+  "rules": [
+    {
+      "table": "drum_param",
+      "field": "diameter",
+      "min": "1240",
+      "max": "1260",
+      "basis": "沿用项目现有卷筒样例尺寸：1250±10 mm。"
+    },
+    {
+      "table": "drum_param",
+      "field": "length",
+      "min": "2990",
+      "max": "3010",
+      "basis": "沿用项目现有卷筒样例尺寸：3000±10 mm。"
+    },
+    {
+      "table": "drum_param",
+      "field": "thick",
+      "min": "18",
+      "max": "22",
+      "basis": "沿用项目现有壁厚样例：20±2 mm。"
+    },
+    {
+      "table": "drum_param",
+      "field": "light",
+      "min": "300",
+      "max": "320",
+      "basis": "沿用项目现有光段样例：310±10 mm。"
+    },
+    {
+      "table": "travel_drive_param",
+      "field": "noise",
+      "min": "0",
+      "max": "85",
+      "basis": "沿用用户已定的机器运行噪声数值校验场景，0～85 dB 为项目样例。"
+    },
+    {
+      "table": "control_cabinet_param",
+      "field": "insulation_resistance",
+      "min": "1",
+      "max": "1000",
+      "basis": "下限沿用设计方案附录 B 中原检验表的1 MΩ参考要求；1000 MΩ为演示量程上限，不代表通用合格上限。"
+    },
+    {
+      "table": "control_cabinet_param",
+      "field": "control_wire_torque",
+      "min": "0.8",
+      "max": "1.2",
+      "basis": "演示端子工艺卡约定1.0±0.2 N·m；实际值取决于端子厂家和导线规格。"
+    },
+    {
+      "table": "control_cabinet_param",
+      "field": "electrical_clearance",
+      "min": "8",
+      "max": "20",
+      "basis": "下限沿用设计方案附录 B 中原检验表8 mm参考要求；20 mm为演示布置尺寸上限，不代表通用合格上限。"
+    },
+    {
+      "table": "travel_paint_param",
+      "field": "total_thickness_ratio",
+      "min": "95",
+      "max": "100",
+      "basis": "演示涂装工艺约定：总厚度测点达标率不低于95%；实际测点和厚度目标需按涂装工艺确定。"
+    },
+    {
+      "table": "travel_paint_param",
+      "field": "adhesion_loss_ratio",
+      "min": "0",
+      "max": "5",
+      "basis": "演示涂装工艺约定：附着力脱落面积占比不超过5%；不是特定标准等级的自动换算。"
+    },
+    {
+      "table": "travel_paint_param",
+      "field": "primer_thickness_ratio",
+      "min": "95",
+      "max": "100",
+      "basis": "沿用已有底漆范围，每个测点均须在范围内。"
+    }
+  ],
+  "normal": {
+    "drum": {
+      "diameter": "1251.4",
+      "length": "3002.6",
+      "thick": "20.15",
+      "light": "309.8"
+    },
+    "travel_drive": {
+      "reducer_nameplate": "ZQ500-31.5（样例）",
+      "motor_nameplate": "YZR160M2-6（样例）",
+      "noise": "79.5"
+    },
+    "control_cabinet": {
+      "insulation_resistance": "180",
+      "control_wire_torque": "1.05",
+      "electrical_clearance": "10.5"
+    },
+    "travel_paint": {
+      "primer_thickness_ratio": "98.4",
+      "total_thickness_ratio": "97.8",
+      "adhesion_loss_ratio": "0.6"
+    }
+  },
+  "scenarios": [
+    {
+      "code": "20261103-10",
+      "name": "东岳重型机械（样例）",
+      "status": "合格",
+      "scene": "四类检验完成",
+      "overrides": {
+        "drum": {
+          "diameter": "1249.6"
+        },
+        "travel_drive": {
+          "noise": "76.4"
+        }
+      }
+    },
+    {
+      "code": "20261104-10",
+      "name": "北辰钢结构（样例）",
+      "status": "合格",
+      "scene": "正常完检",
+      "overrides": {
+        "control_cabinet": {
+          "insulation_resistance": "350",
+          "control_wire_torque": "0.98"
+        }
+      }
+    },
+    {
+      "code": "20261104-20",
+      "name": "江淮物流装备（样例）",
+      "status": "合格",
+      "scene": "卷筒复测合格，保留历史记录",
+      "overrides": {
+        "drum": {
+          "thick": "19.65"
+        },
+        "travel_paint": {
+          "adhesion_loss_ratio": "1.2"
+        }
+      }
+    },
+    {
+      "code": "20261105-10",
+      "name": "南湖造船配套（样例）",
+      "status": "合格",
+      "scene": "配套电柜检验完成",
+      "overrides": {
+        "control_cabinet": {
+          "insulation_resistance": "620",
+          "electrical_clearance": "9.8"
+        },
+        "travel_drive": {
+          "noise": "81.2"
+        }
+      }
+    },
+    {
+      "code": "20261106-10",
+      "name": "远航冶金设备（样例）",
+      "status": "合格",
+      "scene": "复测后四类完检",
+      "overrides": {
+        "drum": {
+          "light": "313.4"
+        },
+        "travel_paint": {
+          "primer_thickness_ratio": "99.2",
+          "total_thickness_ratio": "98.6"
+        }
+      }
+    },
+    {
+      "code": "20261108-20",
+      "name": "汇通轨道交通（样例）",
+      "status": "合格",
+      "scene": "四类完检可导出",
+      "overrides": {
+        "drum": {
+          "diameter": "1255.2",
+          "length": "2998.4"
+        },
+        "travel_drive": {
+          "noise": "83.6"
+        }
+      }
+    },
+    {
+      "code": "20261103-20",
+      "name": "中原港口装卸（样例）",
+      "status": "不合格",
+      "scene": "卷筒直径、长度超差",
+      "overrides": {
+        "drum": {
+          "diameter": "1262.4",
+          "length": "3012.8"
+        }
+      }
+    },
+    {
+      "code": "20261104-30",
+      "name": "西岭水电工程（样例）",
+      "status": "不合格",
+      "scene": "运行噪声超上限",
+      "overrides": {
+        "travel_drive": {
+          "noise": "88.6"
+        }
+      }
+    },
+    {
+      "code": "20261106-30",
+      "name": "长风电力检修（样例）",
+      "status": "不合格",
+      "scene": "电柜绝缘电阻不足",
+      "overrides": {
+        "control_cabinet": {
+          "insulation_resistance": "0.65"
+        }
+      }
+    },
+    {
+      "code": "20261109-10",
+      "name": "凌云环保工程（样例）",
+      "status": "不合格",
+      "scene": "接线力矩不足、电气间隙不足",
+      "overrides": {
+        "control_cabinet": {
+          "control_wire_torque": "0.62",
+          "electrical_clearance": "6.5"
+        }
+      }
+    },
+    {
+      "code": "20261106-20",
+      "name": "泰和建材（样例）",
+      "status": "不合格",
+      "scene": "面漆厚度数值低于当前样例下限，底漆文本不参与判定",
+      "overrides": {
+        "travel_paint": {
+          "primer_thickness_ratio": "92.4",
+          "total_thickness_ratio": "93.8"
+        }
+      }
+    },
+    {
+      "code": "20261107-10",
+      "name": "金桥仓储（样例）",
+      "status": "不合格",
+      "scene": "油漆附着力脱落面积超限",
+      "overrides": {
+        "travel_paint": {
+          "adhesion_loss_ratio": "7.2"
+        }
+      }
+    },
+    {
+      "code": "20261105-20",
+      "name": "青石矿山机械（样例）",
+      "status": "未录全",
+      "scene": "只完成卷筒检验",
+      "include": [
+        "drum"
+      ],
+      "must_be_missing": [
+        "travel_drive",
+        "control_cabinet",
+        "travel_paint"
+      ]
+    },
+    {
+      "code": "20261107-20",
+      "name": "星河新能源（样例）",
+      "status": "未录全",
+      "scene": "已建档，尚未检验",
+      "include": [],
+      "must_be_missing": [
+        "drum",
+        "travel_drive",
+        "control_cabinet",
+        "travel_paint"
+      ]
+    },
+    {
+      "code": "20261108-10",
+      "name": "云海化工设备（样例）",
+      "status": "未录全",
+      "scene": "卷筒、传动完成，待电柜与油漆",
+      "include": [
+        "drum",
+        "travel_drive"
+      ],
+      "must_be_missing": [
+        "control_cabinet",
+        "travel_paint"
+      ]
+    },
+    {
+      "code": "20261109-20",
+      "name": "宏远造纸机械（样例）",
+      "status": "未录全",
+      "scene": "待控制柜检验",
+      "include": [
+        "drum",
+        "travel_drive",
+        "travel_paint"
+      ],
+      "must_be_missing": [
+        "control_cabinet"
+      ]
+    },
+    {
+      "code": "20261109-30",
+      "name": "安泰汽车零部件（样例）",
+      "status": "未录全",
+      "scene": "待大车传动检验",
+      "include": [
+        "drum",
+        "control_cabinet",
+        "travel_paint"
+      ],
+      "must_be_missing": [
+        "travel_drive"
+      ]
+    },
+    {
+      "code": "20261110-10",
+      "name": "鼎盛预制构件（样例）",
+      "status": "未录全",
+      "scene": "待大车油漆检验",
+      "include": [
+        "drum",
+        "travel_drive",
+        "control_cabinet"
+      ],
+      "must_be_missing": [
+        "travel_paint"
+      ]
+    }
+  ]
+}

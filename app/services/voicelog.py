@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 import unicodedata
 from pathlib import Path
 from uuid import uuid4
@@ -91,7 +92,7 @@ def save_audio(content: bytes, filename: str | None):
 def parse(session, text, form, ht_code=None, source=None, *, asr=None,
           audio=None, filename=None, today=None, event_bus=None):
     """文本和音频识别结果共用此入口，先保存证据，再发布事件。"""
-    if form not in {"contract", "drum", "travel_drive"}:
+    if form not in parser.load_voice_config()["forms"]:
         raise Invalid("BAD_FORM", "表单类型不正确")
     publisher = event_bus if event_bus is not None else bus
     result = {**parser.parse_text(text, form, today or today_bj()), "asr": asr}
@@ -157,6 +158,9 @@ def validate_correction(wrong, right):
         raise Invalid("BAD_CORRECTION", "纠错词必须为 1～16 个字")
     if _fold(wrong) == _fold(right):
         raise Invalid("BAD_CORRECTION", "纠错前后不能相同")
+    paint = re.findall('底漆|面漆', unicodedata.normalize('NFKC', wrong))
+    if paint and paint != re.findall('底漆|面漆', unicodedata.normalize('NFKC', right)):
+        raise Invalid('BAD_CORRECTION', '底漆、面漆是不同检验项，不能通过全局纠错替换漆种')
     return wrong, right
 
 

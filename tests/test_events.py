@@ -142,7 +142,8 @@ def test_contract_and_rule_events(client):
     assert items[-1]["data"] == {"rule": rule.json()}
 
 
-def test_export_events(client, contract, good_drum, isolated_events):
+def test_export_events(client, contract, good_drum, isolated_events, complete_new_parameters):
+    complete_new_parameters(contract)
     client.post(f"/api/contracts/{contract}/records/drum", json=good_drum)
     client.post(f"/api/contracts/{contract}/records/travel_drive", json={
         "reducer_nameplate": "ZQ500", "motor_nameplate": "YZR160", "noise": "80"})

@@ -5,6 +5,7 @@ from sqlalchemy import select
 from app.dec import fmt
 from app.fields import validated_fields
 from app.models import MODEL_BY_TABLE, Rule
+from app.readings import parse_readings
 from app.services import contracts
 from app.services.status import contract_status
 
@@ -16,14 +17,28 @@ def judge(table, record_values: dict, rules: dict[str, Rule]) -> dict:
         value, rule = record_values.get(name), rules.get(name)
         lower, upper = (rule.min, rule.max) if rule is not None else (None, None)
         reason = None
-        if value is None:
+        readings = None
+        if field.get('numeric_list'):
+            try:
+                readings = parse_readings(value)
+                bad = [(i, v) for i, v in enumerate(readings, 1)
+                       if lower is not None and upper is not None and not lower <= v <= upper]
+                if not readings:
+                    reason = f'{label}未填写'
+                elif lower is None or upper is None:
+                    reason = f'规则未配置：{label}'
+                elif bad:
+                    reason = '；'.join(f'第{i}个测点 {fmt(v)} 不合格，超出 {fmt(lower)}～{fmt(upper)}' for i, v in bad)
+            except ValueError as exc:
+                reason = str(exc)
+        elif value is None:
             reason = f"{label}未填写"
         elif lower is None or upper is None:
             reason = f"规则未配置：{label}"
         elif value < lower or value > upper:
             reason = f"{label} {fmt(value)} {unit}，超出 {fmt(lower)}～{fmt(upper)}"
         items.append({"field": name, "label": label, "unit": unit,
-                      "value": fmt(value) if value is not None else None,
+                      "value": str(value) if field.get('numeric_list') and value is not None else fmt(value) if value is not None else None,
                       "min": fmt(lower) if lower is not None else None,
                       "max": fmt(upper) if upper is not None else None,
                       "ok": reason is None, "reason": reason})

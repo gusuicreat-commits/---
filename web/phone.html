@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>质检员 · 边测边报</title>
+<title>质检员 · 质检实时录入</title>
 <style>
 :root{
   --bg:#000; --card:#111113; --card2:#19191c; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
@@ -59,7 +59,7 @@ input{font:inherit;color:inherit}
 .icb{width:38px;height:38px;border-radius:12px;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;color:var(--tx3);flex:none}
 .icb.on{color:var(--lime);border-color:rgba(198,244,63,.4)}
 
-.seg{display:flex;margin:12px 20px 0;padding:3px;border-radius:12px;background:var(--card);border:1px solid var(--line);flex:none}
+.seg{display:grid;grid-template-columns:repeat(2,1fr);margin:12px 20px 0;padding:3px;border-radius:12px;background:var(--card);border:1px solid var(--line);flex:none}
 .seg button{flex:1;height:34px;border-radius:9px;font-size:14px;color:var(--tx3);display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s}
 .seg button.on{background:var(--card2);color:var(--tx)}
 .seg i{width:7px;height:7px;border-radius:50%;background:var(--tx4)}
@@ -76,8 +76,8 @@ input{font:inherit;color:inherit}
 .form{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;flex:none}
 .fr{display:flex;align-items:center;gap:10px;padding:0 16px;min-height:62px;border-bottom:1px solid var(--line);position:relative;transition:background .3s}
 .fr:last-child{border-bottom:0}
-.fr .lb{flex:none;width:96px}
-.fr .lb b{display:block;font-size:15.5px;font-weight:500}
+.fr .lb{flex:none;width:132px}
+.fr .lb b{display:block;font-size:14px;font-weight:500}
 .fr .lb small{display:block;font:11.5px var(--mono);color:var(--tx3);margin-top:1px}
 .fr input{flex:1;min-width:0;height:46px;background:none;border:0;outline:none;text-align:right;font:400 22px var(--mono);color:var(--tx);font-variant-numeric:tabular-nums}
 .fr input::placeholder{color:var(--tx4);font-size:15px}
@@ -158,6 +158,7 @@ input{font:inherit;color:inherit}
   .sb{display:none}
   .top{padding-top:max(14px,env(safe-area-inset-top))}
   .island{top:max(8px,env(safe-area-inset-top))}
+  .island:not(.open):not(.rec){visibility:hidden}
   .home{display:none}
   .hint{padding-bottom:max(12px,env(safe-area-inset-bottom))}
 }
@@ -175,7 +176,7 @@ input{font:inherit;color:inherit}
         <button class="icb" id="recsBtn" title="本合同记录"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
         <button class="icb" id="spk" title="语音播报"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg></button>
       </div>
-      <div class="seg" id="tabs"><button data-k="drum"><i></i>卷筒</button><button data-k="travel_drive"><i></i>大车传动</button></div>
+      <div class="seg" id="tabs"><button data-k="drum"><i></i>卷筒</button><button data-k="travel_drive"><i></i>大车传动</button><button data-k="control_cabinet"><i></i>控制柜</button><button data-k="travel_paint"><i></i>大车油漆</button></div>
 
       <div class="body" id="body">
         <div id="banner"></div>
@@ -197,7 +198,7 @@ input{font:inherit;color:inherit}
       <div class="sheet-bg" id="bg"></div>
       <div class="sheet" id="shCt"><div class="grab"></div><h3>选择合同 <small id="ctN"></small></h3>
         <div class="newc"><span class="micro">新建合同</span>
-          <div class="row"><input class="m" id="ncCode" placeholder="20261110-10" inputmode="numeric"><button class="btn ghost" id="ncVoice">按住说</button></div>
+          <div class="row"><input class="m" id="ncCode" placeholder="年份＋4位随机数字，如20264827" inputmode="numeric"><button class="btn ghost" id="ncVoice">按住说</button></div>
           <input id="ncName" placeholder="客户名称">
           <div class="err" id="ncErr"></div>
           <button class="btn" id="ncGo">创建并开始录入</button></div>
@@ -215,10 +216,13 @@ const { esc, KINDS, KIND_LABEL, STATUS_CLS, api, load, store } = QC;
 const $ = id => document.getElementById(id);
 const P = {
   ht: load('qcp_ht', null), contract: null, status: null, form: load('qcp_form', 'drum'),
-  draft: load('qcp_draft', { drum: {}, travel_drive: {} }), vids: load('qcp_vids', { drum: [], travel_drive: [] }),
-  voiced: { drum: {}, travel_drive: {} }, latest: { drum: null, travel_drive: null }, result: null,
+  draft: load('qcp_draft', Object.fromEntries(Object.keys(KINDS).map(k => [k, {}]))), vids: load('qcp_vids', Object.fromEntries(Object.keys(KINDS).map(k => [k, []]))),
+  voiced: Object.fromEntries(Object.keys(KINDS).map(k => [k, {}])), latest: Object.fromEntries(Object.keys(KINDS).map(k => [k, null])), result: null,
   tts: load('qcp_tts', false), busy: false, islT: null, level: 0, rec: null, voiceOk: false, pushT: null,
 };
+
+for (const k of Object.keys(KINDS)) { P.draft[k] ||= {}; P.vids[k] ||= []; }
+if (!KINDS[P.form]) P.form = 'drum';
 
 function fit() { const d = $('device'); if (innerWidth <= 520) { d.style.transform = ''; return; } const s = Math.min(1, (innerHeight - 70) / 852, (innerWidth - 40) / 393); d.style.transform = `scale(${s})`; d.parentElement.style.margin = `${-(852 * (1 - s)) / 2}px 0`; }
 addEventListener('resize', fit); fit();
@@ -239,6 +243,7 @@ const halfwidth = v => String(v).replace(/[０-９．]/g, ch => String.fromCharC
 
 /* ---------- 渲染 ---------- */
 function rowState(kind, f, v) {
+  if (f.numeric_list && v != null && v !== '') { const j=QC.prejudge(kind,f.name,v); return {cls:j.cls,tip:j.verdict}; }
   if (v == null || v === '' || f.type === 'text') return { cls: '', tip: '' };
   const n = halfwidth(v).trim();
   if (!/^-?\d+(\.\d+)?$/.test(n)) return { cls: 'ng', tip: '请填数字' };
@@ -250,11 +255,11 @@ function renderForm(fresh = []) {
   const k = P.form, last = P.latest[k] || {}, d = P.draft[k];
   $('form').innerHTML = QC.fieldsOf(k).map(f => {
     const v = d[f.name] ?? '', st = rowState(k, f, v), txt = f.type === 'text';
-    const rule = txt ? '不校验' : QC.rangeText(QC.ruleOf(k, f.name));
-    const ph = last[f.name] != null && last[f.name] !== '' ? `上次 ${last[f.name]}` : (txt ? '型号' : '—');
+    const rule = txt && !f.numeric_list ? '不校验' : QC.rangeText(QC.ruleOf(k, f.name));
+    const ph = last[f.name] != null && last[f.name] !== '' ? `上次 ${last[f.name]}` : (txt ? (f.name === 'primer_thickness_ratio' ? '多个数值，用逗号分隔' : '型号') : '—');
     return `<label class="fr ${txt ? 'txt' : ''} ${st.cls} ${P.voiced[k][f.name] ? 'voice' : ''} ${fresh.includes(f.name) ? 'fresh' : ''}" data-f="${f.name}">
       <span class="lb"><b>${esc(f.label)}</b><small>${esc(rule)}</small></span>
-      <input data-f="${f.name}" value="${esc(v)}" placeholder="${esc(ph)}" ${txt ? 'autocapitalize="characters"' : 'inputmode="decimal"'} enterkeyhint="done">
+      <input data-f="${f.name}" value="${esc(v)}" placeholder="${esc(ph)}" ${txt ? `autocapitalize="${f.name === 'primer_thickness_ratio' ? 'off' : 'characters'}"` : 'inputmode="decimal"'} enterkeyhint="done">
       ${txt ? '' : `<span class="u">${esc(f.unit || '')}</span>`}<span class="tip">${esc(st.tip)}</span></label>`;
   }).join('');
   $('form').querySelectorAll('input').forEach(i => {
@@ -270,7 +275,7 @@ function renderForm(fresh = []) {
   syncSubmit();
 }
 function syncSubmit() {
-  const d = P.draft[P.form], n = Object.keys(d).length, bad = QC.fieldsOf(P.form).filter(f => d[f.name] != null && d[f.name] !== '' && f.type !== 'text' && QC.prejudge(P.form, f.name, halfwidth(d[f.name]).trim())?.cls === 'ng').length;
+  const d = P.draft[P.form], n = Object.keys(d).length, bad = QC.fieldsOf(P.form).filter(f => d[f.name] != null && d[f.name] !== '' && (f.type !== 'text' || f.numeric_list) && QC.prejudge(P.form, f.name, halfwidth(d[f.name]).trim())?.cls === 'ng').length;
   $('sub').disabled = !P.ht || !n;
   $('sub').textContent = !P.ht ? '先选择合同' : n ? (bad ? `提交（${bad} 项超范围，记为不合格）` : `提交校验（${n} 项）`) : (P.latest[P.form] ? '已提交 · 复测直接重填' : '提交校验');
 }
@@ -288,14 +293,15 @@ function renderMeta() {
   $('time').textContent = QC.hhmmss().slice(0, 5);
 }
 function renderAll(fresh) { renderMeta(); renderBanner(); renderForm(fresh); }
-function idleSaid() { $('said').className = 'said'; $('q').className = 'q idle'; $('q').textContent = P.ht ? '按住麦克风说「直径 1250，光段 300」，会自动填到上面' : '选好合同后，按住麦克风说参数和数值'; $('rb').hidden = true; }
+const SAY_EXAMPLES = { drum: '直径 1250，光段 300', travel_drive: '噪音八十二分贝', control_cabinet: '绝缘电阻五百兆欧，电气间隙八毫米', travel_paint: '底漆九十八、九十七、九十六，面漆99%，附着力百分之一' };
+function idleSaid() { $('said').className = 'said'; $('q').className = 'q idle'; $('q').textContent = P.ht ? `按住麦克风说「${SAY_EXAMPLES[P.form]}」，会自动填到上面` : '选好合同后，按住麦克风说参数和数值'; $('rb').hidden = true; }
 
 /* ---------- 合同 ---------- */
 async function selectContract(ht, quiet) {
-  if (!ht) { P.ht = null; P.contract = null; P.status = null; P.latest = { drum: null, travel_drive: null }; P.result = null; store('qcp_ht', null); renderAll(); idleSaid(); return; }
+  if (!ht) { P.ht = null; P.contract = null; P.status = null; P.latest = Object.fromEntries(Object.keys(KINDS).map(k => [k, null])); P.result = null; store('qcp_ht', null); renderAll(); idleSaid(); return; }
   try {
     const d = await api('GET', '/contracts/' + encodeURIComponent(ht));
-    if (P.ht !== d.contract.ht_code) { P.draft = { drum: {}, travel_drive: {} }; P.vids = { drum: [], travel_drive: [] }; P.voiced = { drum: {}, travel_drive: {} }; P.result = null; }
+    if (P.ht !== d.contract.ht_code) { P.draft = Object.fromEntries(Object.keys(KINDS).map(k => [k, {}])); P.vids = Object.fromEntries(Object.keys(KINDS).map(k => [k, []])); P.voiced = Object.fromEntries(Object.keys(KINDS).map(k => [k, {}])); P.result = null; }
     P.ht = d.contract.ht_code; P.contract = d.contract; P.status = { status: d.status, reason: d.status_reason }; P.latest = d.latest;
     store('qcp_ht', P.ht); saveDraft();
     if (!quiet) pushFocus();
@@ -376,7 +382,8 @@ function showRecord(r, kind, from) {
   P.draft[kind] = {}; P.vids[kind] = []; P.voiced[kind] = {};   // 合格与否都算正常提交，表单清空
   saveDraft();
   if (kind !== P.form) { P.form = kind; store('qcp_form', kind); }
-  const next = ok && kind === 'drum' && !P.latest.travel_drive ? '下一步：切到「大车传动」' : '';
+  const nextKind = Object.keys(KINDS).find(k => !P.latest[k]);
+  const next = ok && nextKind ? `下一步：切到「${KIND_LABEL[nextKind]}」` : '';
   P.result = { ok, title: `${v ? (ok ? `${KIND_LABEL[kind]}参数合格` : `已保存 · ${KIND_LABEL[kind]}参数记为不合格`) : '已保存，校验未完成'} · 记录 #${r.record.id}${from === 'screen' ? '（大屏提交）' : from === 'demo' ? '（演示）' : ''}`,
     lines: ok ? [`合同状态：${r.contract_status.status}${r.contract_status.reason ? '，' + r.contract_status.reason : ''}`, next].filter(Boolean) : v ? [...v.failures, `合同状态：${r.contract_status.status}`, '需要复测时直接重填再提交'] : [r.warning || ''] };
   renderAll();
@@ -428,8 +435,8 @@ function sheet(id) { ['shCt', 'shLs'].forEach(x => $(x).classList.toggle('on', x
 async function openRecs() {
   if (!P.ht) return openContracts();
   sheet('shLs');
-  const [a, b] = await Promise.all(['drum', 'travel_drive'].map(k => api('GET', `/contracts/${encodeURIComponent(P.ht)}/records/${k}`).then(r => r.items.map(x => ({ ...x, kind: k })))));
-  const all = [...a, ...b].sort((x, y) => y.created_at.localeCompare(x.created_at));
+  const groups = await Promise.all(Object.keys(KINDS).map(k => api('GET', `/contracts/${encodeURIComponent(P.ht)}/records/${k}`).then(r => r.items.map(x => ({ ...x, kind: k })))));
+  const all = groups.flat().sort((x, y) => y.created_at.localeCompare(x.created_at));
   $('recN').textContent = all.length + ' 条';
   $('recs').innerHTML = all.map(x => {
     const fl = QC.fieldsOf(x.kind).filter(f => x[f.name] != null && x[f.name] !== '');

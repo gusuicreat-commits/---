@@ -119,5 +119,5 @@ def test_exact_value_still_accepted():
 
 def test_parse_text_uses_beijing_date(client, monkeypatch):
     monkeypatch.setattr(voice, "today_bj", lambda: date(2027, 1, 1))
-    response = client.post("/api/voice/parse-text", json={"text": "日期昨天，合同号二十", "form": "contract"})
-    assert response.json()["fields"] == {"date": "2026-12-31", "ht_code": "20270101-20"}
+    response = client.post("/api/voice/parse-text", json={"text": "日期昨天，合同号二零二七四八二七", "form": "contract"})
+    assert response.json()["fields"] == {"date": "2026-12-31", "ht_code": "20274827"}

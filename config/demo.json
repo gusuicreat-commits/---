@@ -1,17 +1,103 @@
 {
   "name": "演示客户（样例）",
   "steps": [
-    {"focus": "drum", "wait_ms": 1500, "caption": "质检员选好合同开测卷筒 · 下面全程河南话报数"},
-    {"say": "中，俺先报卷筒，直径一千二百六十二嘞，长度三千", "form": "drum", "wait_ms": 4000, "caption": "河南话报数：句尾「嘞」不影响取数；直径超上限当场提醒"},
-    {"say": "哎呀不对不对，子径得有一千二百五十二", "form": "drum", "wait_ms": 4000, "caption": "改口重报：口音「子径」认成直径，「得有」只取数值"},
-    {"say": "后度二十哩，光端三百，中了", "form": "drum", "wait_ms": 4000, "caption": "口音纠错：后度→厚度、光端→光段；「中了」不当数值"},
-    {"say": "厚度恁等一下，俺再量量", "form": "drum", "wait_ms": 3500, "caption": "说不出数值：不瞎猜，转主管复核"},
-    {"submit": "drum", "wait_ms": 3000, "caption": "卷筒参数提交：合格"},
-    {"focus": "travel_drive", "wait_ms": 1500, "caption": "切到大车传动"},
-    {"say": "减速机铭牌 ZQ500 样例，电机铭牌 YZR160M2-6 样例，噪声九十一，有点大嘞", "form": "travel_drive", "wait_ms": 4000, "caption": "噪声 91 dB 超标；「有点大嘞」只是唠嗑，不当数值"},
-    {"submit": "travel_drive", "wait_ms": 3000, "caption": "照常提交：大车传动记为不合格，导出被锁"},
-    {"say": "这回噪声八十二，得劲", "form": "travel_drive", "wait_ms": 4000, "caption": "复测后重报：「得劲」是河南话「好」，不当数值"},
-    {"submit": "travel_drive", "wait_ms": 3000, "caption": "复测合格，合同整体合格"},
-    {"export": true, "wait_ms": 2000, "caption": "导出 Excel"}
+    {
+      "focus": "drum",
+      "wait_ms": 1500,
+      "caption": "质检员选好合同开测卷筒 · 下面全程河南话报数"
+    },
+    {
+      "say": "中，俺先报卷筒，直径一千二百六十二嘞，长度三千",
+      "form": "drum",
+      "wait_ms": 4000,
+      "caption": "河南话报数：句尾「嘞」不影响取数；直径超上限当场提醒"
+    },
+    {
+      "say": "哎呀不对不对，子径得有一千二百五十二",
+      "form": "drum",
+      "wait_ms": 4000,
+      "caption": "改口重报：口音「子径」认成直径，「得有」只取数值"
+    },
+    {
+      "say": "后度二十哩，光端三百，中了",
+      "form": "drum",
+      "wait_ms": 4000,
+      "caption": "口音纠错：后度→厚度、光端→光段；「中了」不当数值"
+    },
+    {
+      "say": "厚度恁等一下，俺再量量",
+      "form": "drum",
+      "wait_ms": 3500,
+      "caption": "说不出数值：不瞎猜，转主管复核"
+    },
+    {
+      "submit": "drum",
+      "wait_ms": 3000,
+      "caption": "卷筒参数提交：合格"
+    },
+    {
+      "focus": "travel_drive",
+      "wait_ms": 1500,
+      "caption": "切到大车传动"
+    },
+    {
+      "say": "减速机铭牌 ZQ500 样例，电机铭牌 YZR160M2-6 样例，噪声九十一，有点大嘞",
+      "form": "travel_drive",
+      "wait_ms": 4000,
+      "caption": "噪声 91 dB 超标；「有点大嘞」只是唠嗑，不当数值"
+    },
+    {
+      "submit": "travel_drive",
+      "wait_ms": 3000,
+      "caption": "照常提交：大车传动记为不合格，导出被锁"
+    },
+    {
+      "say": "这回噪声八十二，得劲",
+      "form": "travel_drive",
+      "wait_ms": 4000,
+      "caption": "复测后重报：「得劲」是河南话「好」，不当数值"
+    },
+    {
+      "submit": "travel_drive",
+      "wait_ms": 3000,
+      "caption": "大车传动复测合格，继续检验控制柜和大车油漆"
+    },
+    {
+      "focus": "control_cabinet",
+      "wait_ms": 1500,
+      "caption": "切到控制柜 · 数值仅为演示样例"
+    },
+    {
+      "say": "绝缘电阻五百兆欧，控制线力矩一点二牛米，电气间隙八毫米",
+      "form": "control_cabinet",
+      "wait_ms": 4000,
+      "caption": "控制柜语音录入：绝缘电阻、控制线力矩、电气间隙"
+    },
+    {
+      "submit": "control_cabinet",
+      "wait_ms": 2000,
+      "caption": "提交控制柜，按当前规则判定"
+    },
+    {
+      "focus": "travel_paint",
+      "wait_ms": 1500,
+      "caption": "切到大车油漆 · 底漆多个测点逐一校验"
+    },
+    {
+      "say": "底漆厚度九十八、九十七、九十六，面漆厚度百分之九十九，附着力百分之一",
+      "form": "travel_paint",
+      "wait_ms": 4000,
+      "caption": "油漆语音录入：底漆厚度逐点校验，面漆厚度和附着力按当前规则判定"
+    },
+    {
+      "submit": "travel_paint",
+      "wait_ms": 2000,
+      "caption": "提交油漆；四类最新记录全合格后才能导出"
+    },
+    {
+      "export": true,
+      "wait_ms": 2000,
+      "caption": "导出 Excel"
+    }
   ]
 }

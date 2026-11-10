@@ -26,8 +26,8 @@ const vals = p => p.$$eval('#f input', a => Object.fromEntries(a.map(i => [i.nam
   let { b, p } = await browser();
   // 1. 配规则（规则页 UI）
   await p.goto(B + '#/rules'); await p.waitForTimeout(800);
-  const R = [['1240', '1260'], ['2990', '3010'], ['18', '22'], ['300', '320'], ['0', '85']];
-  for (let i = 0; i < 5; i++) {
+  const R = [['1240', '1260'], ['2990', '3010'], ['18', '22'], ['300', '320'], ['0', '85'], ['1', '1000'], ['0.5', '2.5'], ['8', '20'], ['95', '100'], ['95', '100'], ['0', '5']];
+  for (let i = 0; i < R.length; i++) {
     const row = (await p.$$('.rrow'))[i], ins = await row.$$('input');
     await ins[0].fill(R[i][0]); await ins[1].fill(R[i][1]); await (await row.$('button')).click(); await p.waitForTimeout(500);
   }
@@ -72,6 +72,18 @@ const vals = p => p.$$eval('#f input', a => Object.fromEntries(a.map(i => [i.nam
   await p.click('button[type=submit]'); await p.waitForTimeout(1200);
   log('  判定:', (await p.$eval('#verdict', e => e.innerText)).replace(/\n+/g, ' / ').slice(0, 120));
   await p.screenshot({ path: SP + '/e_travel.png' });
+
+  // 新增两类必检项（样例值），与手机/大屏共用同一提交接口。
+  for (const [kind, values] of Object.entries({
+    control_cabinet: { insulation_resistance: '500', control_wire_torque: '1.2', electrical_clearance: '8' },
+    travel_paint: { primer_thickness_ratio: '98', total_thickness_ratio: '99', adhesion_loss_ratio: '1' },
+  })) {
+    await p.goto(B + '#/c/' + encodeURIComponent(ht) + '/' + kind);
+    await p.waitForSelector('button[type=submit]');
+    for (const [name, value] of Object.entries(values)) await p.fill(`input[name=${name}]`, value);
+    await p.click('button[type=submit]');
+    await p.waitForSelector('#verdict .ok');
+  }
 
   // 5. 详情页导出并下载
   await p.goto(B + '#/c/' + encodeURIComponent(ht)); await p.waitForTimeout(1000);

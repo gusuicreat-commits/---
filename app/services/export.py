@@ -23,13 +23,19 @@ def export_one(session, ht_code) -> dict:
     wb = Workbook()
     wb.remove(wb.active)
     sheets = []
+    sections = []
     for name, generator in load_sheets():
         ws = wb.create_sheet(name)
         error = None
         try:
             # 隔离生成器的数据库异常，避免影响后续工作表的查询。
             with session.begin_nested():
-                generator(ws, session, ht_code)
+                generated = generator(ws, session, ht_code)
+                if generated:
+                    sections.extend(generated)
+                    errors = [part['error'] for part in generated if not part['ok']]
+                    if errors:
+                        error = '；'.join(errors)
         except Exception as exc:
             error = f"{type(exc).__name__}: {exc}"
             logging.exception("工作表「%s」生成失败", name)
@@ -49,7 +55,7 @@ def export_one(session, ht_code) -> dict:
             get_storage().save(rel, stream.getvalue())
     finally:
         wb.close()
-    return {"ht_code": ht_code, "file": filename, "rel": rel, "sheets": sheets}
+    return {"ht_code": ht_code, "file": filename, "rel": rel, "sheets": sheets, "sections": sections}
 
 
 def export_all(session) -> dict:

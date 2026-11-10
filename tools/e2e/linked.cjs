@@ -22,7 +22,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   await S.goto(B + 'screen.html'); await sleep(1500);
   await P.addInitScript(ht => { localStorage.setItem('qcp_ht', JSON.stringify(ht)); localStorage.setItem('qcp_form', '"drum"'); localStorage.removeItem('qcp_draft'); localStorage.removeItem('qcp_vids'); }, HT);
   await P.goto(B + 'phone.html'); await sleep(2500);
-  console.log('大屏跟随手机合同:', await S.$eval('#ctSel', e => e.value), '|', await S.textContent('#devPhone'));
+  console.log('大屏跟随手机合同:', await S.textContent('#detailContract'), '|', await S.textContent('#devPhone'));
   await P.screenshot({ path: OUT + '/l1_手机_表单.png' });
 
   // 1) 手机直接在表里填：直径超上限
@@ -55,7 +55,16 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   await S.screenshot({ path: OUT + '/l5_大屏_抽屉结果.png' }); await P.screenshot({ path: OUT + '/l5_手机_收到大屏提交.png' });
   // 复测：改噪声 82
   await S.fill('#fv_noise', '82'); await S.click('#fGo'); await sleep(2000);
-  console.log('复测后:', (await S.textContent('#fRes')).trim(), '|', await S.textContent('#gateP'));
+  console.log('传动复测后:', (await S.textContent('#fRes')).trim(), '|', await S.textContent('#gateP'));
+  for (const [kind, values] of Object.entries({
+    control_cabinet: { insulation_resistance: '500', control_wire_torque: '1.2', electrical_clearance: '8' },
+    travel_paint: { primer_thickness_ratio: '98', total_thickness_ratio: '99', adhesion_loss_ratio: '1' },
+  })) {
+    await S.click(`#fKind button[data-k="${kind}"]`);
+    for (const [name, value] of Object.entries(values)) await S.fill('#fv_' + name, value);
+    await S.click('#fGo'); await sleep(1200);
+  }
+  console.log('四类录全后:', await S.textContent('#gateP'));
   await S.click('#dwX'); await sleep(500);
 
   // 5) 抽屉里新建合同并直接录入

@@ -74,5 +74,11 @@ for (d, s, pd, pt), name in zip(PLAN, NAMES):
             post(f"/contracts/{ht}/records/travel_drive", travel(True))
         post(f"/contracts/{ht}/records/travel_drive", travel(pt == "bad"))
 
+    if pd and pt:
+        post(f"/contracts/{ht}/records/control_cabinet", {
+            "insulation_resistance": 500, "control_wire_torque": 1.2, "electrical_clearance": 8})
+        post(f"/contracts/{ht}/records/travel_paint", {
+            "primer_thickness_ratio": "98", "total_thickness_ratio": 99, "adhesion_loss_ratio": 1})
+
 items = c.get("/contracts").json()["items"]
 print(f"新建 {made} 个合同；现在共 {len(items)} 个：", dict(Counter(x["status"] for x in items)))

@@ -24,11 +24,19 @@ def recycle_environment(monkeypatch, tmp_path):
     script = demo.load_script()
     script["steps"] = [{**step, "wait_ms": 0} for step in script["steps"]]
     monkeypatch.setattr(demo, "load_script", lambda: script)
+    monkeypatch.setattr("app.htcode.secrets.choice", lambda pool: pool[0])
     return publisher
 
 
+@pytest.fixture
+def exhausted(monkeypatch):
+    """回收策略用例模拟年度号码耗尽；真实一万号边界由 htcode 用例验证。"""
+    monkeypatch.setattr(demo.contracts, "suggestion", lambda session: None)
+
+
 def _code(number, day=None):
-    return f"{(day or today_bj()):%Y%m%d}-{number:02d}"
+    day = day or today_bj()
+    return f"{day.year:04d}{(day.toordinal() % 90) * 100 + number:04d}"
 
 
 def _contract(session, code, *, day=None, name=None, sources=("demo",), audio_path=None):
@@ -60,7 +68,7 @@ def test_start_recycles_demo_and_removes_old_evidence(
     _finish(configured)
     session.expire_all()
     logs = session.scalars(select(VoiceLog).where(VoiceLog.ht_code == code)).all()
-    assert len(logs) == 6
+    assert len(logs) == 8
     audio = tmp_path / "audio" / "旧演示.wav"
     audio.parent.mkdir()
     audio.write_bytes(b"demo")
@@ -74,13 +82,14 @@ def test_start_recycles_demo_and_removes_old_evidence(
     monkeypatch.setattr(demo, "load_script", lambda: {
         "name": "演示客户（样例）", "steps": [{"say": "长度三千", "form": "drum"}]})
 
+    monkeypatch.setattr(demo.contracts, "suggestion", lambda session: None)
     restarted = configured.post("/api/demo/start", json={})
     assert restarted.status_code == 200
     assert restarted.json()["ht_code"] == restarted.json()["recycled"] == code
     _finish(configured)
     session.expire_all()
-    assert session.scalars(select(Contract.ht_code).order_by(Contract.ht_code)).all() == [
-        _code(number) for number in range(10, 100, 10)]
+    assert session.scalars(select(Contract.ht_code).order_by(Contract.ht_code)).all() == sorted(
+        [code] + [_code(number) for number in range(20, 100, 10)])
     assert session.scalars(select(DrumParam)).all() == []
     assert session.scalars(select(TravelDriveParam)).all() == []
     new_logs = session.scalars(select(VoiceLog).where(VoiceLog.ht_code == code)).all()
@@ -98,10 +107,12 @@ def test_start_keeps_nine_ordinary_contracts(client, session, recycle_environmen
     for number in range(10, 100, 10):
         _contract(session, _code(number), name="普通合同", sources=())
     response = client.post("/api/demo/start", json={})
-    assert response.status_code == 409
-    assert response.json() == {"error": {"code": "NO_CONTRACT_CODE", "message": "今天的合同号已用完"}}
-    assert session.scalars(select(Contract.ht_code).order_by(Contract.ht_code)).all() == [
-        _code(number) for number in range(10, 100, 10)]
+    assert response.status_code == 200
+    assert response.json()["recycled"] is None
+    _finish(client)
+    codes = session.scalars(select(Contract.ht_code)).all()
+    assert len(codes) == 10
+    assert all(_code(number) in codes for number in range(10, 100, 10))
     assert _deleted(recycle_environment) == []
 
 
@@ -113,7 +124,7 @@ def test_start_keeps_nine_ordinary_contracts(client, session, recycle_environmen
     (("demo",), "普通合同"),
 ])
 def test_non_demo_is_never_recycled_or_reset(
-        client, session, tmp_path, recycle_environment, sources, name):
+        client, session, tmp_path, recycle_environment, sources, name, exhausted):
     code = _code(10)
     audio = tmp_path / "audio" / "真实录音.wav"
     audio.parent.mkdir()
@@ -187,9 +198,9 @@ def test_running_reset_is_rejected(client, session, monkeypatch, recycle_environ
     assert client.post("/api/demo/reset").json() == {"deleted": [old_code]}
 
 
-def test_start_recycles_smallest_today_only(client, session, monkeypatch, recycle_environment):
+def test_start_recycles_smallest_in_current_year(client, session, monkeypatch, recycle_environment, exhausted):
     yesterday = today_bj() - timedelta(days=1)
-    old_code = _code(10, yesterday)
+    old_code = f"{today_bj().year - 1:04d}0010"
     _contract(session, old_code, day=yesterday)
     for number in range(10, 100, 10):
         _contract(session, _code(number), name="演示客户（样例）" if number in (30, 70) else "普通合同")
@@ -202,9 +213,9 @@ def test_start_recycles_smallest_today_only(client, session, monkeypatch, recycl
     assert demo.find_demo_contracts(session) == [old_code, _code(70)]
 
 
-def test_yesterday_demo_cannot_free_today_number(client, session, recycle_environment):
+def test_previous_year_demo_cannot_free_current_year_number(client, session, recycle_environment, exhausted):
     yesterday = today_bj() - timedelta(days=1)
-    code = _code(10, yesterday)
+    code = f"{today_bj().year - 1:04d}0010"
     _contract(session, code, day=yesterday)
     for number in range(10, 100, 10):
         _contract(session, _code(number), name="普通合同", sources=())

@@ -29,6 +29,11 @@ def submit(client, code, kind, values):
 
 
 def qualify(client, code, good_drum):
+    for kind, values in {
+        "control_cabinet": {"insulation_resistance": 500, "control_wire_torque": 1.2, "electrical_clearance": 8},
+        "travel_paint": {"primer_thickness_ratio": "98", "total_thickness_ratio": 99, "adhesion_loss_ratio": 1},
+    }.items():
+        submit(client, code, kind, values)
     submit(client, code, "drum", good_drum)
     submit(client, code, "travel_drive", {
         "reducer_nameplate": "ZQ500", "motor_nameplate": "YZR160", "noise": "80"})
@@ -51,26 +56,28 @@ def test_qualified_export_uses_latest_and_formats(client, contract, good_drum):
     result = response.json()
     assert all(item["ok"] and item["error"] is None for item in result["sheets"])
     with workbook(result) as wb:
-        assert wb.sheetnames == ["合同信息", "卷筒参数", "大车传动参数"]
-        contract_ws, drum, travel = wb.worksheets
-        assert [cell.value for cell in contract_ws[1]] == ["合同号", "客户名称", "录入日期"]
-        assert contract_ws["A2"].value == contract
-        assert contract_ws["A2"].data_type == "s"
-        assert contract_ws["A2"].number_format == "@"
-        assert isinstance(contract_ws["C2"].value, date)
-        assert contract_ws["C2"].number_format == "yyyy-mm-dd"
-        assert [cell.value for cell in drum[1]] == [
-            "直径(mm)", "长度(mm)", "厚度(mm)", "光段(mm)", "是否合格", "录入时间"]
-        assert [cell.value for cell in drum[2]][:5] == [1250, 3000, 20, 310, "合格"]
-        assert drum["A2"].number_format == "0.00"
-        datetime.strptime(drum["F2"].value, "%Y-%m-%d %H:%M:%S")
-        assert [cell.value for cell in travel[1]] == [
-            "减速机铭牌", "电机铭牌", "噪声(dB)", "是否合格", "录入时间"]
-        assert [cell.value for cell in travel[2]][:4] == ["ZQ500", "YZR160", 80, "合格"]
-        for ws in wb:
-            assert ws["A1"].font.bold
-            assert ws["A1"].fill.fgColor.rgb == "00EEEEEE"
-            assert all(dimension.width >= 12 for dimension in ws.column_dimensions.values())
+        assert wb.sheetnames == ["检验汇总"]
+        ws = wb.active
+        assert [ws.cell(r,1).value for r in (3,7,11,15,19)] == ["合同信息","卷筒参数","大车传动参数","控制柜参数","大车油漆参数"]
+        assert [c.value for c in ws[4]][:3] == ["合同号", "客户名称", "录入日期"]
+        assert ws["A5"].value == contract
+        assert ws["A5"].data_type == "s" and ws["A5"].number_format == "@"
+        assert isinstance(ws["C5"].value, date) and ws["C5"].number_format == "yyyy-mm-dd"
+        assert [c.value for c in ws[8]] == ["直径(mm)","长度(mm)","厚度(mm)","光段(mm)","是否合格","录入时间"]
+        assert [c.value for c in ws[9]][:5] == [1250,3000,20,310,"合格"]
+        assert ws["A9"].number_format == "0.00"
+        assert [c.value for c in ws[13]][:4] == ["ZQ500","YZR160",80,"合格"]
+        assert not ws.merged_cells.ranges
+        assert ws.freeze_panes is None
+        assert not ws.column_dimensions and not ws.row_dimensions
+        for row in ws:
+            for cell in row:
+                assert not cell.font.bold
+                assert cell.fill.patternType is None
+                assert getattr(cell.border.left, 'style', None) is None
+                assert cell.border.bottom.style == ('thin' if cell.row in (6, 10, 14, 18) else None)
+                assert cell.alignment.wrap_text is None
+
 
 
 @pytest.mark.parametrize("state", ["不合格", "未录全", "待校验"])
@@ -112,15 +119,18 @@ def test_sheet_failure_isolated(client, contract, good_drum, monkeypatch):
     response = client.post(f"/api/contracts/{contract}/export")
     assert response.status_code == 200
     result = response.json()
-    assert result["sheets"][1] == {
+    assert result["sections"][1] == {
         "name": "卷筒参数", "ok": False, "error": "RuntimeError: 模拟生成故障"}
     with workbook(result) as wb:
-        assert wb["合同信息"]["A2"].value == contract
-        assert wb["大车传动参数"]["C2"].value == 80
-        assert wb["卷筒参数"]["A1"].value == "生成失败"
-        assert wb["卷筒参数"]["A2"].value == "原因：RuntimeError: 模拟生成故障"
-        assert wb["卷筒参数"].max_row == 2
-        assert wb["卷筒参数"].max_column == 1
+        assert wb.sheetnames == ['检验汇总']
+        ws = wb.active
+        assert ws['A5'].value == contract
+        assert ws['C13'].value == 80
+        assert ws['A8'].value == '生成失败'
+        assert ws['A9'].value == '原因：RuntimeError: 模拟生成故障'
+        assert ws.max_row == 21 and ws.max_column == 6
+        assert ws['Z9'].value is None
+
 
 
 def test_same_day_overwrite_and_filename(client, contract, good_drum, monkeypatch):
@@ -133,7 +143,7 @@ def test_same_day_overwrite_and_filename(client, contract, good_drum, monkeypatc
     assert second["file"] == f"{contract}_20270102.xlsx"
     assert len(get_storage().list()) == 1
     with workbook(second) as wb:
-        assert wb["卷筒参数"]["A2"].value == 1251
+        assert wb["检验汇总"]["A9"].value == 1251
     items = client.get("/api/exports").json()["items"]
     assert len(items) == 1
     assert items[0]["ht_code"] == contract
@@ -172,7 +182,7 @@ def test_download_and_path_rejection(client, contract, good_drum):
     assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     assert "filename*=UTF-8''" in response.headers["content-disposition"]
     wb = openpyxl.load_workbook(BytesIO(response.content))
-    assert wb["合同信息"]["A2"].value == contract
+    assert wb["检验汇总"]["A5"].value == contract
     wb.close()
     missing = client.get(f"/api/exports/{contract}/20000101")
     assert missing.status_code == 404

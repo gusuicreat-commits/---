@@ -109,7 +109,7 @@ def test_binding_copies_original_and_snapshots_asr_text(client, session, recordi
     assert clip_environment.since(0)[-1]["data"] == {"state": "clips"}
 
 
-@pytest.mark.parametrize("step", [-1, 0, 5, 6, 8, 11, 12, 10000])
+@pytest.mark.parametrize("step", [-1, 0, 5, 6, 8, 11, 14, 17, 18, 10000])
 def test_bind_requires_current_say_step(client, recording, step):
     response = client.post("/api/demo/clips", json={"voice_id": recording().id, "step": step})
     assert response.status_code == 400
@@ -345,7 +345,7 @@ def test_recycle_removes_evidence_copy_and_preserves_playable_clip(
     evidence = [get_settings().audio_dir / row.audio_path for row in logs if row.audio_path]
     assert len(evidence) == 2 and original in evidence
     if cleanup == "purge":
-        assert demo.purge_demo_contract(session, code)["voice_logs"] == 7
+        assert demo.purge_demo_contract(session, code)["voice_logs"] == 9
     else:
         assert configured.post("/api/demo/reset").json() == {"deleted": [code]}
     assert all(not path.exists() for path in evidence)

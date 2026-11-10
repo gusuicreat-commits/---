@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>边测边报 · 驾驶舱</title>
+<title>质检实时录入 · 驾驶舱</title>
 <style>
 :root{
   --bg:#08080a; --s1:#0e0e11; --s2:#141418; --s3:#1b1b20;
@@ -63,7 +63,7 @@ a{color:inherit;text-decoration:none}
 .view.on{display:grid}
 
 /* live */
-.live{grid-template-columns:minmax(300px,23%) 1fr minmax(330px,25%)}
+.live{grid-template-columns:minmax(220px,20%) minmax(0,1fr) minmax(270px,26%)}
 .col{min-height:0;display:flex;flex-direction:column;padding:26px 28px}
 .col+.col{border-left:1px solid var(--line)}
 .sec-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px}
@@ -135,13 +135,6 @@ a{color:inherit;text-decoration:none}
 .cn span{display:inline-flex;align-items:center;gap:7px}
 .cn span::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--violet)}
 .cn span.tb::before{background:var(--amber)} .cn span.hm::before{background:var(--tx2)} .cn span.okk::before{background:var(--lime)} .cn span.bad::before{background:var(--red)}
-.strip{display:flex;border:1px solid var(--line);border-radius:12px;margin:16px 0 0;background:rgba(255,255,255,.015);overflow:hidden;transition:opacity .3s}
-.strip>div{flex:1;padding:11px 16px;min-width:0}
-.strip>div+div{border-left:1px solid var(--line)}
-.strip .micro{display:block;margin-bottom:6px}
-.strip b{font:400 15px/1.2 var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
-.strip b.ng{color:var(--red)} .strip b.amb{color:var(--amber)}
-.strip.empty{opacity:.35}
 .hero{margin-top:auto;padding:8px 0 4px;transition:opacity .35s;overflow:hidden}
 .hero.dimmed{opacity:.18}
 .h-item{font-size:18px;color:var(--tx2);display:flex;align-items:center;gap:10px}
@@ -266,6 +259,96 @@ tr.flash td{animation:rowflash 2s}
 .stack i{display:flex;align-items:center;justify-content:center;font:500 12px var(--mono);color:#0a0a0b;min-width:0;overflow:hidden}
 .lgd{display:flex;gap:18px;font-size:12px;color:var(--tx3);flex-wrap:wrap}
 .lgd span::before{content:"";display:inline-block;width:10px;height:3px;border-radius:2px;background:var(--c);margin-right:7px;vertical-align:3px}
+.verification-visuals{display:flex;flex-direction:column;gap:18px}
+.status-overview{display:grid;grid-template-columns:minmax(140px,1fr) minmax(150px,1fr);align-items:center;gap:18px}
+.status-ring{position:relative;width:100%;max-width:174px;aspect-ratio:1;margin:auto}
+.status-ring svg{display:block;width:100%;height:100%;transform:rotate(-90deg)}
+.status-arc{transition:opacity .18s}
+.status-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.status-center b{font:300 42px/1.1 var(--disp);font-variant-numeric:tabular-nums}
+.status-center span{font-size:12px;color:var(--tx2);margin-top:7px}
+.status-legend{display:flex;flex-direction:column;gap:4px}
+.status-legend button{display:grid;grid-template-columns:8px 1fr auto;gap:9px;align-items:center;text-align:left;padding:9px 10px;border:1px solid transparent;border-radius:8px;font-size:12px;color:var(--tx2)}
+.status-legend button:hover,.status-legend button[aria-pressed=true]{background:var(--s2);border-color:var(--line2)}
+.status-legend button:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+.status-legend i{width:7px;height:7px;border-radius:2px;background:var(--c)}
+.status-legend b{font:500 15px var(--mono);color:var(--tx)}
+.status-legend small{font:11px var(--mono);color:var(--tx3);margin-left:8px;display:inline-block;min-width:39px;text-align:right}
+.chart-block{border-top:1px solid var(--line);padding-top:14px}
+.chart-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.chart-heading h4{font-size:13px;font-weight:500}
+.chart-heading>span,.chart-note{font-size:11px;color:var(--tx2)}
+.chart-note{line-height:1.7;margin-top:12px}
+.coverage-row+.coverage-row{margin-top:8px}
+.coverage-label{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin-bottom:6px}
+.coverage-label span:last-child{font:11px var(--mono);color:var(--tx2)}
+.coverage-track{display:flex;height:8px;border-radius:4px;background:var(--s3);overflow:hidden}
+.coverage-track i{height:100%;min-width:0}
+.coverage-legend{margin-top:14px;gap:12px;font-size:10px}
+.missing-chart{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:end;margin-top:12px}
+.missing-col{text-align:center;min-width:0;font-size:11px;color:var(--tx2)}
+.missing-col b{display:block;font:400 15px var(--mono);color:var(--tx);margin-bottom:7px}
+.missing-rail{height:48px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid var(--line2);margin-bottom:8px}
+.missing-rail i{width:36px;max-width:80%;background:var(--violet);border-radius:4px 4px 0 0;min-height:0}
+@media(max-width:800px){.ver{grid-template-columns:1fr}.ver .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.ver .kpis>div:nth-child(3){border-left:0}.ver .kpis>div:nth-child(n+3){border-top:1px solid var(--line)}}
+
+/* live workspace */
+.contract-nav{padding:22px 16px;gap:10px}
+.contract-nav .sec-h,.contract-nav .ctsel{margin-bottom:0}
+.contract-nav .add{width:100%;padding:10px;border-radius:8px;background:var(--lime);color:#0a0a0b;font-weight:600}
+.stage{padding:18px 20px;min-width:0}
+.stage .sec-h{margin-bottom:10px}
+.stage .ctname{white-space:normal;overflow-wrap:anywhere;margin:0 0 8px}
+.detail-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.detail-context{font-size:12px;color:var(--tx3);text-align:right;overflow-wrap:anywhere}
+.stage .big-n{font-size:28px}.stage .big-n small{font-size:16px}
+.stage .segs{margin:10px 0 12px}
+.stage>.rows{flex:1 1 0;min-height:0;overflow:auto}
+.stage .row{grid-template-columns:8px minmax(110px,1fr) minmax(0,1fr);cursor:pointer}
+.stage .row:hover{background:rgba(255,255,255,.035)}
+.stage .row .nm{min-width:0;white-space:normal;overflow-wrap:anywhere}
+.stage .row .nm em{display:block;margin:4px 0 0}
+.stage .row .val{max-width:none;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.5}
+.stage .sheet-foot{margin-top:10px;padding-top:10px}
+.stage .sheet-foot b{font-size:20px}
+.stage>.tr{font-size:15px;line-height:1.5;min-height:0;max-height:45px;overflow:auto;margin-top:12px}
+.live .cx-h{flex-wrap:wrap}.live .cx-h .micro,.live .cx-h .t{white-space:nowrap}
+.voice-panel{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.voice-panel summary{display:flex;justify-content:space-between;gap:10px;cursor:pointer;color:var(--tx3);font-size:12px}
+.voice-panel summary::after{content:'展开'}
+.voice-panel[open] summary::after{content:'收起'}
+.voice-content{max-height:200px;overflow:auto;margin-top:10px}
+.voice-content .pipe{margin:0 0 8px}.voice-content #wave{height:24px;margin:4px 0}
+.voice-content .hero{margin:6px 0;padding:0}.voice-content .hero.dimmed{opacity:.65}
+.voice-content .h-item{font-size:12px}.voice-content .h-val,.voice-content .h-val.word,.voice-content .h-val.txt{font-size:26px;line-height:1.2;margin:6px 0}
+.voice-content .h-val small{font-size:14px}.voice-content .h-verdict{font-size:15px}
+.voice-content .h-calc,.voice-content .rb p{font-size:12px}.voice-content .rb{margin-top:8px;padding-top:8px}
+@media(max-width:1300px){.hd{gap:16px;padding:0 18px}.mark .sep,.mark>.micro{display:none}.hd-r{gap:12px}.nav{margin-left:0}.nav button,.nav a{white-space:nowrap;padding:8px 9px;font-size:12px}}
+@media(max-width:1000px){.hd-r .clock,.hd-r #devPhone{display:none}.col{padding-left:16px;padding-right:16px}.live{grid-template-columns:170px minmax(0,1fr) 260px}}
+
+/* contract pagination and four parameter panels */
+.contract-nav{min-width:0}
+.contract-list{flex:1;min-height:0;overflow:auto;margin:4px -4px;padding:0 4px}
+.contract-item{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:8px 7px;border:1px solid transparent;border-bottom-color:var(--line);border-radius:6px;font-size:12.5px}
+.contract-item:hover{background:var(--s2)}
+.contract-item.selected{background:var(--lime-d);border-color:rgba(198,244,63,.5)}
+.contract-item .mono{min-width:0;overflow-wrap:anywhere}
+.contract-status.c-dim{color:var(--tx2)}
+.contract-status{font-size:11px;white-space:nowrap;flex:none}
+.contract-pages{flex:none;border-top:1px solid var(--line);padding-top:10px;font-size:11px;color:var(--tx3)}
+.page-settings,.page-controls{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.page-controls{margin-top:10px}.page-controls button{padding:5px;border:1px solid var(--line2);border-radius:5px;color:var(--tx2);font-size:11px}
+.page-controls button:disabled{opacity:.3;cursor:default}
+.page-settings select{font-size:11px;background:var(--s2);border:1px solid var(--line2);border-radius:5px;padding:4px;color:var(--tx2)}
+.detail-contract{margin-left:8px;font-size:13px;color:var(--tx);letter-spacing:0}
+.stage>#rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(180px,1fr));gap:10px;margin:0;padding:0}
+.parameter-card{min-width:0;min-height:0;overflow:auto;border:1px solid var(--line2);border-radius:10px;padding:9px}
+.parameter-card.current{border-color:rgba(198,244,63,.35)}
+.parameter-card .grp{margin:0 0 6px;gap:6px}.parameter-card .grp .micro{font-size:11px;letter-spacing:.04em}
+.stage .parameter-card .row{grid-template-columns:6px minmax(0,1fr) minmax(0,1fr);gap:7px;padding:3px 0;margin:0}
+.stage .parameter-card .nm{font-size:12px;line-height:1.3}.stage .parameter-card .nm em{font-size:10px;margin-top:2px}
+.stage .parameter-card .val{font-size:12px;line-height:1.4}
+@media(max-width:1000px){.live{grid-template-columns:205px minmax(0,1fr) 250px}}
 
 /* evidence */
 .evi{grid-template-columns:380px 1fr}
@@ -287,7 +370,25 @@ tr.flash td{animation:rowflash 2s}
 .play:hover{transform:scale(1.05)} .play:disabled{background:var(--s3);cursor:not-allowed}
 .player canvas{flex:1;height:56px;min-width:0}
 .ev-meta{margin-top:12px;font-size:12px;color:var(--tx3);display:flex;gap:18px;flex-wrap:wrap}
-.tri{display:grid;grid-template-columns:1.1fr 1.3fr 1fr;gap:18px}
+.tri{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.submission-panel{flex:none}
+.submission-panel .ph{justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
+.submission-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));list-style:none;gap:10px;margin-bottom:16px}
+.submission-flow li{border-bottom:2px solid var(--line2);padding:0 0 10px;min-width:0}
+.submission-flow span{display:block;color:var(--tx3);font-size:12px;margin-bottom:6px}
+.submission-flow b{font-size:13px;line-height:1.5;overflow-wrap:anywhere;font-weight:500}
+.submission-note,.submission-next{font-size:13px;line-height:1.8;color:var(--tx2);margin:10px 0}
+.submission-parsed{padding:12px 14px;background:var(--s2);border-radius:8px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.submission-parsed span,.submission-meta span{font-size:12px;color:var(--tx3)}
+.submission-parsed b{font-weight:500;overflow-wrap:anywhere}
+.submission-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.submission-meta>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.submission-meta b{font-size:13px;font-weight:500;overflow-wrap:anywhere}
+.submission-panel h4{font-size:13px;margin:18px 0 12px}
+.submission-panel .kv{grid-template-columns:minmax(110px,.7fr) minmax(0,1fr)}
+.submission-panel .kv>span{overflow-wrap:anywhere}
+.submission-definition{border-top:1px solid var(--line);padding-top:12px;margin:16px 0;font-size:12px;line-height:1.7;color:var(--tx3)}
+.submission-definition b{display:block;color:var(--tx2);font-weight:500}
 .tl{display:flex;flex-direction:column;gap:14px;position:relative;padding-left:20px}
 .tl::before{content:"";position:absolute;left:3px;top:6px;bottom:6px;width:1px;background:var(--line2)}
 .tl>div{position:relative;font-size:13px;line-height:1.55;cursor:default}
@@ -312,16 +413,21 @@ tr.flash td{animation:rowflash 2s}
 .btn-s.demo{color:var(--lime);border-color:rgba(198,244,63,.4)} .btn-s.demo:hover{background:var(--lime-d)}
 .btn-s.stop{color:var(--red);border-color:rgba(255,90,78,.45)}
 
-/* 录入抽屉 */
+/* 居中录入弹窗 */
 .dw-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .25s;z-index:60}
 .dw-bg.on{opacity:1;pointer-events:auto}
-.dw{position:fixed;top:0;right:0;bottom:0;width:min(480px,100vw);background:var(--s1);border-left:1px solid var(--line2);z-index:61;transform:translateX(100%);transition:transform .3s var(--ease);display:flex;flex-direction:column}
-.dw.on{transform:none}
+.dw{position:fixed;top:50%;left:50%;width:min(720px,calc(100vw - 32px));max-height:calc(100dvh - 32px);background:var(--s1);border:1px solid var(--line2);border-radius:18px;box-shadow:0 28px 100px rgba(0,0,0,.6);z-index:61;transform:translate(-50%,-48%);opacity:0;visibility:hidden;pointer-events:none;transition:transform .2s var(--ease),opacity .2s,visibility .2s;display:flex;flex-direction:column}
+.dw.on{transform:translate(-50%,-50%);opacity:1;visibility:visible;pointer-events:auto}
+.dw-h,.dw-f{flex-shrink:0}
 .dw-h{display:flex;align-items:center;gap:12px;padding:20px 24px;border-bottom:1px solid var(--line)}
 .dw-h h3{font:600 17px var(--sans)}
 .dw-h .x{margin-left:auto;font-size:20px;color:var(--tx3);width:32px;height:32px;border-radius:8px}
 .dw-h .x:hover{background:var(--s3);color:var(--tx)}
-.dw-b{flex:1;overflow:auto;padding:20px 24px;display:flex;flex-direction:column;gap:18px}
+.dw-b{flex:1;min-height:0;overflow:auto;padding:20px 24px;display:flex;flex-direction:column;gap:18px}
+.form-error{flex:none;margin:16px 24px 0;padding:12px 14px;border:1px solid rgba(255,90,78,.5);border-radius:10px;background:var(--red-d);color:#ffd0cc;font-size:13.5px;max-height:25dvh;overflow:auto}
+.form-error[hidden]{display:none}
+.dw-b>*{flex-shrink:0}
+@media(max-width:600px){.dw .fgrid{grid-template-columns:1fr}.dw .seg{display:grid;grid-template-columns:repeat(2,1fr)}}
 .dw-f{padding:16px 24px;border-top:1px solid var(--line);display:flex;gap:10px}
 .seg{display:flex;padding:3px;border-radius:10px;background:var(--s2);border:1px solid var(--line)}
 .seg button{flex:1;height:32px;border-radius:7px;font-size:13.5px;color:var(--tx3)}
@@ -340,6 +446,17 @@ tr.flash td{animation:rowflash 2s}
 .fi.ng .in{border-color:rgba(255,90,78,.6)} .fi.ng .hint{color:#ff9d95}
 .fi.warn .hint{color:var(--amber)}
 .fi.dft input{color:var(--violet)}
+.fi.voice:not(.ng) .in{border-color:rgba(170,156,255,.65)}
+.fi.voice:not(.ng):not(.warn) input,.fi.voice:not(.ng):not(.warn) .hint{color:var(--violet)}
+.form-voice{margin-top:18px;padding:16px;border:1px solid var(--line2);border-radius:12px;background:var(--s2)}
+.cv-top{display:flex;align-items:center;gap:14px}
+.cv-top>div{flex:1;min-width:0}.cv-top b{font-size:14px}.cv-status{font-size:12.5px;color:var(--tx3);margin-top:4px}
+.cv-mic{width:56px;height:56px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--lime);color:#0a0a0b;touch-action:none;user-select:none}
+.cv-mic:disabled{background:var(--s3);color:var(--tx3);cursor:not-allowed}.cv-mic.rec{background:var(--red);color:white}.cv-mic.busy{background:var(--violet)}
+.cv-level{height:3px;background:var(--s3);margin-top:10px;border-radius:2px;overflow:hidden}.cv-level i{display:block;width:100%;height:100%;background:var(--red);transform:scaleX(var(--level,0));transform-origin:left}
+.cv-type{display:flex;gap:8px;margin-top:12px}.cv-type input{flex:1;min-width:0;background:var(--s1);border:1px solid var(--line2);border-radius:8px;padding:9px 10px;font-size:13px;outline:none}
+.cv-examples{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.cv-examples button{font-size:12px;color:var(--tx3);border:1px dashed var(--line2);border-radius:6px;padding:4px 8px}
+.cv-result{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;word-break:break-word}.cv-result p{margin-top:5px}.cv-result small{display:block;color:var(--tx3);margin-top:6px}
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px 14px}
 .fgrid .full{grid-column:1/-1}
 .dw .res{border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.6}
@@ -365,14 +482,14 @@ tr.flash td{animation:rowflash 2s}
 .sw i{width:28px;height:16px;border-radius:8px;background:var(--tx4);position:relative;transition:background .2s}
 .sw i::after{content:"";position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform .2s}
 .sw.on i{background:var(--lime)} .sw.on i::after{transform:translateX(12px)}
-.toasts{position:fixed;top:78px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:50;pointer-events:none}
+.toasts{position:fixed;top:78px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:80;pointer-events:none}
 .toast{background:rgba(20,20,24,.95);border:1px solid var(--line2);border-radius:12px;padding:10px 16px;font-size:13.5px;box-shadow:0 20px 50px rgba(0,0,0,.5);animation:rise .3s var(--ease);max-width:640px}
 .toast.ng{border-color:rgba(255,90,78,.5)} .toast.ok{border-color:rgba(198,244,63,.4)} .toast.fix{border-color:rgba(170,156,255,.5)}
 </style>
 </head>
 <body>
 <header class="hd">
-  <div class="mark"><b>边测边报<i>.</i></b><span class="sep"></span><span class="micro">Cockpit · 主管驾驶舱</span></div>
+  <div class="mark"><b>质检实时录入<i>.</i></b><span class="sep"></span><span class="micro">Cockpit · 主管驾驶舱</span></div>
   <nav class="nav" id="nav">
     <button data-v="live" class="on">实时检验</button>
     <button data-v="asr">识别纠错<span class="badge" id="rvBadge" style="background:var(--amber)"></span></button>
@@ -392,30 +509,40 @@ tr.flash td{animation:rowflash 2s}
 <main class="views">
   <!-- 实时检验 -->
   <section class="view live on" id="v-live">
-    <div class="col">
-      <div class="sec-h"><span class="micro">Sheet · 检验表</span><span style="display:flex;gap:8px;align-items:center"><span class="tag" id="sync">—</span><button class="add" id="addBtn" title="手动填写参数">＋ 录入</button></span></div>
-      <div class="ctsel"><select id="ctSel"></select></div>
-      <div class="ctname" id="ctName"></div>
-      <div class="prog"><span class="big-n" id="sheetN">0<small>/7</small></span><span>项已录</span></div>
-      <div class="segs" id="segs"></div>
-      <div class="rows" id="rows"></div>
-      <div class="sheet-foot" id="sheetFoot"></div>
+    <div class="col contract-nav">
+      <div class="sec-h"><span class="micro">合同</span></div>
+      <button class="add" id="addBtn" title="录入合同或检验参数">＋ 录入</button>
+      <div class="contract-list" id="contractList" aria-label="合同号列表"></div>
+      <div class="contract-pages">
+        <div class="page-settings"><span id="contractCount"></span><select id="contractPageSize" aria-label="每页合同条数"><option value="20">20条/页</option><option value="50">50条/页</option><option value="100">100条/页</option></select></div>
+        <div class="page-controls"><button id="contractPrev" aria-label="上一页合同">上一页</button><span id="contractPageInfo"></span><button id="contractNext" aria-label="下一页合同">下一页</button></div>
+      </div>
     </div>
     <div class="col stage" id="stage">
-      <div class="stg-top"><span class="live-dot micro" id="liveDot">Live · 现场语音</span><div class="r" id="stgTags"></div></div>
-      <ol class="pipe" id="pipe">
-        <li><b><span>01</span>语音采集</b><small></small></li>
-        <li><b><span>02</span>识别 · 纠错</b><small></small></li>
-        <li><b><span>03</span>结构化解析</b><small></small></li>
-        <li><b><span>04</span>规则判定</b><small></small></li>
-        <li><b><span>05</span>回读 · 入库</b><small></small></li>
-      </ol>
-      <canvas id="wave" width="1400" height="112"></canvas>
+      <div class="sec-h"><span class="micro">参数明细 <b class="mono detail-contract" id="detailContract"></b></span><span class="tag" id="sync">—</span></div>
+      <div class="ctname" id="ctName"></div>
+      <div class="detail-heading"><div class="prog"><span class="big-n" id="sheetN">0<small>/13</small></span><span>项已录</span></div><span class="detail-context" id="detailContext"></span></div>
+      <div class="segs" id="segs"></div>
+      <div class="rows" id="rows" aria-label="当前合同参数明细"></div>
+      <div class="sheet-foot" id="sheetFoot"></div>
       <div class="tr idle" id="tr">等待质检员说话…</div>
-      <div class="cn" id="cn"></div>
-      <div class="strip empty" id="strip"><div><span class="micro">合同</span><b>—</b></div><div><span class="micro">表单</span><b>—</b></div><div><span class="micro">字段</span><b>—</b></div><div><span class="micro">数值</span><b>—</b></div><div><span class="micro">拒收</span><b>—</b></div></div>
-      <div class="hero dim dimmed" id="hero"></div>
-      <div class="rb" id="rb"><div class="spk"><i></i><i></i><i></i><i></i></div><div><span class="micro">Readback · 回读</span><p class="idle" id="rbp">系统会把识别到的每一个数复述给质检员确认。</p></div></div>
+      <details class="voice-panel">
+        <summary><span class="live-dot micro" id="liveDot">Live · 现场语音</span><span>识别过程与回读</span></summary>
+        <div class="voice-content">
+          <div class="stg-top"><div class="r" id="stgTags"></div></div>
+          <ol class="pipe" id="pipe">
+            <li><b><span>01</span>语音采集</b><small></small></li>
+            <li><b><span>02</span>识别 · 纠错</b><small></small></li>
+            <li><b><span>03</span>结构化解析</b><small></small></li>
+            <li><b><span>04</span>规则判定</b><small></small></li>
+            <li><b><span>05</span>回读 · 入库</b><small></small></li>
+          </ol>
+          <canvas id="wave" width="1400" height="112"></canvas>
+          <div class="cn" id="cn"></div>
+          <div class="hero dim dimmed" id="hero"></div>
+          <div class="rb" id="rb"><div class="spk"><i></i><i></i><i></i></div><div><span class="micro">Readback · 回读</span><p class="idle" id="rbp">系统会把识别到的每一个数复述给质检员确认。</p></div></div>
+        </div>
+      </details>
     </div>
     <div class="col">
       <div class="sec-h"><span class="micro">Exceptions · 待处理</span><span class="tag" id="exTag"></span></div>
@@ -456,7 +583,7 @@ tr.flash td{animation:rowflash 2s}
   <!-- 验证看板 -->
   <section class="view pane ver" id="v-ver">
     <div class="kpis" id="kpis"></div>
-    <div class="panel"><div class="ph"><h3>合同状态分布</h3><span class="micro">按最新记录</span></div><div id="dist"></div></div>
+    <div class="panel"><div class="ph"><h3>合同状态分布</h3><span class="micro">按最新记录</span></div><div class="verification-visuals"><div id="dist"></div><div id="verificationDetails"></div></div></div>
     <div class="panel"><div class="ph"><h3>不合格参数排行</h3><span class="micro">最新记录中超出范围的次数</span></div><div id="lad"></div></div>
     <div class="panel span2"><div class="ph"><h3>当前规则</h3><div class="r"><a class="btn-s" href="admin.html#/rules" target="_blank">去修改规则 ↗</a></div></div>
       <table><thead><tr><th>表</th><th>参数</th><th>下限</th><th>上限</th><th>单位</th><th>状态</th></tr></thead><tbody id="ruleRows"></tbody></table></div>
@@ -477,18 +604,30 @@ tr.flash td{animation:rowflash 2s}
 </footer>
 <div class="toasts" id="toasts"></div>
 <div class="dw-bg" id="dwBg"></div>
-<aside class="dw" id="dw">
-  <div class="dw-h"><h3>手动录入</h3><span class="micro">提交后两端同步</span><button class="x" id="dwX">×</button></div>
+<aside class="dw" id="dw" role="dialog" aria-modal="true" aria-labelledby="formTitle" aria-hidden="true">
+  <div class="dw-h"><h3 id="formTitle">录入与校验</h3><span class="micro">提交后两端同步</span><button class="x" id="dwX" aria-label="关闭录入弹窗">×</button></div>
+  <div class="form-error" id="fErr" role="alert" hidden></div>
   <div class="dw-b">
     <div class="fi"><label>合同</label><div class="in"><select id="fCt"></select></div></div>
     <div id="fNew" hidden>
       <div class="fgrid">
-        <div class="fi"><label>合同号<em>日期-序号</em></label><div class="in"><input id="nHt" placeholder="20261110-10"></div><span class="hint" id="nHtH"></span></div>
-        <div class="fi"><label>录入日期</label><div class="in"><input id="nDate" placeholder="YYYY-MM-DD"></div></div>
+        <div class="fi"><label>合同号<em>年份＋4位随机数字</em></label><div class="in"><input id="nHt" placeholder="20264827" inputmode="numeric"></div><span class="hint" id="nHtH"></span></div>
+        <div class="fi"><label>录入日期</label><div class="in"><input id="nDate" placeholder="YYYY-MM-DD"></div><span class="hint" id="nDateH"></span></div>
         <div class="fi full"><label>客户名称</label><div class="in"><input id="nName" style="font-family:var(--sans)" placeholder="例如：某某重工（样例）"></div><span class="hint" id="nNameH"></span></div>
       </div>
+
     </div>
-    <div class="seg" id="fKind"><button data-k="drum">卷筒参数</button><button data-k="travel_drive">大车传动参数</button></div>
+    <div class="seg" id="fKind"><button data-k="drum">卷筒参数</button><button data-k="travel_drive">大车传动参数</button><button data-k="control_cabinet">控制柜参数</button><button data-k="travel_paint">大车油漆参数</button></div>
+      <section class="form-voice" aria-labelledby="cvTitle">
+        <div class="cv-top">
+          <button class="cv-mic" id="cvMic" type="button" aria-label="按住说合同号和客户名称" disabled><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+          <div><b id="cvTitle">语音填表</b><div class="cv-status" id="cvStatus" role="status">正在检查语音服务…</div></div><span class="micro" id="cvTime" hidden>0:00</span>
+        </div>
+        <div class="cv-level" id="cvLevel" hidden><i></i></div>
+        <div class="cv-type"><input id="cvText" aria-label="输入合同识别文字" placeholder="例如：合同号二零二六四八二七，客户样例重工，日期今天"><button class="btn-s" id="cvParse" type="button">解析填表</button></div>
+        <div class="cv-examples" id="cvExamples"><button type="button">合同号二零二六四八二七</button><button type="button">客户样例重工，日期今天</button></div>
+        <div class="cv-result" id="cvResult" hidden></div>
+      </section>
     <div class="fgrid" id="fFields"></div>
     <div id="fRes"></div>
   </div>
@@ -501,62 +640,97 @@ tr.flash td{animation:rowflash 2s}
 const { esc, KINDS, KIND_LABEL, STATUS_CLS, api, load, store } = QC;
 const $ = id => document.getElementById(id);
 const S = {
-  view: 'live', ht: null, form: 'drum', detail: null, contracts: [], draft: { drum: {}, travel_drive: {} },
-  voices: [], log: [], reviews: [], learned: [], dvids: { drum: [], travel_drive: [] }, evSel: null, evF: '全部', demo: null, tts: load('qcs_tts', false), busy: false, phoneOn: false, ledF: '全部', exports: [], lastRaw: null,
+  view: 'live', ht: null, contractPage: 1, contractPageSize: 20, form: 'drum', detail: null, contracts: [], draft: Object.fromEntries(Object.keys(KINDS).map(k => [k, {}])),
+  voices: [], log: [], reviews: [], learned: [], dvids: Object.fromEntries(Object.keys(KINDS).map(k => [k, []])), evSel: null, evF: '全部', demo: null, tts: load('qcs_tts', false), busy: false, phoneOn: false, ledF: '全部', exports: [], lastRaw: null,
 };
-const EX = { drum: ['直径一千二百五十，光段三百', '厚度十二点五毫米', '直径1262'], travel_drive: ['噪音八十二分贝', '电机铭牌 YZR160M2-6'] };
+const EX = { control_cabinet: ['绝缘电阻五百兆欧，控制线力矩一点二牛米', '电气间隙八毫米'], travel_paint: ['底漆九十八、九十七、九十六', '面漆99%，附着力百分之一'], drum: ['直径一千二百五十，光段三百', '厚度十二点五毫米', '直径1262'], travel_drive: ['噪音八十二分贝', '电机铭牌 YZR160M2-6'] };
 
 function toast(html, cls = '') { const el = document.createElement('div'); el.className = 'toast ' + cls; el.innerHTML = html; $('toasts').appendChild(el); setTimeout(() => { el.style.transition = 'opacity .4s'; el.style.opacity = 0; setTimeout(() => el.remove(), 400); }, 3600); }
 function view(v) { S.view = v; document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v)); document.querySelectorAll('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v)); store('qcs_view', v); renderView(); }
 function renderView() { ({ live: renderLive, asr: renderASR, led: renderLed, ver: renderVer, evi: renderEvi })[S.view]?.(); }
 
 /* ---------- 数据 ---------- */
-async function loadContracts() { S.contracts = (await api('GET', '/contracts')).items; renderCtSel(); renderEx(); const ng = S.contracts.filter(c => c.status === '不合格').length; $('ngBadge').textContent = ng; $('ngBadge').classList.toggle('show', ng > 0); }
-async function loadDetail() { S.detail = S.ht ? await api('GET', '/contracts/' + encodeURIComponent(S.ht)).catch(() => null) : null; }
+async function loadContracts() { S.contracts = (await api('GET', '/contracts')).items; renderContractList(); renderEx(); const ng = S.contracts.filter(c => c.status === '不合格').length; $('ngBadge').textContent = ng; $('ngBadge').classList.toggle('show', ng > 0); }
+async function loadDetail() {
+  const ht = S.ht, request = S.detailRequest = (S.detailRequest || 0) + 1;
+  S.detailLoading = !!ht;
+  const detail = ht ? await api('GET', '/contracts/' + encodeURIComponent(ht)).catch(() => null) : null;
+  if (request !== S.detailRequest || ht !== S.ht) return false;
+  S.detail = detail; S.detailLoading = false; return true;
+}
+function resetStageContext() {
+  S.stageVersion = (S.stageVersion || 0) + 1; S.shown = false; S.busy = false;
+  clearTimeout(S.rbT); $('rb').className = 'rb'; $('rbp').className = 'idle';
+  $('rbp').textContent = S.ht ? '等待当前合同的语音录入或参数提交。' : '请先选择合同。';
+  if (S.tts && 'speechSynthesis' in window) speechSynthesis.cancel();
+}
 async function focus(ht, form, opts = {}) {
-  const changed = ht !== S.ht;
-  S.ht = ht; if (form && KINDS[form]) S.form = form;
-  if (changed) { S.draft = { drum: {}, travel_drive: {} }; S.dvids = { drum: [], travel_drive: [] }; }
-  await loadDetail(); renderLive();
+  const changed = ht !== S.ht, nextForm = form && KINDS[form] ? form : S.form;
+  const contextChanged = changed || nextForm !== S.form;
+  S.ht = ht; S.form = nextForm;
+  if (changed) { locateContractPage(ht); renderContractList(); }
+  if (changed) { S.detail = null; S.detailLoading = !!ht; S.draft = Object.fromEntries(Object.keys(KINDS).map(k => [k, {}])); S.dvids = Object.fromEntries(Object.keys(KINDS).map(k => [k, []])); }
+  if (contextChanged) { resetStageContext(); idleStage(); renderSheet(); renderChips(); }
+  if (!await loadDetail() || ht !== S.ht || nextForm !== S.form) return false;
+  renderLive();
   if (opts.push) QC.publish('focus', { ht_code: ht, form: S.form, reason: opts.reason }, 'screen');
+  return true;
 }
 
 /* ---------- 左：检验表 ---------- */
-function renderCtSel() {
-  const sel = $('ctSel');
-  sel.innerHTML = '<option value="">— 选择合同 —</option>' + S.contracts.map(c => `<option value="${esc(c.ht_code)}" ${c.ht_code === S.ht ? 'selected' : ''}>${esc(c.ht_code)}　${esc(c.status)}</option>`).join('');
+function contractStatusLabel(status) { return status === '合格' ? '合格' : status === '不合格' ? '不合格' : '未录入'; }
+function locateContractPage(ht) {
+  const index = S.contracts.findIndex(c => c.ht_code === ht);
+  if (index >= 0) S.contractPage = Math.floor(index / S.contractPageSize) + 1;
+}
+function renderContractList() {
+  const total = S.contracts.length, pages = Math.max(1, Math.ceil(total / S.contractPageSize));
+  S.contractPage = Math.max(1, Math.min(S.contractPage, pages));
+  const start = (S.contractPage - 1) * S.contractPageSize;
+  $('contractList').innerHTML = S.contracts.slice(start, start + S.contractPageSize).map(c => {
+    const label = contractStatusLabel(c.status), cls = label === '合格' ? 'ok' : label === '不合格' ? 'ng' : 'dim';
+    return `<button class="contract-item ${c.ht_code === S.ht ? 'selected' : ''}" data-ht="${esc(c.ht_code)}" aria-pressed="${c.ht_code === S.ht}" title="${esc(c.name + ' · ' + c.status + ' · ' + (c.status_reason || ''))}"><span class="mono">${esc(c.ht_code)}</span><span class="contract-status c-${cls}">${label}</span></button>`;
+  }).join('') || '<p class="empty-x">暂无合同</p>';
+  $('contractList').querySelectorAll('[data-ht]').forEach(button => button.onclick = () => focus(button.dataset.ht, null, { push: false }));
+  $('contractCount').textContent = `共 ${total} 条`;
+  $('contractPageInfo').textContent = `${S.contractPage} / ${pages}`;
+  $('contractPrev').disabled = S.contractPage <= 1;
+  $('contractNext').disabled = S.contractPage >= pages;
+  $('contractPageSize').value = String(S.contractPageSize);
 }
 function cellState(kind, f) {
   const dv = S.draft[kind][f.name], last = S.detail?.latest?.[kind];
   if (dv != null && dv !== '') { const j = QC.prejudge(kind, f.name, dv); return { v: dv, cls: j.cls === 'ng' ? 'ng' : 'fix', draft: true }; }
-  if (last && last[f.name] != null && last[f.name] !== '') { const j = QC.prejudge(kind, f.name, last[f.name]); return { v: last[f.name], cls: f.type === 'text' ? 'ok' : (j.cls === 'ng' ? 'ng' : 'ok') }; }
+  if (last && last[f.name] != null && last[f.name] !== '') { const j = QC.prejudge(kind, f.name, last[f.name]); return { v: last[f.name], cls: f.type === 'text' && !f.numeric_list ? 'ok' : (j.cls === 'ng' ? 'ng' : 'ok') }; }
   return { v: null, cls: '' };
 }
 function renderSheet(flash = []) {
   const d = S.detail;
   $('ctName').textContent = d ? `${d.contract.name} · 录入日期 ${d.contract.date}` : '在左上角选择合同，或等待质检员手机端选择';
-  const kinds = ['drum', 'travel_drive'];
+  const kinds = Object.keys(KINDS);
   let filled = 0, total = 0, segs = '', rows = '';
   const cnt = { ok: 0, ng: 0, fix: 0, none: 0 };
   kinds.forEach(k => {
     const last = d?.latest?.[k];
     const q = last ? (last.is_qualified === 1 ? '<span class="q c-ok">合格</span>' : last.is_qualified === 0 ? '<span class="q c-ng">不合格</span>' : '<span class="q c-warn">待校验</span>') : '<span class="q c-dim">未录入</span>';
-    rows += `<div class="grp"><span class="micro">${KIND_LABEL[k]}${k === S.form ? ' · 当前' : ''}</span>${q}</div>`;
+    rows += `<section class="parameter-card ${k === S.form ? 'current' : ''}" data-kind="${k}" aria-label="${KIND_LABEL[k]}参数"><div class="grp"><span class="micro">${KIND_LABEL[k]}${k === S.form ? ' · 当前' : ''}</span>${q}</div>`;
     QC.fieldsOf(k).forEach(f => {
       const s = cellState(k, f); total++; if (s.v != null) filled++;
       cnt[s.cls === 'ok' ? 'ok' : s.cls === 'ng' ? 'ng' : s.cls === 'fix' ? 'fix' : 'none']++;
       segs += `<i class="${s.cls}"></i>`;
-      const rule = f.type === 'text' ? '不校验' : QC.rangeText(QC.ruleOf(k, f.name));
+      const rule = f.type === 'text' && !f.numeric_list ? '不校验' : QC.rangeText(QC.ruleOf(k, f.name));
       rows += `<div data-k="${k}" data-f="${f.name}" class="row ${s.cls || 'pending'} ${flash.includes(k + '.' + f.name) ? 'flash' : ''}"><i class="dot"></i>
         <span class="nm">${esc(f.label)}<em>${esc(rule)}</em></span>
-        <span class="val">${s.v == null ? '<span class="c-dim">—</span>' : `<b>${esc(s.v)}</b>${f.unit ? `<span class="u">${esc(f.unit)}</span>` : ''}${s.draft ? '<span class="d">待提交</span>' : ''}`}</span></div>`;
+        <span class="val">${s.v == null ? '<span class="c-dim">—</span>' : `<b>${esc(s.v)}</b>${f.unit ? `<span class="u">${esc(f.unit)}</span>` : ''}${s.draft ? '<span class="d">待提交</span>' : ''}`}</span>${f.numeric_list && s.v != null && QC.prejudge(k,f.name,s.v)?.cls === 'ng' ? `<small style="grid-column:2/-1;color:var(--red);font-size:11px;white-space:normal">${esc(QC.prejudge(k,f.name,s.v).verdict)}</small>` : ''}</div>`;
     });
+    rows += '</section>';
   });
   $('sheetN').innerHTML = `${filled}<small>/${total}</small>`;
   $('segs').innerHTML = segs; $('rows').innerHTML = rows;
   $('rows').querySelectorAll('.row').forEach(r => r.onclick = () => openForm(r.dataset.k, r.dataset.f));
   $('sheetFoot').innerHTML = `<div><b class="c-ok">${cnt.ok}</b><span>合格</span></div><div><b class="c-ng">${cnt.ng}</b><span>超范围</span></div><div><b class="c-fix">${cnt.fix}</b><span>待提交</span></div><div><b class="c-dim">${cnt.none}</b><span>未录</span></div>`;
-  $('sync').textContent = d ? d.status : '—'; $('sync').className = 'tag ' + (d ? { '合格': 'lim', '不合格': 'amb', '未录全': '', '待校验': 'amb' }[d.status] : '');
+  $('sync').textContent = d ? contractStatusLabel(d.status) : '—'; $('sync').className = 'tag ' + (d ? { '合格': 'lim', '不合格': 'amb', '未录全': '', '待校验': 'amb' }[d.status] : '');
+  renderParameterContext();
   const dn = Object.keys(S.draft[S.form] || {}).length;
   $('mSubmit').disabled = !S.ht || !dn; $('mSubmit').textContent = dn ? `提交手机草稿（${KIND_LABEL[S.form]} ${dn} 项）` : '提交手机草稿';
 }
@@ -574,7 +748,7 @@ function renderEx() {
   bindReviewCards($('cards'));
   document.querySelectorAll('#cards .cx:not([data-rv]) button').forEach(b => b.onclick = () => {
     const ht = b.dataset.ht, reason = b.dataset.reason;
-    const form = /大车|传动/.test(reason) && !/卷筒/.test(reason) ? 'travel_drive' : 'drum';
+    const form = Object.keys(KINDS).find(k => (reason || '').includes(KIND_LABEL[k])) || 'drum';
     if (b.dataset.act === 'see') focus(ht, form);
     else { focus(ht, form, { push: true, reason: /不合格/.test(reason) ? '主管派单：请复测' : '主管派单：请补录' }); toast(`已派给质检员：<b class="mono">${esc(ht)}</b> ${KIND_LABEL[form]}${S.phoneOn ? '' : '（手机当前不在线，上线后会自动切过去）'}`, 'fix'); }
   });
@@ -585,7 +759,7 @@ function renderClosed() {
 function renderGate() {
   const g = $('gate'), d = S.detail; S.gateDl = null;
   if (!d) { g.className = 'gate lock'; $('gateBtn').textContent = '导出 Excel'; $('gateP').textContent = '请先选择合同'; return; }
-  if (d.status === '合格') { g.className = 'gate open'; $('gateBtn').textContent = `导出 ${d.contract.ht_code} Excel →`; $('gateP').textContent = '两类参数最新记录均合格'; }
+  if (d.status === '合格') { g.className = 'gate open'; $('gateBtn').textContent = `导出 ${d.contract.ht_code} Excel →`; $('gateP').textContent = '四类参数最新记录均合格'; }
   else { g.className = 'gate lock'; $('gateBtn').textContent = '🔒 导出 Excel'; $('gateP').textContent = `不能导出：${d.status_reason}${d.rules.configured < d.rules.total ? `（规则已配置 ${d.rules.configured}/${d.rules.total}）` : ''}`; }
 }
 $('gateBtn').onclick = async () => {
@@ -636,15 +810,18 @@ function cnHTML(p) {
   if (p.message) out.push(`<span class="bad">${esc(p.message)}</span>`);
   return out.join('');
 }
-function stripHTML(p) {
-  const names = Object.keys(p.fields || {}).filter(n => p.form === 'contract' || QC.fieldMeta(p.form, n));
-  const lab = n => p.form === 'contract' ? ({ ht_code: '合同号', name: '客户', date: '日期' }[n] || n) : QC.fieldMeta(p.form, n).label;
-  const bad = n => p.form !== 'contract' && QC.prejudge(p.form, n, p.fields[n])?.cls === 'ng';
-  return `<div><span class="micro">合同</span><b>${esc(p.ht_code || S.ht || '—')}</b></div><div><span class="micro">表单</span><b>${esc(KIND_LABEL[p.form] || p.form)}</b></div>
-    <div><span class="micro">字段</span><b>${names.map(n => esc(lab(n))).join(' · ') || '—'}</b></div>
-    <div style="flex:1.6"><span class="micro">数值</span><b>${names.map(n => `<span class="${bad(n) ? 'c-ng' : ''}">${esc(p.fields[n])}</span>`).join(' · ') || '—'}</b></div>
-    <div><span class="micro">拒收</span><b class="${(p.rejected || []).length ? 'amb' : ''}">${(p.rejected || []).length || '无'}</b></div>`;
+function renderParameterContext() {
+  const detail = S.detail?.contract.ht_code === S.ht ? S.detail : null;
+  const latest = detail?.latest?.[S.form];
+  const fields = QC.fieldsOf(S.form);
+  const hasDraft = !!S.ht && fields.some(f => S.draft[S.form]?.[f.name] != null && S.draft[S.form][f.name] !== '');
+  const state = !S.ht ? '未选择合同' : !detail ? (S.detailLoading ? '读取中' : '详情暂不可用') : hasDraft ? '草稿 · 未提交' : latest ? `已保存 #${latest.id}` : '尚未录入';
+  const stateClass = S.ht && !detail ? 'c-warn' : hasDraft ? 'c-fix' : '';
+  $('detailContract').textContent = S.ht || '未选择合同';
+  $('detailContext').className = 'detail-context ' + stateClass;
+  $('detailContext').textContent = `${KIND_LABEL[S.form] || '—'} · ${state}`;
 }
+
 function setHero(o) {
   const h = $('hero'); h.className = 'hero ' + (o.cls || 'dim');
   const vcls = o.word ? 'word' : o.txt ? 'txt' : '';
@@ -656,7 +833,7 @@ function setHero(o) {
 }
 function idleStage() {
   pipe(0); $('tr').className = 'tr idle'; $('tr').textContent = S.ht ? '等待质检员说话…' : '等待质检员选择合同…'; $('cn').innerHTML = '';
-  $('strip').className = 'strip empty';
+  renderParameterContext();
   if (S.detail) {
     const d = S.detail;
     setHero({ title: `${d.contract.ht_code} · 合同状态`, big: d.status, word: true, verdict: d.status_reason, cls: STATUS_CLS[d.status] || 'dim' });
@@ -666,17 +843,18 @@ function idleStage() {
 function readback(text) { $('rbp').className = ''; $('rbp').textContent = text; $('rb').className = 'rb on'; if (S.tts) QC.speak(text); clearTimeout(S.rbT); S.rbT = setTimeout(() => $('rb').className = 'rb', Math.max(1800, text.length * 130)); }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function presentVoice(p, src) {
+  const version = S.stageVersion = (S.stageVersion || 0) + 1;
   S.busy = true; $('stage').classList.add('busy');
   const a = p.asr;
   const n1 = a ? `${Number(a.duration_s || 0).toFixed(1)} 秒 · ${QC.denoiseText(a.denoise)}` : (src === 'screen' ? '大屏键入' : '键盘输入');
   const n2 = a ? `识别 ${a.elapsed_ms} ms` : '跳过识别';
-  pipe(1, false, [n1]); await sleep(260);
+  pipe(1, false, [n1]); await sleep(260); if (version !== S.stageVersion) return;
   pipe(2, false, [n1, n2]);
-  $('tr').className = 'tr'; $('tr').innerHTML = esc(p.text || '') + '<span class="caret"></span>'; await sleep(420);
+  $('tr').className = 'tr'; $('tr').innerHTML = esc(p.text || '') + '<span class="caret"></span>'; await sleep(420); if (version !== S.stageVersion) return;
   $('tr').innerHTML = trHTML(p); $('cn').innerHTML = cnHTML(p);
   const nf = Object.keys(p.fields || {}).length;
   pipe(3, !nf, [n1, n2, `${nf} 个字段 · 拒收 ${(p.rejected || []).length}`]);
-  $('strip').className = 'strip'; $('strip').innerHTML = stripHTML(p); await sleep(300);
+  renderParameterContext(); await sleep(300); if (version !== S.stageVersion) return;
   if (p.form === 'contract') {
     pipe(5, false, [n1, n2, `${nf} 个字段`, '合同信息', '回填到新建合同']);
     setHero({ title: '新建合同 · 语音识别', big: p.fields.ht_code || '?', txt: true, verdict: p.fields.ht_code ? '合同号已识别' : '没有听出合同号', cls: p.fields.ht_code ? 'dim' : 'warn', src: p.fields.name ? `客户 ${p.fields.name}` : '' });
@@ -691,13 +869,14 @@ async function presentVoice(p, src) {
     setHero({ title: `${f.label}${names.length > 1 ? `  · 本句共 ${names.length} 项` : ''}`, tag: p.notes?.[show[0]] || '', big: p.fields[show[0]], unit: f.unit, txt: f.type === 'text',
       verdict: j.cls === 'ok' ? '在范围内 · 待提交' : j.verdict, cls: j.cls === 'ok' ? 'dim' : j.cls, calc: j.calc, src: j.src,
       alert: bad.length ? { cls: 'ng', html: `<b>超范围</b>${bad.map(([n]) => `${esc(QC.fieldMeta(p.form, n).label)} ${esc(p.fields[n])}`).join('、')} — 可照常提交，记为不合格` } : (p.rejected || []).length ? { cls: 'warn', html: `<b>有内容没有填入</b>${(p.rejected).map(r => esc(`「${r.said || r.field}」${r.reason}`)).join('；')}` } : null });
-    await sleep(250);
+    await sleep(250); if (version !== S.stageVersion) return;
     pipe(5, !!bad.length, [n1, n2, `${nf} 个字段`, bad.length ? `${bad.length} 项超范围` : '全部在范围内', '回读 · 等待提交']);
   }
   readback(QC.readbackVoice(p, p.form));
   S.busy = false; $('stage').classList.remove('busy');
 }
 function presentRecord(d, src) {
+  S.stageVersion = (S.stageVersion || 0) + 1; S.busy = false; renderParameterContext();
   const v = d.validation, ok = v && v.is_qualified === 1, k = d.kind;
   pipe(5, !ok, ['', '', '', v ? (ok ? '全部合格' : `${v.failures.length} 项不合格`) : '校验未完成', `已入库 #${d.record.id}`]);
   setHero({ title: `${d.ht_code} · ${KIND_LABEL[k]}参数 · 记录 #${d.record.id}`, tag: { screen: '大屏提交', demo: '演示提交' }[src] || '手机提交', big: v ? (ok ? '合格' : '不合格') : '待校验', word: true,
@@ -707,7 +886,7 @@ function presentRecord(d, src) {
   S.log.unshift({ t: QC.hhmmss().slice(0, 5), ok, text: `${d.ht_code} ${KIND_LABEL[k]} #${d.record.id} ${v ? (ok ? '合格' : '不合格') : '待校验'}` });
   renderClosed();
 }
-function renderLive(flash) { renderSheet(flash); renderGate(); renderCtSel(); renderEx(); renderClosed(); if (!S.busy && !S.shown) idleStage(); }
+function renderLive(flash) { renderSheet(flash); renderGate(); renderContractList(); renderEx(); renderClosed(); if (!S.busy && !S.shown) idleStage(); }
 
 /* 舞台波形：识别过程中跳动，平时静止 */
 let wseed = Array.from({ length: 120 }, (_, i) => (0.15 + 0.85 * Math.random()) * Math.sin(Math.PI * (i + .5) / 120) ** .6);
@@ -768,26 +947,62 @@ $('expAll').onclick = async () => {
 };
 
 /* ---------- 验证看板 ---------- */
+function renderVerificationDistribution(cs) {
+  const states = [['合格', 'var(--lime)'], ['不合格', 'var(--red)'], ['待校验', 'var(--amber)'], ['未录全', 'var(--tx3)']];
+  const n = cs.length, counts = states.map(([name]) => cs.filter(c => c.status === name).length);
+  let offset = 0;
+  const arcs = states.map(([name, color], i) => {
+    const size = n ? counts[i] / n * 100 : 0, start = offset; offset += size;
+    return size ? `<circle class="status-arc" data-status="${i}" cx="100" cy="100" r="76" fill="none" stroke="${color}" stroke-width="19" pathLength="100" stroke-dasharray="${size} ${100 - size}" stroke-dashoffset="${-start}"><title>${name} ${counts[i]} 个合同</title></circle>` : '';
+  }).join('');
+  $('dist').innerHTML = `<div class="status-overview"><div class="status-ring"><svg viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="76" fill="none" stroke="var(--s3)" stroke-width="19"/>${arcs}</svg><div class="status-center" aria-live="polite"><b id="statusChartValue">${n}</b><span id="statusChartLabel">全部合同</span></div></div><div class="status-legend" aria-label="合同状态数量与占比">${states.map(([name, color], i) => `<button type="button" data-status="${i}" aria-pressed="false" aria-label="${name} ${counts[i]} 个，占 ${n ? (counts[i] / n * 100).toFixed(1) : '0.0'}%"><i style="--c:${color}"></i><span>${name}</span><span><b>${counts[i]}</b><small>${n ? (counts[i] / n * 100).toFixed(1) : '0.0'}%</small></span></button>`).join('')}</div></div><p class="chart-note">${n ? '点击图例查看对应状态，再次点击恢复全部。' : '暂无合同，创建合同后显示状态分布。'}</p>`;
+  $('dist').querySelectorAll('button[data-status]').forEach(b => b.onclick = () => {
+    const selected = b.getAttribute('aria-pressed') !== 'true', index = +b.dataset.status;
+    $('dist').querySelectorAll('button[data-status]').forEach(x => x.setAttribute('aria-pressed', String(selected && x === b)));
+    $('dist').querySelectorAll('.status-arc').forEach(x => x.style.opacity = selected && +x.dataset.status !== index ? '.16' : '1');
+    $('statusChartValue').textContent = selected ? counts[index] : n;
+    $('statusChartLabel').textContent = selected ? `${states[index][0]} · ${n ? (counts[index] / n * 100).toFixed(1) : '0.0'}%` : '全部合同';
+  });
+}
+function verificationKindStats(details) {
+  return Object.keys(KINDS).map(kind => {
+    const rows = details.map(d => d.latest?.[kind]), count = value => rows.filter(r => r != null && r.is_qualified === value).length;
+    const missing = rows.filter(r => r == null).length;
+    return { kind, ok: count(1), ng: count(0), pending: rows.filter(r => r != null && r.is_qualified !== 1 && r.is_qualified !== 0).length, missing, recorded: rows.length - missing };
+  });
+}
+function renderVerificationDetails(details, total) {
+  if (!details.length && total) { $('verificationDetails').innerHTML = '<div class="chart-block chart-note">合同明细暂时读取失败，检验进度和待补录分布暂不可用。重新进入看板可重试。</div>'; return; }
+  const n = details.length, stats = verificationKindStats(details), max = Math.max(1, ...stats.map(x => x.missing));
+  const colors = ['var(--lime)', 'var(--red)', 'var(--amber)', 'var(--tx4)'];
+  $('verificationDetails').innerHTML = `<section class="chart-block" aria-label="四类检验进度"><div class="chart-heading"><h4>四类检验进度</h4><span>已有记录 / 合同数</span></div>${stats.map(s => {
+    const description = `${KIND_LABEL[s.kind]}：合格 ${s.ok}，不合格 ${s.ng}，待校验 ${s.pending}，未录入 ${s.missing}`;
+    return `<div class="coverage-row" data-kind="${s.kind}" role="img" aria-label="${description}" title="${description}"><div class="coverage-label"><span>${KIND_LABEL[s.kind]}</span><span>${s.recorded} / ${n}</span></div><div class="coverage-track">${[s.ok, s.ng, s.pending, s.missing].map((v, i) => v ? `<i style="width:${n ? v / n * 100 : 0}%;background:${colors[i]}"></i>` : '').join('')}</div></div>`;
+  }).join('')}<div class="lgd coverage-legend"><span style="--c:var(--lime)">合格</span><span style="--c:var(--red)">不合格</span><span style="--c:var(--amber)">待校验</span><span style="--c:var(--tx4)">未录入</span></div></section>
+    <section class="chart-block" aria-label="待补录分布"><div class="chart-heading"><h4>待补录分布</h4><span>缺少该类记录的合同数</span></div><div class="missing-chart">${stats.map(s => `<div class="missing-col" data-kind="${s.kind}" role="img" aria-label="${KIND_LABEL[s.kind]}待补录 ${s.missing} 个合同"><b>${s.missing}</b><div class="missing-rail"><i style="height:${s.missing / max * 100}%"></i></div><span>${KIND_LABEL[s.kind]}</span></div>`).join('')}</div><p class="chart-note">${total > n ? `已读取 ${n} / ${total} 个合同，以上两图暂不包含读取失败的合同。` : n ? '同一合同缺少多类记录时，会分别计入各类。' : '暂无合同，创建合同后显示检验进度。'}</p></section>`;
+}
 async function renderVer() {
+  const request = S.verRequest = (S.verRequest || 0) + 1;
   const cs = S.contracts, n = cs.length, by = s => cs.filter(c => c.status === s).length;
   const ok = by('合格'), ng = by('不合格'), part = by('未录全'), pend = by('待校验');
   const vs = S.voices.filter(x => x.p.asr), avg = vs.length ? Math.round(vs.reduce((a, x) => a + x.p.asr.elapsed_ms, 0) / vs.length) : null;
   const hit = S.voices.length ? Math.round(100 * S.voices.filter(x => Object.keys(x.p.fields || {}).length).length / S.voices.length) : null;
   $('kpis').innerHTML = `
-    <div><div class="h"><span class="micro">合同</span><span class="tag">共 ${n}</span></div><div class="n">${ok}<small>/${n}</small></div><p>可导出（两类参数最新记录均合格）</p></div>
+    <div><div class="h"><span class="micro">合同</span><span class="tag">共 ${n}</span></div><div class="n">${ok}<small>/${n}</small></div><p>可导出（四类参数最新记录均合格）</p></div>
     <div><div class="h"><span class="micro">不合格</span><span class="tag amb">需复测</span></div><div class="n c-ng">${ng}</div><p>${part} 个未录全 · ${pend} 个待校验</p></div>
     <div><div class="h"><span class="micro">识别耗时</span><span class="tag">本场 ${vs.length} 段语音</span></div><div class="n">${avg ?? '—'}<small>${avg != null ? 'ms' : ''}</small></div><p>FunASR 本机识别，平均每段</p></div>
     <div><div class="h"><span class="micro">一次填入率</span><span class="tag">本场 ${S.voices.length} 句</span></div><div class="n">${hit ?? '—'}<small>${hit != null ? '%' : ''}</small></div><p>说一句至少填入一个字段的比例</p></div>`;
-  const seg = (v, c, l) => v ? `<i style="flex:${v};background:${c}" title="${l} ${v}">${v}</i>` : '';
-  $('dist').innerHTML = `<div class="stack">${seg(ok, 'var(--lime)', '合格')}${seg(ng, 'var(--red)', '不合格')}${seg(pend, 'var(--amber)', '待校验')}${seg(part, 'var(--tx3)', '未录全')}</div>
-    <div class="lgd"><span style="--c:var(--lime)">合格 ${ok}</span><span style="--c:var(--red)">不合格 ${ng}</span><span style="--c:var(--amber)">待校验 ${pend}</span><span style="--c:var(--tx3)">未录全 ${part}</span></div>`;
+  renderVerificationDistribution(cs);
+  $('verificationDetails').innerHTML = '<div class="chart-block chart-note" role="status">正在统计四类检验进度…</div>';
   // 规则表
-  $('ruleRows').innerHTML = (QC.G.rules?.items || []).map(r => { const f = QC.fieldMeta(r.table_name === 'drum_param' ? 'drum' : 'travel_drive', r.name); return `<tr><td class="t2">${r.table_name === 'drum_param' ? '卷筒' : '大车传动'}</td><td>${esc(f?.label || r.name)}</td><td class="m">${esc(r.min ?? '—')}</td><td class="m">${esc(r.max ?? '—')}</td><td class="t3">${esc(f?.unit || '')}</td><td>${QC.configured(r) ? '<span class="chip ok">已配置</span>' : '<span class="chip warn">未配置</span>'}</td></tr>`; }).join('');
+  $('ruleRows').innerHTML = (QC.G.rules?.items || []).map(r => { const kind = Object.keys(KINDS).find(k => KINDS[k] === r.table_name), f = QC.fieldMeta(kind, r.name); return `<tr><td class="t2">${esc(KIND_LABEL[kind] || r.table_label)}</td><td>${esc(f?.label || r.name)}</td><td class="m">${esc(r.min ?? '—')}</td><td class="m">${esc(r.max ?? '—')}</td><td class="t3">${esc(f?.unit || '')}</td><td>${QC.configured(r) ? '<span class="chip ok">已配置</span>' : '<span class="chip warn">未配置</span>'}</td></tr>`; }).join('');
   // 不合格参数排行：取每个合同的最新记录
   $('lad').innerHTML = '<div class="empty-x">统计中…</div>';
   const det = await Promise.all(cs.map(c => api('GET', '/contracts/' + encodeURIComponent(c.ht_code)).catch(() => null)));
+  if (request !== S.verRequest || S.view !== 'ver') return;
+  renderVerificationDetails(det.filter(Boolean), n);
   const cnt = {};
-  det.filter(Boolean).forEach(d => ['drum', 'travel_drive'].forEach(k => { const r = d.latest[k]; if (!r) return; QC.fieldsOf(k).forEach(f => { if (f.type === 'text') return; if (QC.prejudge(k, f.name, r[f.name])?.cls === 'ng') cnt[k + '.' + f.name] = (cnt[k + '.' + f.name] || 0) + 1; }); }));
+  det.filter(Boolean).forEach(d => Object.keys(KINDS).forEach(k => { const r = d.latest[k]; if (!r) return; QC.fieldsOf(k).forEach(f => { if (f.type === 'text' && !f.numeric_list) return; if (QC.prejudge(k, f.name, r[f.name])?.cls === 'ng') cnt[k + '.' + f.name] = (cnt[k + '.' + f.name] || 0) + 1; }); }));
   const rows = Object.entries(cnt).sort((a, b) => b[1] - a[1]), max = rows[0]?.[1] || 1;
   $('lad').innerHTML = rows.map(([key, v]) => { const [k, nme] = key.split('.'), f = QC.fieldMeta(k, nme); return `<div class="lad-r"><span class="nm">${esc(f.label)}<small>${KIND_LABEL[k]} · ${esc(QC.rangeText(QC.ruleOf(k, nme)))}</small></span><div class="bar"><i style="width:${100 * v / max}%;background:var(--red)"></i></div><span class="v">${v} 个合同</span></div>`; }).join('') || '<div class="empty-x">最新记录中没有超出范围的参数。</div>';
 }
@@ -814,7 +1029,9 @@ $('dmReset').onclick = async () => {
   try { const r = await api('POST', '/demo/reset'); toast(r.deleted.length ? `已清理 ${r.deleted.length} 个演示合同` : '没有演示合同', 'ok'); await loadContracts(); await loadReviews(); renderLed(); } catch (e) { toast(esc(e.message), 'ng'); }
 };
 $('ttsSw').onclick = () => { S.tts = !S.tts; store('qcs_tts', S.tts); $('ttsSw').classList.toggle('on', S.tts); if (S.tts) QC.speak('回读播报已打开'); };
-$('ctSel').onchange = () => focus($('ctSel').value || null, null, { push: false });
+$('contractPrev').onclick = () => { S.contractPage--; renderContractList(); $('contractList').scrollTop = 0; };
+$('contractNext').onclick = () => { S.contractPage++; renderContractList(); $('contractList').scrollTop = 0; };
+$('contractPageSize').onchange = () => { S.contractPageSize = Number($('contractPageSize').value); S.contractPage = 1; locateContractPage(S.ht); renderContractList(); $('contractList').scrollTop = 0; };
 document.querySelectorAll('#nav button').forEach(b => b.onclick = () => view(b.dataset.v));
 
 /* ---------- 复核 + 学习纠错 ---------- */
@@ -861,7 +1078,7 @@ function bindReviewCards(box) {
     card.querySelectorAll('.cx-a button').forEach(b => b.onclick = async () => {
       const act = b.dataset.act;
       if (act === 'ev') { S.evSel = id; view('evi'); return; }
-      if (act === 'go') { view('asr'); return; }
+      if (act === 'go') { S.evSel = id; S.evF = '待复核'; S.reviewTarget = id; view('evi'); return; }
       try {
         if (act === 'ign') { await api('POST', `/review/${id}/resolve`, { action: 'ignore' }); toast('已忽略这条', ''); }
         else {
@@ -872,6 +1089,7 @@ function bindReviewCards(box) {
           toast(`已学进纠错表：<b>${esc(wrong)} → ${esc(right)}</b>　重新解析：${fl || '仍未填入参数'}`, 'ok');
         }
         await loadReviews(); await loadLearned();
+        if (S.view === 'evi' && S.evSel === id) await renderEvi();
       } catch (e) { toast(esc(e.message), 'ng'); }
     });
   });
@@ -897,27 +1115,78 @@ $('lcAdd').onclick = async () => {
 const VST = { ok: ['ok', '已解析'], review: ['warn', '待复核'], resolved: ['fix', '已复核'], ignored: ['dim', '已忽略'] };
 function fieldsText(v) { return Object.entries(v.fields || {}).map(([k, x]) => `${(v.form === 'contract' ? { ht_code: '合同号', name: '客户', date: '日期' }[k] : QC.fieldMeta(v.form, k)?.label) || k} ${x}`).join(' · '); }
 async function renderEvi() {
+  const request = S.eviRequest = (S.eviRequest || 0) + 1;
+  const current = () => request === S.eviRequest && S.view === 'evi';
+  S.evDetailRequest = (S.evDetailRequest || 0) + 1;
+  $('evd').innerHTML = '<div class="empty-x">正在读取语音记录…</div>';
+  if (evAudio) { evAudio.pause(); evAudio = null; evPlayT = -1; }
   const fs = ['全部', '当前合同', '有录音', '待复核'];
   $('evF').innerHTML = fs.map(f => `<button class="${f === S.evF ? 'on' : ''}">${f}</button>`).join('');
-  $('evF').querySelectorAll('button').forEach((b, i) => b.onclick = () => { S.evF = fs[i]; renderEvi(); });
+  $('evF').querySelectorAll('button').forEach((b, i) => b.onclick = () => { S.evF = fs[i]; S.evSel = null; S.reviewTarget = null; renderEvi(); });
   let q = '?limit=150';
   if (S.evF === '当前合同' && S.ht) q += '&ht_code=' + encodeURIComponent(S.ht);
   if (S.evF === '待复核') q += '&status=review';
   let items = [];
-  try { items = (await api('GET', '/voice/logs' + q)).items; } catch (e) { $('evList').innerHTML = `<div class="empty-x">${esc(e.message)}</div>`; return; }
+  try { items = (await api('GET', '/voice/logs' + q)).items; } catch (e) { if (current()) $('evList').innerHTML = `<div class="empty-x">${esc(e.message)}</div>`; return; }
+  if (!current()) return;
   if (S.evF === '有录音') items = items.filter(v => v.has_audio);
+  // 待处理列表可能引用超过最近 150 条的旧语音，仍须准确展示所点记录。
+  if (S.evSel && !items.some(v => v.id === S.evSel)) {
+    try {
+      const selected = await api('GET', '/voice/logs/' + S.evSel);
+      if (!current()) return;
+      items.unshift(selected);
+    } catch (e) {
+      if (current()) { $('evList').innerHTML = ''; $('evd').innerHTML = `<div class="empty-x">${esc(e.message)}</div>`; }
+      return;
+    }
+  }
+  if (!S.evSel && items[0]) S.evSel = items[0].id;
   $('evList').innerHTML = items.map(v => { const st = VST[v.status] || ['dim', v.status]; return `<button class="ev-i ${v.id === S.evSel ? 'on' : ''}" data-id="${v.id}"><div class="r1"><span class="id">#${v.id}</span><span class="chip ${st[0]}">${st[1]}</span>${v.has_audio ? '<span class="au">♪ 录音</span>' : ''}<span class="t">${esc(v.created_at.slice(5, 16))}</span></div>
     <div class="r2">「${esc(v.text)}」${fieldsText(v) ? ' → ' + esc(fieldsText(v)) : ''}</div></button>`; }).join('') || '<div class="empty-x">没有语音记录</div>';
-  $('evList').querySelectorAll('.ev-i').forEach(b => b.onclick = () => { S.evSel = +b.dataset.id; renderEvi(); });
-  if (!S.evSel && items[0]) S.evSel = items[0].id;
-  if (S.evSel) renderEvDetail(S.evSel);
+  $('evList').querySelectorAll('.ev-i').forEach(b => b.onclick = () => { S.evSel = +b.dataset.id; S.reviewTarget = null; renderEvi(); });
+  if (S.evSel) await renderEvDetail(S.evSel);
+  else { S.evDetailRequest = (S.evDetailRequest || 0) + 1; $('evd').innerHTML = '<div class="empty-x">没有符合条件的语音记录</div>'; }
+}
+function submissionPanel(v, rec) {
+  const linked = v.record_id != null && !!v.record_kind;
+  const contractOnly = v.form === 'contract' && !linked;
+  const fields = Object.keys(v.fields || {}).length;
+  const heading = contractOnly ? '本条语音用于合同信息录入' : '这句语音对应的检测提交';
+  const status = contractOnly ? '合同信息' : rec ? '已关联检测提交' : linked ? '已关联 · 详情暂不可用' : '尚未关联检测提交';
+  const cls = rec ? 'ok' : linked ? 'warn' : 'dim';
+  const target = linked ? `${KIND_LABEL[v.record_kind] || v.record_kind}检测记录 #${v.record_id}` : contractOnly ? '用于创建或填写合同' : '暂未找到提交关联';
+  const recordLink = v.ht_code ? `<a class="btn-s" href="admin.html#/c/${encodeURIComponent(v.ht_code)}" target="_blank" rel="noopener">查看该合同的检测记录 ↗</a>` : '';
+  let body;
+  if (rec) {
+    const r = rec.record, verdict = r.is_qualified === 1 ? '合格' : r.is_qualified === 0 ? '不合格' : '待校验';
+    body = `<p class="submission-note">这句语音已与下面这次检测提交建立关联，可核对提交时保存的数据。</p>
+      <div class="submission-meta"><div><span>检测记录编号</span><b>${esc(target)}</b></div><div><span>合同号</span><b class="mono">${esc(v.ht_code || '—')}</b></div><div><span>提交时间</span><b>${esc(r.created_at)}</b></div><div><span>本次校验结果</span><b class="c-${r.is_qualified === 1 ? 'ok' : r.is_qualified === 0 ? 'ng' : 'warn'}">${verdict}</b></div></div>
+      <h4>这次提交保存的参数</h4><div class="kv">${QC.fieldsOf(rec.kind).map(f => `<span>${esc(f.label)}</span><span class="mono">${esc(r[f.name] ?? '—')}${r[f.name] != null && f.unit ? ' ' + esc(f.unit) : ''}</span>`).join('')}</div>`;
+  } else if (linked) {
+    body = `<p class="submission-note">系统已记录这句语音对应 ${esc(target)}，但目前未能读取该次提交的详情。</p><p class="submission-next">可稍后重新打开本条语音，或到合同的检测记录中核对。</p>`;
+  } else if (contractOnly) {
+    body = '<p class="submission-note">这条语音识别的是合同号、客户名称等合同信息。检测记录编号会在提交卷筒、大车传动、控制柜或油漆参数时生成。</p>';
+  } else {
+    body = `<p class="submission-note">本条语音已记录，暂未找到与它关联的检测提交。可能尚未提交，也可能提交时没有关联这条语音。</p>
+      ${fields ? `<div class="submission-parsed"><span>本条识别结果</span><b>${esc(fieldsText(v))}</b></div>` : ''}
+      <p class="submission-next">${v.status === 'review' ? '下一步：先完成上方复核，再核对合同的检测记录和提交情况。' : v.status === 'ignored' ? '本条语音已忽略，可到合同记录中核对实际提交情况。' : '下一步：先查看合同的检测记录。若尚未提交，再到录入页面核对参数并点击“提交校验”。'}</p>`;
+  }
+  return `<section class="panel submission-panel" id="submissionPanel" aria-label="语音与检测提交说明"><div class="ph"><h3>${heading}</h3><span class="chip ${cls}" id="submissionStatus">${status}</span></div>
+    <ol class="submission-flow"><li><span>① 原话记录</span><b>语音 #${v.id}</b></li><li><span>② 识别结果</span><b>${fields ? `已识别 ${fields} 项${v.status === 'review' ? ' · 待复核' : ''}` : '待核对'}</b></li><li><span>③ ${contractOnly ? '合同信息' : '检测提交'}</span><b>${esc(target)}</b></li></ol>
+    ${body}<div class="submission-definition"><b>检测记录编号是什么？</b><span>每次参数提交成功后，系统会保存一条检测记录并生成编号，用来回查这次提交。语音编号用于查原话，检测记录编号用于查已保存的参数。</span></div>${recordLink}</section>`;
 }
 let evAudio = null, evPlayT = -1;
 async function renderEvDetail(id) {
-  let v; try { v = await api('GET', '/voice/logs/' + id); } catch (e) { $('evd').innerHTML = `<div class="empty-x">${esc(e.message)}</div>`; return; }
+  const request = S.evDetailRequest = (S.evDetailRequest || 0) + 1;
+  const current = () => request === S.evDetailRequest && S.evSel === id && S.view === 'evi';
+  $('evd').innerHTML = '<div class="empty-x">正在读取语音 #' + id + '…</div>';
   if (evAudio) { evAudio.pause(); evAudio = null; evPlayT = -1; }
+  let v; try { v = await api('GET', '/voice/logs/' + id); } catch (e) { if (current()) $('evd').innerHTML = `<div class="empty-x">${esc(e.message)}</div>`; return; }
+  if (!current()) return;
   let tl = [];
   if (v.ht_code) { try { tl = (await api('GET', `/contracts/${encodeURIComponent(v.ht_code)}/timeline`)).items; } catch (e) {} }
+  if (!current()) return;
   const st = VST[v.status] || ['dim', v.status], res = v.resolution ? (() => { try { return JSON.parse(v.resolution); } catch (e) { return null; } })() : null;
   const rec = tl.find(x => x.type === 'record' && x.record.id === v.record_id && x.kind === v.record_kind);
   const changed = v.corrected && v.corrected.toLowerCase() !== (v.text || '').normalize('NFKC').toLowerCase();
@@ -928,23 +1197,32 @@ async function renderEvDetail(id) {
       <div class="ev-meta"><span>${esc(v.created_at)}</span><span>来源 ${v.source === 'phone' ? '手机' : v.source === 'screen' ? '大屏' : v.source === 'demo' ? '演示' : '—'}</span><span>${v.has_audio ? `录音 ${Number(v.duration_s || 0).toFixed(1)} 秒 · 识别 ${v.elapsed_ms} ms` : '键盘输入'}</span><span>合同 ${esc(v.ht_code || '—')} · ${esc(KIND_LABEL[v.form] || v.form)}</span></div>
       ${v.has_audio && KINDS[v.form] && v.source !== 'demo' ? (() => { const st = (S.script?.steps || []).filter(x => x.say && x.form === v.form); const used = st.find(x => x.clip?.source_voice_id === v.id);
         return st.length ? `<div class="toclip">${used ? `<span class="chip fix">已用作演示第 ${used.index + 1} 步</span>` : ''}<select id="clipStep">${st.map(x => `<option value="${x.index}">第 ${x.index + 1} 步：${esc(x.say)}${x.clip ? '（已有录音，将替换）' : ''}</option>`).join('')}</select><button class="btn-s demo" id="clipGo">用作演示录音</button></div>` : ''; })() : ''}</div>
+    ${v.status === 'review' ? `<div class="cards" id="evRv" style="margin-top:14px;flex:none;overflow:visible">${reviewCard({ ...v, has_audio: false }, false)}</div>` : ''}
+    ${submissionPanel(v, rec)}
     <div class="tri">
       <div class="panel"><div class="ph"><h3>解析过程</h3></div><div class="kv">
         <span>纠错后</span><span>${changed ? `<span class="ins">${esc(v.corrected)}</span>` : '<span class="c-dim">无变化</span>'}</span>
         <span>填入</span><span>${(v.result?.matched || []).map(m => `<span class="chip ${m.via === 'pinyin' ? 'py' : 'ok'}">${esc(m.keyword)} ${esc(m.value)}${m.via === 'pinyin' ? ' · 拼音' : ''}</span>`).join('<br>') || '<span class="c-dim">无</span>'}</span>
         <span>拒收</span><span>${(v.rejected || []).map(r => `<span class="chip ng">「${esc(r.said || r.field)}」${esc(r.reason)}</span>`).join('<br>') || (v.message ? `<span class="chip ng">${esc(v.message)}</span>` : '<span class="c-dim">无</span>')}</span>
         ${res && res.wrong ? `<span>复核</span><span><span class="del">${esc(res.wrong)}</span> → <span class="ins">${esc(res.right)}</span>　重解析：${esc(Object.entries(res.reparsed?.fields || {}).map(([k, x]) => (QC.fieldMeta(v.form, k)?.label || k) + ' ' + x).join('、') || '无')}</span>` : ''}
-      </div>${v.status === 'review' ? `<div class="cards" id="evRv" style="margin-top:14px;flex:none;overflow:visible">${reviewCard({ ...v, has_audio: false }, false)}</div>` : ''}</div>
+      </div></div>
       <div class="panel"><div class="ph"><h3>合同时间线</h3><span class="micro">${esc(v.ht_code || '')}</span></div>${tl.length ? `<div class="tl">${tl.map(x => {
         if (x.type === 'voice') { const y = x.voice, me = y.id === v.id; return `<div class="${y.status === 'review' ? 'warn' : y.status === 'resolved' ? 'fix' : ''} ${me ? 'me' : ''}" data-v="${y.id}"><span class="micro"><span>语音 #${y.id}${me ? ' · 本条' : ''}</span><span>${esc(x.at.slice(11, 19))}</span></span>「${esc(y.text)}」</div>`; }
         const r = x.record, ok = r.is_qualified === 1; return `<div class="${ok ? 'ok' : r.is_qualified === 0 ? 'ng' : 'warn'}"><span class="micro"><span>${KIND_LABEL[x.kind]}记录 #${r.id} · ${ok ? '合格' : r.is_qualified === 0 ? '不合格' : '待校验'}</span><span>${esc(x.at.slice(11, 19))}</span></span>${esc(QC.fieldsOf(x.kind).filter(f => r[f.name] != null && r[f.name] !== '').map(f => f.label + ' ' + r[f.name]).join(' · '))}${x.voice_ids?.length ? `<br><span class="c-dim">依据语音 ${x.voice_ids.map(i => '#' + i).join(' ')}</span>` : ''}</div>`;
       }).join('')}</div>` : '<div class="empty-x">这条语音没有关联合同。</div>'}</div>
-      <div class="panel"><div class="ph"><h3>进了哪条记录</h3></div>${rec ? `<div class="kv"><span>记录</span><span class="mono">${KIND_LABEL[rec.kind]} #${rec.record.id}</span><span>判定</span><span class="${rec.record.is_qualified === 1 ? 'c-ok' : 'c-ng'}">${rec.record.is_qualified === 1 ? '合格' : rec.record.is_qualified === 0 ? '不合格' : '待校验'}</span><span>提交时间</span><span class="mono">${esc(rec.record.created_at)}</span>${QC.fieldsOf(rec.kind).map(f => `<span>${esc(f.label)}</span><span class="mono">${esc(rec.record[f.name] ?? '—')}</span>`).join('')}</div>` : `<div class="empty-x">${v.status === 'review' ? '没有听懂，没有进任何记录（不猜）。' : '还没有提交，或提交时没有关联这条语音。'}</div>`}</div>
+
     </div>`;
   const cv = $('evWave'); let seed = v.id * 9301 + 49297; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
   cv._b = Array.from({ length: 140 }, (_, i) => (0.12 + 0.88 * rnd()) * Math.sin(Math.PI * i / 140) ** 0.5); paintEv();
   $('evd').querySelectorAll('.tl>div[data-v]').forEach(d => d.onclick = () => { S.evSel = +d.dataset.v; renderEvi(); });
-  if ($('evRv')) bindReviewCards($('evRv'));
+  if ($('evRv')) {
+    bindReviewCards($('evRv'));
+    if (S.reviewTarget === id) {
+      S.reviewTarget = null;
+      $('evRv').scrollIntoView({ block: 'center' });
+      $('evRv').querySelector('[data-w]')?.focus({ preventScroll: true });
+    }
+  }
   if ($('clipGo')) $('clipGo').onclick = async () => {
     const step = +$('clipStep').value;
     try { await api('POST', '/demo/clips', { voice_id: v.id, step }); toast(`已设为演示第 ${step + 1} 步的真实录音`, 'ok'); loadClips(); }
@@ -969,7 +1247,7 @@ function onDemo(d) {
     const a = playClip(d.audio_url); view('live');
     $('cap').innerHTML = `<span class="step">演示 ${d.index + 1}/${d.total || S.demo?.total || ''}</span><span class="c-ok">▶ 正在播放现场真实录音</span> · 播完后按当时的识别结果解析、判定`;
     pipe(1, false, [`播放录音 ${d.duration_s ? Number(d.duration_s).toFixed(1) + ' 秒' : ''}`]);
-    $('tr').className = 'tr'; $('tr').innerHTML = '<span class="c-dim">（真实录音播放中…）</span><span class="caret"></span>'; $('cn').innerHTML = ''; $('strip').innerHTML = '';
+    $('tr').className = 'tr'; $('tr').innerHTML = '<span class="c-dim">（真实录音播放中…）</span><span class="caret"></span>'; $('cn').innerHTML = ''; renderParameterContext();
     return;
   }
   S.demo = d.state === 'step' ? d : null;
@@ -985,38 +1263,182 @@ $('dmBtn').onclick = async () => {
   } catch (e) { toast(esc(e.message), 'ng'); }
 };
 
-/* ---------- 手动录入抽屉 ---------- */
-const F = { ht: null, kind: 'drum' };
+/* ---------- 弹窗语音填表：合同信息或当前参数 ---------- */
+const CV = { rec: null, busy: false, available: false, token: 0, timer: null };
+function formVoiceForm() { return F.ht === NEW ? 'contract' : F.kind; }
+function configureFormVoice() {
+  const form = formVoiceForm(), isContract = form === 'contract';
+  const examples = isContract ? ['合同号二零二六四八二七', '客户样例重工，日期今天'] : EX[form];
+  $('cvTitle').textContent = isContract ? '合同语音填表' : KIND_LABEL[form] + '参数语音填表';
+  $('cvMic').setAttribute('aria-label', isContract ? '按住说合同号和客户名称' : '按住说' + KIND_LABEL[form] + '参数');
+  $('cvText').setAttribute('aria-label', isContract ? '输入合同识别文字' : '输入参数识别文字');
+  $('cvText').placeholder = '例如：' + examples[0];
+  $('cvExamples').innerHTML = examples.map(text => `<button type="button">${esc(text)}</button>`).join('');
+  $('cvExamples').querySelectorAll('button').forEach(b => b.onclick = () => { $('cvText').value = b.textContent; parseFormText(b.textContent); });
+}
+function formVoiceControls(active) {
+  $('cvMic').disabled = CV.busy || !CV.available;
+  $('cvMic').classList.toggle('busy', CV.busy);
+  $('cvParse').disabled = active; $('cvText').disabled = active;
+  $('cvExamples').querySelectorAll('button').forEach(b => b.disabled = active);
+  $('fGo').disabled = active;
+}
+function resetFormVoice() {
+  CV.token++; const rec = CV.rec; CV.rec = null; CV.busy = false;
+  if (rec) rec.stop().catch(() => {});
+  clearInterval(CV.timer); $('cvTime').hidden = true; $('cvLevel').hidden = true;
+  $('cvMic').classList.remove('rec'); $('cvMic').setAttribute('aria-pressed', 'false');
+  $('cvResult').hidden = true; $('cvResult').textContent = '';
+  $('cvText').value = '';
+  $('cvStatus').textContent = CV.available ? '按住说话，松开识别；核对后再提交' : '正在检查语音服务…';
+  ['nHt', 'nName', 'nDate'].forEach(id => {
+    if ($(id).closest('.fi').classList.contains('voice')) { $(id).closest('.fi').classList.remove('voice'); $(id + 'H').textContent = ''; }
+  });
+  formVoiceControls(false);
+}
+function formVoiceAvailability(vs) {
+  const support = QC.micSupport();
+  CV.available = support.ok && vs.available && vs.loaded;
+  if (CV.rec || CV.busy) return;
+  $('cvMic').disabled = !CV.available;
+  $('cvStatus').textContent = !support.ok ? support.why : !vs.available ? '语音服务不可用，可用文字解析或手动填写' : !vs.loaded ? '语音模型正在加载，可先手动填写' : '按住说话，松开识别；核对后再提交';
+}
+async function checkFormVoice() {
+  const token = CV.token, vs = await QC.voiceStatus();
+  if (token === CV.token) formVoiceAvailability(vs);
+}
+function applyFormVoice(result) {
+  const isContract = formVoiceForm() === 'contract';
+  const inputs = isContract ? { ht_code: 'nHt', name: 'nName', date: 'nDate' } : Object.fromEntries(QC.fieldsOf(F.kind).map(f => [f.name, 'fv_' + f.name]));
+  let count = 0;
+  Object.entries(result.fields || {}).forEach(([name, value]) => {
+    const id = inputs[name]; if (!id) return;
+    $(id).value = value;
+    if (!isContract) judgeField($(id));
+    $(id).closest('.fi').classList.add('voice');
+    const hint = isContract ? $(id + 'H') : $(id).closest('.fi').querySelector('.hint');
+    const note = (result.notes?.[name] ? result.notes[name] + '，' : '') + (name === 'ht_code' ? '语音填入的合同号，请重点核对' : '语音填入，请核对');
+    hint.textContent = (!isContract && hint.textContent ? hint.textContent + '；' : '') + note;
+    count++;
+  });
+  if (!isContract && count && result.voice_id) {
+    F.voiceIds[F.kind] ||= [];
+    if (!F.voiceIds[F.kind].includes(result.voice_id)) F.voiceIds[F.kind].push(result.voice_id);
+  }
+  const rejected = (result.rejected || []).map(x => `「${x.said || x.field}」没有填入：${x.reason}`);
+  $('cvResult').hidden = false;
+  $('cvResult').innerHTML = `<span class="micro">识别原文</span><p>${esc(result.text || '（空）')}</p>${result.corrected && result.corrected !== result.text ? `<small>纠错后：${esc(result.corrected)}</small>` : ''}${rejected.map(x => `<small>${esc(x)}</small>`).join('')}${result.asr ? `<small>${esc(result.asr.duration_s ?? '—')} 秒音频 · 识别 ${esc(result.asr.elapsed_ms ?? '—')} ms · 降噪 ${esc(QC.denoiseText(result.asr.denoise))}</small>` : ''}`;
+  const empty = `未识别到${isContract ? '合同信息' : '当前表单参数'}，请重说或手动填写`;
+  $('cvStatus').textContent = count ? `已填入 ${count} 项，请核对后提交` : empty;
+  formError(rejected.length ? rejected.join('；') : count ? '' : empty + '。');
+}
+async function parseFormText(text) {
+  if (!text.trim() || CV.rec || CV.busy || !F.ht) return;
+  const token = CV.token; CV.busy = true; formVoiceControls(true);
+  formError(''); $('cvStatus').textContent = '解析中…';
+  try {
+    const result = await QC.sendText(text, formVoiceForm(), F.ht === NEW ? null : F.ht, 'screen');
+    if (token === CV.token) applyFormVoice(result);
+  } catch (e) { if (token === CV.token) { formError(e.message); $('cvStatus').textContent = '解析失败，可重试或手动填写'; } }
+  finally { if (token === CV.token) { CV.busy = false; formVoiceControls(false); } }
+}
+async function startFormVoice() {
+  if (CV.rec || CV.busy || !CV.available || !F.ht) return;
+  const token = CV.token;
+  const rec = QC.recorder({
+    onLevel: level => $('cvLevel').style.setProperty('--level', level),
+    onStart: () => {
+      if (token !== CV.token) return;
+      $('cvMic').classList.add('rec'); $('cvMic').setAttribute('aria-pressed', 'true');
+      $('cvTime').hidden = false; $('cvTime').textContent = '0:00'; $('cvLevel').hidden = false;
+      $('cvStatus').textContent = '正在听…松开结束（最长 60 秒）';
+      const started = Date.now();
+      CV.timer = setInterval(() => { $('cvTime').textContent = '0:' + String(Math.floor((Date.now() - started) / 1000)).padStart(2, '0'); }, 200);
+    },
+    onMax: () => stopFormVoice(),
+  });
+  CV.rec = rec; formVoiceControls(true); formError('');
+  try { await rec.start(); }
+  catch (e) {
+    if (token !== CV.token) return;
+    CV.rec = null; await rec.stop(); formVoiceControls(false);
+    formError(e.name === 'NotAllowedError' ? '没有麦克风权限，请允许浏览器使用麦克风后重试。' : '无法启动录音：' + e.message);
+    $('cvStatus').textContent = '无法录音，可用文字解析或手动填写';
+  }
+}
+async function stopFormVoice() {
+  const rec = CV.rec; if (!rec) return;
+  const token = CV.token; CV.rec = null; CV.busy = true; formVoiceControls(true);
+  clearInterval(CV.timer); $('cvTime').hidden = true; $('cvLevel').hidden = true;
+  $('cvMic').classList.remove('rec'); $('cvMic').setAttribute('aria-pressed', 'false');
+  try {
+    const recording = await rec.stop();
+    if (token !== CV.token) return;
+    if (!recording || recording.dur < 0.5) { $('cvStatus').textContent = '太短了，请按住说完再松开'; return; }
+    $('cvStatus').textContent = '识别中…';
+    const result = await QC.sendAudio(recording.blob, formVoiceForm(), F.ht === NEW ? null : F.ht, 'screen');
+    if (token === CV.token) applyFormVoice(result);
+  } catch (e) { if (token === CV.token) { formError(e.message); $('cvStatus').textContent = '识别失败，可重试或手动填写'; } }
+  finally { if (token === CV.token) { CV.busy = false; formVoiceControls(false); } }
+}
+$('cvMic').addEventListener('pointerdown', e => { e.preventDefault(); $('cvMic').setPointerCapture?.(e.pointerId); startFormVoice(); });
+$('cvMic').addEventListener('pointerup', e => { e.preventDefault(); stopFormVoice(); });
+$('cvMic').addEventListener('pointercancel', () => stopFormVoice());
+$('cvMic').addEventListener('contextmenu', e => e.preventDefault());
+$('cvMic').addEventListener('keydown', e => { if (['Space', 'Enter'].includes(e.code) && !e.repeat) { e.preventDefault(); startFormVoice(); } });
+$('cvMic').addEventListener('keyup', e => { if (['Space', 'Enter'].includes(e.code)) { e.preventDefault(); stopFormVoice(); } });
+$('cvParse').onclick = () => parseFormText($('cvText').value);
+$('cvText').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); parseFormText(e.target.value); } };
+$('cvExamples').querySelectorAll('button').forEach(b => b.onclick = () => { $('cvText').value = b.textContent; parseFormText(b.textContent); });
+['nHt', 'nName', 'nDate'].forEach(id => $(id).addEventListener('input', () => { if ($(id).closest('.fi').classList.contains('voice')) { $(id).closest('.fi').classList.remove('voice'); $(id + 'H').textContent = ''; } }));
+
+/* ---------- 手动录入弹窗 ---------- */
+const F = { ht: null, kind: 'drum', voiceIds: {} };
 const NEW = '__new__';
-function dwOpen(on) { $('dw').classList.toggle('on', on); $('dwBg').classList.toggle('on', on); }
+let formReturnFocus = null;
+function dwOpen(on) {
+  if (on) formReturnFocus = document.activeElement;
+  else resetFormVoice();
+  $('dw').classList.toggle('on', on); $('dwBg').classList.toggle('on', on);
+  $('dw').setAttribute('aria-hidden', String(!on));
+  if (!on && formReturnFocus) formReturnFocus.focus();
+}
+function formError(message, field) {
+  $('fErr').textContent = message || ''; $('fErr').hidden = !message;
+  if (field) field.focus();
+}
 async function openForm(kind, focusName) {
-  F.ht = S.ht || NEW; F.kind = kind || S.form || 'drum';
+  F.ht = S.ht || NEW; F.kind = kind || S.form || 'drum'; F.voiceIds = {};
   $('fCt').innerHTML = `<option value="${NEW}">＋ 新建合同…</option>` + S.contracts.map(c => `<option value="${esc(c.ht_code)}">${esc(c.ht_code)}　${esc(c.name)}　· ${esc(c.status)}</option>`).join('');
-  $('fCt').value = F.ht; $('fRes').innerHTML = '';
+  $('fCt').value = F.ht; $('fRes').innerHTML = ''; formError('');
   await formCt(); renderFormFields(true); dwOpen(true);
   setTimeout(() => { const el = focusName ? $('fv_' + focusName) : (F.ht === NEW ? $('nName') : $('fFields').querySelector('input')); el && el.focus(); }, 320);
 }
 async function formCt() {
+  resetFormVoice();
   const isNew = F.ht === NEW; $('fNew').hidden = !isNew; $('fGo').textContent = isNew ? '创建合同并提交' : '提交并校验';
-  if (isNew) { try { const sg = await api('GET', '/contracts/suggest'); $('nHt').value = sg.ht_code || ''; $('nHtH').textContent = sg.ht_code ? '已按今天自动编号，可修改' : '今天的合同号已用完，请手动填写其他日期'; } catch (e) {} $('nDate').value = QC.todayStr(); }
+  checkFormVoice();
+  if (isNew) { try { const sg = await api('GET', '/contracts/suggest'); $('nHt').value = sg.ht_code || ''; $('nHtH').textContent = sg.ht_code ? '已按今年＋4位随机数字编号，可修改' : '本年度的四位随机合同号已用完，请联系管理员'; } catch (e) {} $('nDate').value = QC.todayStr(); }
   F.latest = null;
   if (!isNew) { try { F.latest = (await api('GET', '/contracts/' + encodeURIComponent(F.ht))).latest; } catch (e) {} }
 }
 function renderFormFields(fill) {
+  configureFormVoice();
   document.querySelectorAll('#fKind button').forEach(b => b.classList.toggle('on', b.dataset.k === F.kind));
   const last = F.latest?.[F.kind] || {}, draft = F.ht === S.ht ? (S.draft[F.kind] || {}) : {};
   $('fFields').innerHTML = QC.fieldsOf(F.kind).map(f => {
     const v = fill ? (draft[f.name] ?? '') : '', isText = f.type === 'text';
-    const rule = isText ? '不校验' : QC.rangeText(QC.ruleOf(F.kind, f.name)) + ' ' + (f.unit || '');
+    const rule = isText && !f.numeric_list ? '不校验' : QC.rangeText(QC.ruleOf(F.kind, f.name)) + ' ' + (f.unit || '');
     return `<div class="fi ${isText ? 'full' : ''} ${draft[f.name] != null && fill ? 'dft' : ''}" id="fw_${f.name}"><label>${esc(f.label)}<em>${esc(rule)}</em></label>
       <div class="in"><input id="fv_${f.name}" data-n="${f.name}" value="${esc(v)}" ${isText ? 'style="font-family:var(--sans)"' : 'inputmode="decimal"'} placeholder="${last[f.name] != null && last[f.name] !== '' ? '上次 ' + esc(last[f.name]) + '（留空沿用）' : (isText ? '自由文本' : '0.00')}">${f.unit ? `<span class="u">${esc(f.unit)}</span>` : ''}</div>
       <span class="hint"></span></div>`;
   }).join('');
-  $('fFields').querySelectorAll('input').forEach(i => { i.oninput = () => judgeField(i); judgeField(i); i.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('fGo').click(); } }; });
+  $('fFields').querySelectorAll('input').forEach(i => { i.oninput = () => { i.closest('.fi').classList.remove('voice'); judgeField(i); }; judgeField(i); i.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('fGo').click(); } }; });
 }
 function judgeField(i) {
   const n = i.dataset.n, w = $('fw_' + n), f = QC.fieldMeta(F.kind, n), v = i.value.trim(), h = w.querySelector('.hint');
   w.classList.remove('ok', 'ng', 'warn');
+  if (f.numeric_list && v) { const j=QC.prejudge(F.kind,n,v); w.classList.add(j.cls); h.textContent=j.verdict; return; }
   if (!v || f.type === 'text') { h.textContent = ''; return; }
   const num = v.replace(/[０-９．]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
   if (!/^-?\d+(\.\d+)?$/.test(num)) { w.classList.add('ng'); h.textContent = '请填数字'; return; }
@@ -1025,11 +1447,21 @@ function judgeField(i) {
 }
 $('addBtn').onclick = () => openForm(S.form);
 $('dwX').onclick = $('dwBg').onclick = () => dwOpen(false);
-document.addEventListener('keydown', e => { if (e.key === 'Escape') dwOpen(false); });
-$('fCt').onchange = async () => { F.ht = $('fCt').value; $('fRes').innerHTML = ''; await formCt(); renderFormFields(true); };
-document.querySelectorAll('#fKind button').forEach(b => b.onclick = () => { F.kind = b.dataset.k; $('fRes').innerHTML = ''; renderFormFields(true); });
-$('fClr').onclick = () => { $('fFields').querySelectorAll('input').forEach(i => { i.value = ''; judgeField(i); }); $('fRes').innerHTML = ''; };
+document.addEventListener('keydown', e => {
+  if (!$('dw').classList.contains('on')) return;
+  if (e.key === 'Escape') { e.preventDefault(); dwOpen(false); }
+  if (e.key === 'Tab') {
+    const items = [...$('dw').querySelectorAll('button:not(:disabled),input,select')].filter(el => el.getClientRects().length);
+    const first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+});
+$('fCt').onchange = async () => { F.ht = $('fCt').value; F.voiceIds = {}; $('fRes').innerHTML = ''; formError(''); await formCt(); renderFormFields(true); };
+document.querySelectorAll('#fKind button').forEach(b => b.onclick = () => { resetFormVoice(); F.kind = b.dataset.k; $('fRes').innerHTML = ''; formError(''); renderFormFields(true); checkFormVoice(); });
+$('fClr').onclick = () => { resetFormVoice(); checkFormVoice(); $('fFields').querySelectorAll('input').forEach(i => { i.value = ''; judgeField(i); }); $('fRes').innerHTML = ''; formError(''); };
 $('fGo').onclick = async () => {
+  formError('');
   const body = {}; let bad = false;
   QC.fieldsOf(F.kind).forEach(f => {
     const i = $('fv_' + f.name), v = i.value.trim().replace(/[０-９．]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
@@ -1037,31 +1469,33 @@ $('fGo').onclick = async () => {
     const last = F.latest?.[F.kind]?.[f.name];
     body[f.name] = v === '' ? (last ?? null) : v;
   });
-  if (bad) { toast('有字段填写格式不对', 'ng'); return; }
-  if (!Object.values(body).some(v => v != null && v !== '')) { toast('至少填写一项', 'ng'); return; }
+  if (bad) { formError('有字段填写格式不对，请检查标红的参数。', $('fFields').querySelector('.fi.ng input')); return; }
+  if (!Object.values(body).some(v => v != null && v !== '')) { formError('至少填写一项参数后再提交。', $('fFields').querySelector('input')); return; }
   $('fGo').disabled = true;
   try {
     let ht = F.ht;
     if (ht === NEW) {
-      const name = $('nName').value.trim(); if (!name) { $('nNameH').textContent = '请填写客户名称'; $('fGo').disabled = false; return; }
+      const name = $('nName').value.trim(); if (!name) { $('nNameH').textContent = '请填写客户名称'; formError('请填写客户名称。', $('nName')); $('fGo').disabled = false; return; }
       $('nNameH').textContent = '';
       try { const c = await api('POST', '/contracts?source=screen', { ht_code: $('nHt').value.trim(), name, date: $('nDate').value.trim() || undefined }); ht = c.ht_code; }
-      catch (e) { $('nHtH').textContent = e.message + (e.suggestion ? `，可用 ${e.suggestion}` : ''); if (e.suggestion) $('nHt').value = e.suggestion; $('fGo').disabled = false; return; }
+      catch (e) { const message = e.message + (e.suggestion ? `，可用 ${e.suggestion}` : ''); $('nHtH').textContent = message; formError(message); if (e.suggestion) $('nHt').value = e.suggestion; $('fGo').disabled = false; return; }
       F.ht = ht; await loadContracts();
       $('fCt').innerHTML = `<option value="${NEW}">＋ 新建合同…</option>` + S.contracts.map(c => `<option value="${esc(c.ht_code)}">${esc(c.ht_code)}　${esc(c.name)}　· ${esc(c.status)}</option>`).join('');
       $('fCt').value = ht; $('fNew').hidden = true; $('fGo').textContent = '提交并校验';
     }
     if (ht !== S.ht) await focus(ht, F.kind, { push: true, reason: '主管切换了检验对象' });
-    const vq = ht === S.ht && S.dvids[F.kind].length ? '&voice_ids=' + S.dvids[F.kind].slice(-50).join(',') : '';
+    const ids = [...new Set([...(ht === S.ht ? S.dvids[F.kind] : []), ...(F.voiceIds[F.kind] || [])])].slice(-50);
+    const vq = ids.length ? '&voice_ids=' + ids.join(',') : '';
     const r = await api('POST', `/contracts/${encodeURIComponent(ht)}/records/${F.kind}?source=screen${vq}`, body);
     const v = r.validation, ok = v && v.is_qualified === 1;
     $('fRes').innerHTML = `<div class="res ${ok ? 'ok' : 'ng'}"><b>${v ? (ok ? `${KIND_LABEL[F.kind]}参数合格` : `已保存 · ${KIND_LABEL[F.kind]}参数记为不合格`) : '已保存，校验未完成'}</b> · 记录 #${r.record.id}<br>${ok ? '合同状态：' + esc(r.contract_status.status) + '（' + esc(r.contract_status.reason) + '）' : v ? v.failures.map(esc).join('<br>') + '<br>合同状态：' + esc(r.contract_status.status) : esc(r.warning || '')}</div>`;
+    F.voiceIds[F.kind] = []; resetFormVoice();
     F.latest = (await api('GET', '/contracts/' + encodeURIComponent(ht))).latest;
     renderFormFields(false);   // 合格与否都清空，占位显示刚提交的值
     if (!S.hasBus) handleRecord({ source: 'screen', data: { ...r, kind: F.kind, ht_code: ht } });
   } catch (e) {
     if (e.fields) Object.entries(e.fields).forEach(([k, m]) => { const w = $('fw_' + k); if (w) { w.classList.add('ng'); w.querySelector('.hint').textContent = m; } });
-    else toast(esc(e.message), 'ng');
+    formError(e.message + (e.fields ? '：' + Object.values(e.fields).join('；') : ''));
   }
   $('fGo').disabled = false;
 };
@@ -1070,8 +1504,8 @@ $('fGo').onclick = async () => {
 async function handleVoice(ev) {
   const p = ev.data; S.voices.unshift({ ev, p }); if (S.voices.length > 200) S.voices.pop();
   if (S.view === 'asr') renderASR();
-  if (p.ht_code && p.ht_code !== S.ht) await focus(p.ht_code, p.form);
-  if (p.form && KINDS[p.form] && p.form !== S.form) { S.form = p.form; renderChips(); }
+  if (p.ht_code && p.ht_code !== S.ht && !await focus(p.ht_code, p.form)) return;
+  if (p.form && KINDS[p.form] && p.form !== S.form) { resetStageContext(); S.form = p.form; renderChips(); }
   if (p.form !== 'contract' && KINDS[p.form] && p.voice_id) S.dvids[p.form].push(p.voice_id);
   if (S.view === 'evi') renderEvi();
   if (p.form !== 'contract') { Object.entries(p.fields || {}).forEach(([k, v]) => S.draft[p.form][k] = v); renderSheet(Object.keys(p.fields || {}).map(n => p.form + '.' + n)); }
@@ -1079,10 +1513,12 @@ async function handleVoice(ev) {
 }
 async function handleRecord(ev) {
   const d = ev.data;
-  if (d.ht_code !== S.ht) await focus(d.ht_code, d.kind);
+  if (d.ht_code !== S.ht && !await focus(d.ht_code, d.kind)) return;
+  if (KINDS[d.kind] && S.form !== d.kind) { resetStageContext(); S.form = d.kind; renderChips(); }
   S.draft[d.kind] = {}; S.dvids[d.kind] = [];   // 合格与否都算正常提交
   if (S.view === 'evi') renderEvi();
-  await loadDetail(); S.shown = true;
+  if (!await loadDetail() || d.ht_code !== S.ht || d.kind !== S.form) return;
+  S.shown = true;
   renderSheet(QC.fieldsOf(d.kind).map(f => d.kind + '.' + f.name)); renderGate();
   presentRecord(d, ev.source);
   loadContracts();
@@ -1095,7 +1531,7 @@ QC.onEvent(async ev => {
     else if (ev.type === 'record') await handleRecord(ev);
     else if (ev.type === 'draft' && ev.source !== 'screen') {
       if (d.ht_code && d.ht_code !== S.ht) await focus(d.ht_code, d.form);
-      if (d.form && KINDS[d.form]) { S.draft[d.form] = { ...(d.fields || {}) }; if (d.form !== S.form) { S.form = d.form; renderChips(); } }
+      if (d.form && KINDS[d.form]) { S.draft[d.form] = { ...(d.fields || {}) }; if (d.form !== S.form) { resetStageContext(); S.form = d.form; renderChips(); } }
       renderSheet();
     }
     else if (ev.type === 'focus' && ev.source !== 'screen') {
@@ -1116,6 +1552,7 @@ QC.bus.onState = m => { S.hasBus = m === 'live' || m === 'poll'; };
 function setDev(el, on, text) { el.className = 'dev ' + (on ? 'on' : 'off'); el.innerHTML = `<i></i>${text}`; }
 async function tickStatus() {
   const vs = await QC.voiceStatus();
+  if ($('dw').classList.contains('on') && CV.available !== Boolean(QC.micSupport().ok && vs.available && vs.loaded)) formVoiceAvailability(vs);
   setDev($('devAsr'), vs.available && vs.loaded, vs.available ? (vs.loaded ? '语音识别 · 就绪' : '语音识别 · 加载中') : '语音识别 · 不可用');
   $('clock').textContent = QC.hhmmss();
 }
@@ -1137,6 +1574,7 @@ QC.presence('screen', p => {
   try { const r = await api('GET', '/events?after=0&limit=500'); const has = new Set(S.contracts.map(c => c.ht_code)); const f = [...r.items].reverse().find(x => x.type === 'focus' && has.has(x.data?.ht_code)); if (f) { S.ht = f.data.ht_code; S.form = f.data.form && KINDS[f.data.form] ? f.data.form : 'drum'; } r.items.filter(x => x.type === 'voice').forEach(x => S.voices.unshift({ ev: x, p: x.data })); } catch (e) {}
   if (!S.ht) { const h = load('qcs_ht', null); if (S.contracts.some(c => c.ht_code === h)) S.ht = h; }
   await loadDetail(); if (!S.detail) S.ht = null;
+  locateContractPage(S.ht);
   $('ttsSw').classList.toggle('on', S.tts);
   renderChips(); renderLive(); idleStage();
   view(load('qcs_view', 'live'));

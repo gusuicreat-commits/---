@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.fields import load_fields, validated_fields
 from app.models import Base, Rule
+from app.migrations import migrate_paint_primer_text
 
 
 @lru_cache(maxsize=16)
@@ -27,6 +28,7 @@ def SessionLocal(**kwargs) -> Session:
 def init_db(engine=None):
     engine = engine if engine is not None else get_engine()
     Base.metadata.create_all(engine)
+    migrate_paint_primer_text(engine)
     with Session(engine) as session:
         existing = set(session.execute(select(Rule.table_name, Rule.name)).all())
         for table in load_fields():

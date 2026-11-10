@@ -1,19 +1,118 @@
 {
   "drum_param": {
-    "kind": "drum", "label": "卷筒",
+    "kind": "drum",
+    "label": "卷筒",
     "fields": [
-      {"name": "diameter", "label": "直径", "unit": "mm", "type": "number", "validate": true},
-      {"name": "length",   "label": "长度", "unit": "mm", "type": "number", "validate": true},
-      {"name": "thick",    "label": "厚度", "unit": "mm", "type": "number", "validate": true},
-      {"name": "light",    "label": "光段", "unit": "mm", "type": "number", "validate": true}
+      {
+        "name": "diameter",
+        "label": "直径",
+        "unit": "mm",
+        "type": "number",
+        "validate": true
+      },
+      {
+        "name": "length",
+        "label": "长度",
+        "unit": "mm",
+        "type": "number",
+        "validate": true
+      },
+      {
+        "name": "thick",
+        "label": "厚度",
+        "unit": "mm",
+        "type": "number",
+        "validate": true
+      },
+      {
+        "name": "light",
+        "label": "光段",
+        "unit": "mm",
+        "type": "number",
+        "validate": true
+      }
     ]
   },
   "travel_drive_param": {
-    "kind": "travel_drive", "label": "大车传动",
+    "kind": "travel_drive",
+    "label": "大车传动",
     "fields": [
-      {"name": "reducer_nameplate", "label": "减速机铭牌", "type": "text", "max_len": 255, "validate": false},
-      {"name": "motor_nameplate",   "label": "电机铭牌",   "type": "text", "max_len": 255, "validate": false},
-      {"name": "noise",             "label": "噪声", "unit": "dB", "type": "number", "validate": true}
+      {
+        "name": "reducer_nameplate",
+        "label": "减速机铭牌",
+        "type": "text",
+        "max_len": 255,
+        "validate": false
+      },
+      {
+        "name": "motor_nameplate",
+        "label": "电机铭牌",
+        "type": "text",
+        "max_len": 255,
+        "validate": false
+      },
+      {
+        "name": "noise",
+        "label": "噪声",
+        "unit": "dB",
+        "type": "number",
+        "validate": true
+      }
+    ]
+  },
+  "control_cabinet_param": {
+    "kind": "control_cabinet",
+    "label": "控制柜",
+    "fields": [
+      {
+        "name": "insulation_resistance",
+        "label": "绝缘电阻",
+        "unit": "MΩ",
+        "type": "number",
+        "validate": true
+      },
+      {
+        "name": "control_wire_torque",
+        "label": "控制线力矩",
+        "unit": "N·m",
+        "type": "number",
+        "validate": true
+      },
+      {
+        "name": "electrical_clearance",
+        "label": "电气间隙",
+        "unit": "mm",
+        "type": "number",
+        "validate": true
+      }
+    ]
+  },
+  "travel_paint_param": {
+    "kind": "travel_paint",
+    "label": "大车油漆",
+    "fields": [
+      {
+        "name": "primer_thickness_ratio",
+        "label": "底漆厚度",
+        "type": "text",
+        "validate": true,
+        "max_len": 255,
+        "numeric_list": true
+      },
+      {
+        "name": "total_thickness_ratio",
+        "label": "面漆厚度",
+        "unit": "%",
+        "type": "number",
+        "validate": true
+      },
+      {
+        "name": "adhesion_loss_ratio",
+        "label": "附着力",
+        "unit": "%",
+        "type": "number",
+        "validate": true
+      }
     ]
   }
 }

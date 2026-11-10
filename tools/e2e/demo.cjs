@@ -26,7 +26,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     await sleep(300);
   }
   await sleep(1500);
-  console.log('演示结束 导出闸门:', await S.textContent('#gateP'), '| 合同:', await S.$eval('#ctSel', e => e.value));
+  console.log('演示结束 导出闸门:', await S.textContent('#gateP'), '| 合同:', await S.textContent('#detailContract'));
   await S.screenshot({ path: `${OUT}/d12_大屏_演示完成.png` }); await P.screenshot({ path: `${OUT}/d12_手机_演示完成.png` });
 
   // 2) 手机换到另一个（非演示）合同再录音，避免演示合同因混入真人语音而不能回收

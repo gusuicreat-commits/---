@@ -32,7 +32,10 @@ def test_boundaries(table, name, label, value, qualified):
     assert item["ok"] is qualified
     assert result["is_qualified"] == int(qualified)
     if not qualified:
-        assert item["reason"] == f"{label} {fmt(Decimal(value))} {item['unit']}，超出 10～20"
+        if name == 'primer_thickness_ratio':
+            assert item['reason'] == f'第1个测点 {fmt(Decimal(value))} 不合格，超出 10～20'
+        else:
+            assert item["reason"] == f"{label} {fmt(Decimal(value))} {item['unit']}，超出 10～20"
 
 
 @pytest.mark.parametrize("table,name,label", PARAMETERS)

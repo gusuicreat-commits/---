@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/voice")
 
 
 def _check_form(form: str) -> None:
-    if form not in {"contract", "drum", "travel_drive"}:
+    if form not in parser.load_voice_config()["forms"]:
         raise Invalid("BAD_FORM", "表单类型不正确")
 
 

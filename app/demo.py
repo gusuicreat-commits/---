@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import re
 import threading
 from contextlib import contextmanager
 from datetime import date
@@ -218,9 +219,10 @@ class DemoRunner:
             with self.session_factory() as session:
                 code = contracts.suggestion(session)
                 if code is None:
-                    candidates = find_demo_contracts(session, today_bj())
+                    candidates = [code for code in find_demo_contracts(session)
+                                  if re.fullmatch(rf"{today_bj().year:04d}[0-9]{{4}}", code)]
                     if not candidates:
-                        raise Conflict("NO_CONTRACT_CODE", "今天的合同号已用完")
+                        raise Conflict("NO_CONTRACT_CODE", "本年度的四位随机合同号已用完")
                     code = recycled = candidates[0]
                     purge_demo_contract(session, code)
                     bus.publish("contract", {"action": "deleted", "contract": {"ht_code": code}}, "demo")
