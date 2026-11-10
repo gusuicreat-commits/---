@@ -4,15 +4,20 @@ import json
 import logging
 import os
 import threading
+from datetime import date
 from pathlib import Path
 from uuid import uuid4
 
-from app.config import ROOT
-from app.errors import AppError, Conflict
+from sqlalchemy import delete, or_, select
+
+from app.config import ROOT, get_settings
+from app.errors import AppError, Conflict, Invalid
 from app.events import bus
 from app.fields import table_by_kind
+from app.models import Contract, MODEL_BY_TABLE, VoiceLog
 from app.services import contracts, export, records, voicelog
 from app.services.status import latest_records
+from app.timeutil import today_bj
 
 
 def load_script():
@@ -21,6 +26,48 @@ def load_script():
         path = ROOT / path
     with path.open(encoding="utf-8") as stream:
         return json.load(stream)
+
+
+def _demo_contract_query():
+    logs = select(VoiceLog.id).where(VoiceLog.ht_code == Contract.ht_code)
+    other_logs = logs.where(or_(VoiceLog.source != "demo", VoiceLog.source.is_(None)))
+    return select(Contract.ht_code).where(
+        Contract.name == load_script()["name"], logs.exists(), ~other_logs.exists())
+
+
+def find_demo_contracts(session, day: date | None = None) -> list[str]:
+    """只识别有演示语音证据、且没有其他来源语音的同名合同。"""
+    query = _demo_contract_query()
+    if day is not None:
+        query = query.where(Contract.date == day)
+    return list(session.scalars(query.order_by(Contract.ht_code)))
+
+
+def purge_demo_contract(session, ht_code) -> dict:
+    """在同一事务内删除演示数据，提交成功后清理录音，保留导出留档。"""
+    try:
+        if session.scalar(_demo_contract_query().where(Contract.ht_code == ht_code)) is None:
+            raise Invalid("NOT_DEMO", "不是演示合同，不能删除")
+        audio_paths = session.scalars(select(VoiceLog.audio_path).where(
+            VoiceLog.ht_code == ht_code, VoiceLog.audio_path.is_not(None))).all()
+        record_count = sum(session.execute(delete(model).where(
+            model.ht_code == ht_code)).rowcount for model in MODEL_BY_TABLE.values())
+        voice_count = session.execute(delete(VoiceLog).where(VoiceLog.ht_code == ht_code)).rowcount
+        session.execute(delete(Contract).where(Contract.ht_code == ht_code))
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    for audio_path in audio_paths:
+        try:
+            root = get_settings().audio_dir.resolve()
+            target = (root / audio_path).resolve()
+            if not target.is_relative_to(root):
+                raise ValueError("录音路径超出录音目录")
+            target.unlink(missing_ok=True)
+        except (OSError, ValueError):
+            logging.exception("删除演示录音失败：%s", audio_path)
+    return {"ht_code": ht_code, "records": record_count, "voice_logs": voice_count}
 
 
 def run_script(session_factory, steps, ht_code, run_id=None, *, speed=1.0,
@@ -90,7 +137,8 @@ class DemoRunner:
         self._lock = threading.Lock()
         self._stop = threading.Event()
         self._thread = None
-        self._status = {"running": False, "run_id": None, "ht_code": None, "index": -1, "total": 0}
+        self._status = {"running": False, "run_id": None, "ht_code": None, "index": -1,
+                        "total": 0, "recycled": None}
 
     def status(self):
         with self._lock:
@@ -101,21 +149,39 @@ class DemoRunner:
             if self._status["running"]:
                 raise Conflict("DEMO_RUNNING", "演示正在进行")
             script = load_script()
+            recycled = None
             with self.session_factory() as session:
                 code = contracts.suggestion(session)
                 if code is None:
-                    raise Conflict("NO_CONTRACT_CODE", "今天的合同号已用完")
+                    candidates = find_demo_contracts(session, today_bj())
+                    if not candidates:
+                        raise Conflict("NO_CONTRACT_CODE", "今天的合同号已用完")
+                    code = recycled = candidates[0]
+                    purge_demo_contract(session, code)
+                    bus.publish("contract", {"action": "deleted", "contract": {"ht_code": code}}, "demo")
                 contract = contracts.create(session, code, script["name"])
             bus.publish("contract", {"action": "created", "contract": contract}, "demo")
             run_id = uuid4().hex
             self._stop = threading.Event()
             self._status = {"running": True, "run_id": run_id, "ht_code": code,
-                            "index": -1, "total": len(script["steps"])}
+                            "index": -1, "total": len(script["steps"]), "recycled": recycled}
             self._thread = threading.Thread(target=self._run,
                                             args=(script["steps"], code, run_id, speed, self._stop),
                                             daemon=True)
             self._thread.start()
-            return {key: self._status[key] for key in ("run_id", "ht_code", "total")}
+            return {key: self._status[key] for key in ("run_id", "ht_code", "total", "recycled")}
+
+    def reset(self):
+        with self._lock:
+            if self._status["running"]:
+                raise Conflict("DEMO_RUNNING", "演示正在进行")
+            deleted = []
+            with self.session_factory() as session:
+                for code in find_demo_contracts(session):
+                    purge_demo_contract(session, code)
+                    deleted.append(code)
+                    bus.publish("contract", {"action": "deleted", "contract": {"ht_code": code}}, "demo")
+            return {"deleted": deleted}
 
     def _run(self, steps, code, run_id, speed, stop):
         def progress(index):
