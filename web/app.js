@@ -442,7 +442,7 @@ function mountVoice(form, f, lockFields) {
         const n = 64, w = cv.width / n;
         for (let i = 0; i < n; i++) {
           const v = Math.abs(buf[Math.floor(i * buf.length / n)] - 128) / 128, h = Math.max(3, v * cv.height * 1.8);
-          g.fillStyle = '#ff5a4e'; g.fillRect(i * w + 2, (cv.height - h) / 2, w - 4, h);
+          g.fillStyle = '#ec6a60'; g.fillRect(i * w + 2, (cv.height - h) / 2, w - 4, h);
         }
         raf = requestAnimationFrame(draw);
       };
@@ -591,7 +591,7 @@ async function pageExports() {
       $('#allres').innerHTML = `<div class="card" style="margin-bottom:18px"><div class="hd"><h3>批量导出结果</h3><span class="sp"></span>
         <span class="pill ok">成功 ${r.succeeded.length}</span>${r.failed.length ? `<span class="pill ng">失败 ${r.failed.length}</span>` : ''}<span class="pill part">跳过不合格 ${r.skipped}</span></div>
         <div class="res">${r.succeeded.map(x => `<div class="ri"><span class="ht mono">${esc(x.ht_code)}</span><span class="shs">${x.sheets.map(s => `<span class="${s.ok ? '' : 'bad'}" title="${esc(s.error || '')}">${esc(s.name)}${s.ok ? '' : ' · 失败'}</span>`).join('')}</span><span class="sp"></span><span class="mono" style="color:var(--tx3);font-size:12px">${esc(x.file)}</span></div>`).join('')}
-        ${r.failed.map(x => `<div class="ri" style="border-color:rgba(255,90,78,.35)"><span class="ht mono">${esc(x.ht_code)}</span><span style="color:var(--red)">${esc(x.reason)}</span></div>`).join('')}
+        ${r.failed.map(x => `<div class="ri" style="border-color:rgba(236,106,96,.35)"><span class="ht mono">${esc(x.ht_code)}</span><span style="color:var(--red)">${esc(x.reason)}</span></div>`).join('')}
         ${!r.succeeded.length && !r.failed.length ? '<div class="empty" style="padding:20px">没有可导出的合格合同</div>' : ''}</div></div>`;
       loadFiles();
     } catch (e) { toast(e.message, 'ng'); }

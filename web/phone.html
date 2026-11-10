@@ -11,7 +11,7 @@
 :root{
   --bg:#000; --card:#111113; --card2:#19191c; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
   --tx:#f5f5f7; --tx2:#a1a1aa; --tx3:#63636b; --tx4:#2e2e33;
-  --lime:#c6f43f; --red:#ff5a4e; --amber:#ffb547; --violet:#aa9cff;
+  --acc:#5b8def; --acc-d:rgba(91,141,239,.12); --lime:#4cbf86; --red:#ec6a60; --amber:#e2a446; --violet:var(--acc);
   --sans:-apple-system,"SF Pro Text","PingFang SC","Helvetica Neue",sans-serif;
   --disp:"SF Pro Display",-apple-system,"PingFang SC",sans-serif;
   --mono:"SF Mono",ui-monospace,Menlo,monospace;
@@ -20,10 +20,10 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{background:#050506;color:var(--tx);font:15px/1.5 var(--sans);-webkit-font-smoothing:antialiased;overflow:hidden;display:grid;place-items:center}
-body::before{content:"";position:fixed;inset:0;background:radial-gradient(700px 500px at 50% 40%,rgba(198,244,63,.05),transparent 70%);pointer-events:none}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(700px 500px at 50% 40%,rgba(91,141,239,.03),transparent 70%);pointer-events:none}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 input{font:inherit;color:inherit}
-.c-ok{color:var(--lime)} .c-ng{color:#ff8a80} .c-warn{color:var(--amber)} .c-dim{color:var(--tx3)}
+.c-ok{color:var(--lime)} .c-ng{color:#f0a39b} .c-warn{color:var(--amber)} .c-dim{color:var(--tx3)}
 
 .stagewrap{display:flex;flex-direction:column;align-items:center;gap:18px}
 .cap{font:500 11px/1 var(--mono);letter-spacing:.2em;color:var(--tx3);text-transform:uppercase}
@@ -39,7 +39,7 @@ input{font:inherit;color:inherit}
 .island.open{width:calc(100% - 20px);height:72px;border-radius:28px;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 12px 40px rgba(0,0,0,.6)}
 .island.open .ic,.island.open .tx{opacity:1;transition-delay:.15s}
 .island.ng .ic{background:var(--red)} .island.warn .ic{background:var(--amber)} .island.ok .ic{background:var(--lime)} .island.fix .ic{background:var(--violet)}
-.island.ng .tx b{color:#ff8a80} .island.warn .tx b{color:var(--amber)} .island.ok .tx b{color:var(--lime)} .island.fix .tx b{color:var(--violet)}
+.island.ng .tx b{color:#f0a39b} .island.warn .tx b{color:var(--amber)} .island.ok .tx b{color:var(--lime)} .island.fix .tx b{color:var(--violet)}
 .island.rec{width:150px}
 .island.rec::after{content:"";position:absolute;right:16px;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--red);animation:blink 1s infinite}
 @keyframes blink{50%{opacity:.2}}
@@ -54,10 +54,10 @@ input{font:inherit;color:inherit}
 .ct small{display:block;font-size:12px;color:var(--tx3)}
 .ct b{display:flex;align-items:center;gap:6px;font:600 20px/1.3 var(--mono)}
 .ct b i{font-style:normal;color:var(--tx3);font:400 16px var(--sans)}
-.ct b.none{font-family:var(--sans);color:var(--lime);font-size:18px}
+.ct b.none{font-family:var(--sans);color:var(--acc);font-size:18px}
 .ct .nm{display:block;font-size:12.5px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .icb{width:38px;height:38px;border-radius:12px;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;color:var(--tx3);flex:none}
-.icb.on{color:var(--lime);border-color:rgba(198,244,63,.4)}
+.icb.on{color:var(--acc);border-color:rgba(91,141,239,.4)}
 
 .seg{display:grid;grid-template-columns:repeat(2,1fr);margin:12px 20px 0;padding:3px;border-radius:12px;background:var(--card);border:1px solid var(--line);flex:none}
 .seg button{flex:1;height:34px;border-radius:9px;font-size:14px;color:var(--tx3);display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s}
@@ -70,8 +70,8 @@ input{font:inherit;color:inherit}
 .banner{border-radius:16px;padding:12px 14px;font-size:13.5px;line-height:1.55;display:flex;gap:10px;align-items:flex-start}
 .banner b{font-weight:600}
 .banner .dot{width:20px;height:20px;border-radius:50%;flex:none;display:grid;place-items:center;margin-top:1px}
-.banner.ok{background:rgba(198,244,63,.09);border:1px solid rgba(198,244,63,.3)} .banner.ok .dot{background:var(--lime)}
-.banner.ng{background:rgba(255,90,78,.1);border:1px solid rgba(255,90,78,.35)} .banner.ng .dot{background:var(--red)}
+.banner.ok{background:rgba(76,191,134,.09);border:1px solid rgba(76,191,134,.3)} .banner.ok .dot{background:var(--lime)}
+.banner.ng{background:rgba(236,106,96,.1);border:1px solid rgba(236,106,96,.35)} .banner.ng .dot{background:var(--red)}
 .banner.info{background:var(--card);border:1px solid var(--line);color:var(--tx2)}
 .form{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;flex:none}
 .fr{display:flex;align-items:center;gap:10px;padding:0 16px;min-height:62px;border-bottom:1px solid var(--line);position:relative;transition:background .3s}
@@ -87,19 +87,19 @@ input{font:inherit;color:inherit}
 .fr.txt input{text-align:left;font:16px var(--sans);height:36px}
 .fr .tip{position:absolute;right:16px;bottom:4px;font-size:11px;color:var(--tx3)}
 .fr.txt .tip{display:none}
-.fr.ok input{color:var(--lime)} .fr.ng input{color:#ff8a80} .fr.ng{background:rgba(255,90,78,.06)} .fr.ng .tip{color:#ff8a80}
+.fr.ok input{color:var(--lime)} .fr.ng input{color:#f0a39b} .fr.ng{background:rgba(236,106,96,.06)} .fr.ng .tip{color:#f0a39b}
 .fr.voice::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:var(--violet)}
 .fr.fresh{animation:fresh 1.2s var(--ease)}
-@keyframes fresh{0%{background:rgba(170,156,255,.22)}}
+@keyframes fresh{0%{background:rgba(91,141,239,.22)}}
 .said{border-radius:16px;background:var(--card);border:1px solid var(--line);padding:11px 14px;display:flex;flex-direction:column;gap:4px;min-height:52px;flex:none}
 .said .q{font-size:14px;color:var(--tx)}
-.said .q mark{background:none;color:var(--violet)}
+.said .q mark{background:none;color:var(--tx);text-decoration:underline;text-decoration-color:rgba(91,141,239,.6);text-underline-offset:4px}
 .said .q.idle{color:var(--tx3);font-size:13px}
 .said .rb{font-size:12.5px;color:var(--tx2);display:flex;gap:8px;align-items:flex-start}
 .said .rb[hidden]{display:none}
 .said .rb .eq{display:flex;gap:2px;align-items:center;height:16px;flex:none}
 .said .rb .eq i{width:2.5px;height:4px;border-radius:2px;background:var(--tx4)}
-.said .rb.on .eq i{background:var(--lime);animation:eq .9s ease-in-out infinite}
+.said .rb.on .eq i{background:var(--acc);animation:eq .9s ease-in-out infinite}
 .said .rb.on .eq i:nth-child(2){animation-delay:.15s}.said .rb.on .eq i:nth-child(3){animation-delay:.3s}
 @keyframes eq{0%,100%{height:4px}50%{height:14px}}
 #wave{width:100%;height:30px;display:none}
@@ -108,15 +108,15 @@ input{font:inherit;color:inherit}
 /* 底部 */
 .dock{flex:none;padding:10px 20px 6px;display:flex;align-items:center;gap:14px}
 .mic{width:66px;height:66px;border-radius:50%;background:var(--card2);border:1px solid var(--line2);display:grid;place-items:center;position:relative;flex:none;transition:transform .2s,background .25s;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
-.mic svg{stroke:var(--lime)}
+.mic svg{stroke:var(--acc)}
 .mic:active{transform:scale(.95)}
 .mic::before,.mic::after{content:"";position:absolute;inset:-1px;border-radius:50%;border:2px solid var(--red);opacity:0}
 .mic.on{background:var(--red);border-color:var(--red)} .mic.on svg{stroke:#fff}
 .mic.on::before{animation:ring 1.4s infinite} .mic.on::after{animation:ring 1.4s .7s infinite}
-.mic.busy{background:var(--violet);border-color:var(--violet)} .mic.busy svg{stroke:#0a0a0b}
+.mic.busy{background:var(--violet);border-color:var(--violet)} .mic.busy svg{stroke:#fff}
 .mic.off svg{stroke:var(--tx3)}
 @keyframes ring{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.55);opacity:0}}
-.go{flex:1;height:58px;border-radius:18px;background:var(--lime);color:#0a0a0b;font-weight:600;font-size:17px;transition:opacity .2s,transform .15s}
+.go{flex:1;height:58px;border-radius:18px;background:var(--acc);color:#fff;font-weight:600;font-size:17px;transition:opacity .2s,transform .15s}
 .go:active{transform:scale(.98)}
 .go:disabled{opacity:.3}
 .hint{flex:none;text-align:center;font-size:12px;color:var(--tx3);padding:0 20px 10px}
@@ -135,14 +135,14 @@ input{font:inherit;color:inherit}
 .ci b{font:500 15px var(--mono)}
 .ci .nm{font-size:12px;color:var(--tx3)}
 .ci .st{font-size:12.5px;text-align:right;align-self:center;grid-row:1/3;grid-column:2}
-.ci.cur{background:rgba(198,244,63,.05)}
+.ci.cur{background:rgba(91,141,239,.05)}
 .newc{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:var(--card);border:1px solid var(--line);margin-bottom:12px;flex:none}
 .newc .micro{font-size:12px;color:var(--tx3)}
 .newc .row{display:flex;gap:8px}
 .newc input{flex:1;min-width:0;height:44px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:0 12px;outline:none;font-size:15px}
 .newc input.m{font-family:var(--mono)}
-.newc .err{font-size:12px;color:#ff8a80}
-.btn{height:44px;border-radius:12px;background:var(--lime);color:#0a0a0b;font-weight:600;font-size:15px;padding:0 16px}
+.newc .err{font-size:12px;color:#f0a39b}
+.btn{height:44px;border-radius:12px;background:var(--acc);color:#fff;font-weight:600;font-size:15px;padding:0 16px}
 .btn.ghost{background:var(--card2);color:var(--tx);border:1px solid var(--line);font-weight:500}
 .rec{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:12px 4px;border-bottom:1px solid var(--line)}
 .rec b{font-weight:500;font-size:14.5px}
@@ -425,7 +425,7 @@ holdOn($('ncVoice'), 'contract');
 function waveLoop(t) {
   if (P.rec?.on) {
     const cv = $('wave'), g = cv.getContext('2d'), W = cv.width, H = cv.height, n = 48, w = W / n; g.clearRect(0, 0, W, H);
-    for (let i = 0; i < n; i++) { const env = Math.sin(Math.PI * (i + .5) / n), a = (0.12 + 0.88 * P.level * Math.abs(Math.sin(t / 90 + i * .7))) * env, h = Math.max(3, a * H); g.fillStyle = `rgba(255,90,78,${.4 + .6 * env})`; g.fillRect(i * w + w * .3, (H - h) / 2, w * .4, h); }
+    for (let i = 0; i < n; i++) { const env = Math.sin(Math.PI * (i + .5) / n), a = (0.12 + 0.88 * P.level * Math.abs(Math.sin(t / 90 + i * .7))) * env, h = Math.max(3, a * H); g.fillStyle = `rgba(236,106,96,${.4 + .6 * env})`; g.fillRect(i * w + w * .3, (H - h) / 2, w * .4, h); }
   }
   requestAnimationFrame(waveLoop);
 }
