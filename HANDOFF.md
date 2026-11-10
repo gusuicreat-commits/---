@@ -195,3 +195,14 @@ zsh $T/run.sh <任务> [工作树名]          # 运行时拼接 common.md + <�
 
 - **`~/Desktop/AI入企黑客松/质检演示/`**：卫华黑客松 #13「边测边报」的纯静态演示（大屏驾驶舱 + 手机端，检验项和公差都是编的）。本项目的前端视觉沿用自它：深色背景、荧光绿强调色、大号细体数字。两者代码不共享。
 - **GitHub `kumu314/qc-voice-copilot`**：之前向它推过一个 PR #1（静态演示），这个 PR 还开着。用户已经说了不用再管它，**不要往那个仓库推本项目的代码**。
+
+## 10. 2026-11-10 下午追加：两端联动 + 证据 / 复核 / 演示
+
+- **页面**：`web/index.html` 启动页、`screen.html` 主管驾驶舱（实时检验 / 识别纠错 / 证据追溯 / 合同台账 / 验证看板）、`phone.html` 质检员手机端，共用 `common.js`；原管理 SPA 改名 `admin.html`。
+- **后端（Codex）**：
+  - B3：SSE 事件流 `/api/events/stream`、`/api/events`、在线状态 `/api/presence`、`/api/voice/config`、`tools/run_https.sh`（手机需 https 才能用麦克风）。
+  - B4：解析保留铭牌 / 客户名大小写。
+  - B5：每句语音写 `voice_log`（录音存 `QC_AUDIO_DIR`，默认 `data/audio`），`/api/voice/logs`、`/logs/{id}/audio`、`/contracts/{ht}/timeline`；fields 为空或有拒收 → 待复核 `/api/review`，复核「学进纠错表」写 `learned_correction` 并重解析；提交记录可带 `?voice_ids=`；一键演示 `/api/demo/start|stop|status`，剧本 `config/demo.json`，事件 source=demo。
+  - B6：今天合同号用完时回收当天演示合同；`/api/demo/reset` 清理全部演示合同。演示合同 = 名称为「演示客户（样例）」且语音全部来自演示（混入真人语音就视为真实数据，不删）。
+- **测试**：546 条 pytest；留出集 36/36；前端全流程 `node tools/e2e/linked.cjs 端到端截图/联动`、`node tools/e2e/demo.cjs 端到端截图/演示`（需主程序 8600 + 识别 8601）。
+- **决定**：规则全局一套；噪声为机器运行噪音，保持 dB 数值校验；真手机实测暂缓。
