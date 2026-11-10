@@ -448,7 +448,7 @@ document.addEventListener('keydown', e => { if (/INPUT|TEXTAREA/.test(e.target.t
 document.addEventListener('keyup', e => { if (e.code === 'Space' && P.rec) { e.preventDefault(); stopRec(); } });
 
 /* ---------- 演示字幕 ---------- */
-function onDemo(d) { $('hint').innerHTML = d.state === 'step' ? `<span class="c-ok">演示 ${d.index + 1}/${d.total}</span> · ${esc(d.caption || '')}` : '按住麦克风说话，松开自动识别'; }
+function onDemo(d) { if (d.state === 'audio') { $('hint').innerHTML = `<span class="c-ok">演示 ${d.index + 1}</span> · ▶ 大屏正在播放现场真实录音`; return; } if (d.state === 'clips') return; $('hint').innerHTML = d.state === 'step' ? `<span class="c-ok">演示 ${d.index + 1}/${d.total}</span> · ${esc(d.caption || '')}` : '按住麦克风说话，松开自动识别'; }
 
 /* ---------- 和大屏联动 ---------- */
 QC.onEvent(ev => {

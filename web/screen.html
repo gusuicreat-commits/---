@@ -126,6 +126,7 @@ a{color:inherit;text-decoration:none}
 .tr.idle{color:var(--tx4)}
 .tr .caret{display:inline-block;width:2px;height:.95em;background:var(--lime);margin-left:3px;vertical-align:-.1em;animation:blink .8s infinite}
 .tr ruby{ruby-position:over}
+.toclip{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}.toclip select{max-width:520px;height:30px;background:var(--card2,#19191c);color:inherit;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:0 8px;font-size:12.5px}
 .tr ruby b{color:var(--violet);font-weight:500}
 .tr rt{font-size:.42em;color:var(--red);text-decoration:line-through;letter-spacing:.05em;opacity:.9}
 .tr mark{background:none;color:var(--lime);text-decoration:underline;text-decoration-color:rgba(198,244,63,.35);text-underline-offset:6px}
@@ -433,6 +434,8 @@ tr.flash td{animation:rowflash 2s}
     <div class="panel"><div class="ph"><h3>待复核</h3><span class="micro" id="rvN"></span><div class="r"><span class="micro">听不清不猜 · 主管复核后自动学进纠错表</span></div></div><div class="cards" id="rvCards" style="flex:none;overflow:visible"></div></div>
     <div class="panel"><div class="ph"><h3>学习到的纠错</h3><span class="micro" id="lcN"></span><div class="r lf" style="margin:0"><input id="lcW" placeholder="听成"><span class="arrow">→</span><input id="lcR" placeholder="应为"><button class="btn-s" id="lcAdd">手动添加</button></div></div>
       <table><thead><tr><th>听成</th><th>纠正为</th><th>来源</th><th>命中</th><th>时间</th><th></th></tr></thead><tbody id="lcRows"></tbody></table></div>
+    <div class="panel span2" id="clipPanel"><div class="ph"><h3>演示录音</h3><span class="micro" id="clipN"></span><div class="r"><span class="micro">用手机按住说话录好 → 在「证据追溯」里点开那条录音 →「用作演示第 N 步」。演示到这一步时播放真实录音。</span></div></div>
+      <table><thead><tr><th>步骤</th><th>表单</th><th>文字台词</th><th>真实录音（演示时优先）</th><th></th></tr></thead><tbody id="clipRows"></tbody></table></div>
   </section>
 
   <!-- 证据追溯 -->
@@ -820,10 +823,28 @@ async function loadReviews() {
   $('rvBadge').textContent = S.reviews.length; $('rvBadge').classList.toggle('show', S.reviews.length > 0);
   renderReviews(); renderEx();
 }
+async function loadClips() {
+  try { S.script = await api('GET', '/demo/script'); } catch (e) { S.script = null; }
+  renderClips();
+  if (S.view === 'evi' && S.evSel) renderEvDetail(S.evSel);
+}
+function renderClips() {
+  if (!$('clipRows')) return;
+  const steps = (S.script?.steps || []).filter(x => x.say);
+  $('clipN').textContent = steps.length ? `${steps.filter(x => x.clip).length}/${steps.length} 步已用真实录音` : '';
+  $('clipRows').innerHTML = steps.map(x => `<tr><td class="mono">第 ${x.index + 1} 步</td><td>${esc(KIND_LABEL[x.form] || x.form)}</td><td class="${x.clip ? 'c-dim' : ''}">${x.clip ? `<s>${esc(x.say)}</s>` : esc(x.say)}</td>
+    <td>${x.clip ? `<button class="btn-s" data-play="${x.index}">▶ 试听</button> 「${esc(x.clip.text)}」<span class="c-dim">${x.clip.duration_s ? ' · ' + Number(x.clip.duration_s).toFixed(1) + ' 秒' : ''} · 来自语音 #${x.clip.source_voice_id}</span>` : '<span class="c-dim">未设置，演示时用文字台词</span>'}</td>
+    <td>${x.clip ? `<button class="btn-s" data-unclip="${x.index}">改回文字</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="5" class="c-dim">演示脚本里没有语音步骤</td></tr>';
+  $('clipRows').querySelectorAll('[data-play]').forEach(b => b.onclick = () => playClip(S.script.steps[+b.dataset.play].clip.audio_url));
+  $('clipRows').querySelectorAll('[data-unclip]').forEach(b => b.onclick = async () => { try { await api('DELETE', '/demo/clips/' + b.dataset.unclip); toast(`第 ${+b.dataset.unclip + 1} 步改回文字台词`, ''); loadClips(); } catch (e) { toast(esc(e.message), 'ng'); } });
+}
+let clipAudio = null;
+function playClip(url) { if (clipAudio) clipAudio.pause(); clipAudio = new Audio(url); clipAudio.play().catch(e => toast('无法播放：' + esc(e.message), 'ng')); return clipAudio; }
 async function loadLearned() {
   try { const r = await api('GET', '/corrections'); S.learned = r.learned; } catch (e) { S.learned = []; }
   S.vcfg = await api('GET', '/voice/config').catch(() => S.vcfg);
   if (S.view === 'asr') renderASR();
+  loadClips();
 }
 function reviewCard(v, compact) {
   const why = [...(v.rejected || []).map(r => `「${r.said || r.field}」${r.reason}`), v.message].filter(Boolean).join('；') || '没有填入参数';
@@ -904,7 +925,9 @@ async function renderEvDetail(id) {
     <div><div class="ph" style="margin-bottom:10px"><span class="micro">Evidence #${v.id} · 原话</span><span class="chip ${st[0]}" style="margin-left:6px">${st[1]}</span></div>
       <div class="quote">${esc(v.text)}</div>
       <div class="player"><button class="play" id="evPlay" ${v.has_audio ? '' : 'disabled title="键盘输入，没有录音"'}><svg width="18" height="18" viewBox="0 0 24 24" fill="#0a0a0b"><path d="M7 4l13 8-13 8z"/></svg></button><canvas id="evWave" width="1200" height="112"></canvas></div>
-      <div class="ev-meta"><span>${esc(v.created_at)}</span><span>来源 ${v.source === 'phone' ? '手机' : v.source === 'screen' ? '大屏' : v.source === 'demo' ? '演示' : '—'}</span><span>${v.has_audio ? `录音 ${Number(v.duration_s || 0).toFixed(1)} 秒 · 识别 ${v.elapsed_ms} ms` : '键盘输入'}</span><span>合同 ${esc(v.ht_code || '—')} · ${esc(KIND_LABEL[v.form] || v.form)}</span></div></div>
+      <div class="ev-meta"><span>${esc(v.created_at)}</span><span>来源 ${v.source === 'phone' ? '手机' : v.source === 'screen' ? '大屏' : v.source === 'demo' ? '演示' : '—'}</span><span>${v.has_audio ? `录音 ${Number(v.duration_s || 0).toFixed(1)} 秒 · 识别 ${v.elapsed_ms} ms` : '键盘输入'}</span><span>合同 ${esc(v.ht_code || '—')} · ${esc(KIND_LABEL[v.form] || v.form)}</span></div>
+      ${v.has_audio && KINDS[v.form] && v.source !== 'demo' ? (() => { const st = (S.script?.steps || []).filter(x => x.say && x.form === v.form); const used = st.find(x => x.clip?.source_voice_id === v.id);
+        return st.length ? `<div class="toclip">${used ? `<span class="chip fix">已用作演示第 ${used.index + 1} 步</span>` : ''}<select id="clipStep">${st.map(x => `<option value="${x.index}">第 ${x.index + 1} 步：${esc(x.say)}${x.clip ? '（已有录音，将替换）' : ''}</option>`).join('')}</select><button class="btn-s demo" id="clipGo">用作演示录音</button></div>` : ''; })() : ''}</div>
     <div class="tri">
       <div class="panel"><div class="ph"><h3>解析过程</h3></div><div class="kv">
         <span>纠错后</span><span>${changed ? `<span class="ins">${esc(v.corrected)}</span>` : '<span class="c-dim">无变化</span>'}</span>
@@ -922,6 +945,11 @@ async function renderEvDetail(id) {
   cv._b = Array.from({ length: 140 }, (_, i) => (0.12 + 0.88 * rnd()) * Math.sin(Math.PI * i / 140) ** 0.5); paintEv();
   $('evd').querySelectorAll('.tl>div[data-v]').forEach(d => d.onclick = () => { S.evSel = +d.dataset.v; renderEvi(); });
   if ($('evRv')) bindReviewCards($('evRv'));
+  if ($('clipGo')) $('clipGo').onclick = async () => {
+    const step = +$('clipStep').value;
+    try { await api('POST', '/demo/clips', { voice_id: v.id, step }); toast(`已设为演示第 ${step + 1} 步的真实录音`, 'ok'); loadClips(); }
+    catch (e) { toast(esc(e.message), 'ng'); }
+  };
   if (v.has_audio) $('evPlay').onclick = () => {
     if (evAudio && !evAudio.paused) { evAudio.pause(); return; }
     evAudio = evAudio || new Audio(`/api/voice/logs/${v.id}/audio`);
@@ -936,6 +964,14 @@ function paintEv() { const cv = $('evWave'); if (!cv || !cv._b) return; const g 
 
 /* ---------- 一键演示 ---------- */
 function onDemo(d) {
+  if (d.state === 'clips') { loadClips(); return; }
+  if (d.state === 'audio') {
+    const a = playClip(d.audio_url); view('live');
+    $('cap').innerHTML = `<span class="step">演示 ${d.index + 1}/${d.total || S.demo?.total || ''}</span><span class="c-ok">▶ 正在播放现场真实录音</span> · 播完后按当时的识别结果解析、判定`;
+    pipe(1, false, [`播放录音 ${d.duration_s ? Number(d.duration_s).toFixed(1) + ' 秒' : ''}`]);
+    $('tr').className = 'tr'; $('tr').innerHTML = '<span class="c-dim">（真实录音播放中…）</span><span class="caret"></span>'; $('cn').innerHTML = ''; $('strip').innerHTML = '';
+    return;
+  }
   S.demo = d.state === 'step' ? d : null;
   const cap = $('cap');
   if (d.state === 'step') { cap.hidden = false; $('mInput').style.display = 'none'; $('mChips').style.display = 'none'; cap.innerHTML = `<span class="step">演示 ${d.index + 1}/${d.total}</span>${esc(d.caption || '')}`; if (d.index === 0) { S.log = []; } }
