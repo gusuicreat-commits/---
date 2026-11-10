@@ -1,0 +1,5 @@
+[
+  {"name": "合同信息",     "generator": "contract"},
+  {"name": "卷筒参数",     "generator": "drum"},
+  {"name": "大车传动参数", "generator": "travel"}
+]
