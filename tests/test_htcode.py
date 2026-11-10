@@ -18,7 +18,8 @@ def test_check(raw, expected):
 
 @pytest.mark.parametrize("codes, expected", [
     ([], "20261110-10"), (["20261110-10", "20261110-20"], "20261110-30"),
-    (["20261110-90"], None), (["20261109-90", "20261111-80"], "20261110-10"),
+    ([f"20261110-{number}" for number in range(10, 100, 10)], None),
+    (["20261109-90", "20261111-80"], "20261110-10"),
 ])
 def test_suggest(codes, expected):
     assert suggest(codes, date(2026, 11, 10)) == expected
