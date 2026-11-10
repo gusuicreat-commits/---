@@ -233,7 +233,7 @@ const $ = id => document.getElementById(id);
 const P = {
   ht: load('qcp_ht', null), contract: null, status: null, form: load('qcp_form', 'drum'),
   draft: load('qcp_draft', { drum: {}, travel_drive: {} }), latest: { drum: null, travel_drive: null },
-  fresh: null, tts: load('qcp_tts', false), busy: false, islT: null, level: 0, rec: null, voiceOk: false,
+  vids: load('qcp_vids', { drum: [], travel_drive: [] }), fresh: null, tts: load('qcp_tts', false), busy: false, islT: null, level: 0, rec: null, voiceOk: false,
 };
 const EX = {
   drum: ['直径一千二百五十，长度三米', '厚度十二点五毫米，光段三百', '直径1262', '直径1250，不对，1252'],
@@ -252,7 +252,7 @@ function island(state, title, sub, ms) {
   if (ms) P.islT = setTimeout(() => island(null), ms);
 }
 function readback(text, on = true) { $('rbp').className = ''; $('rbp').textContent = text; $('rb').className = on ? 'rb on' : 'rb'; if (P.tts) QC.speak(text); setTimeout(() => $('rb').className = 'rb', Math.max(1500, text.length * 120)); }
-function saveDraft() { store('qcp_draft', P.draft); }
+function saveDraft() { store('qcp_draft', P.draft); store('qcp_vids', P.vids); }
 function pushDraft() { saveDraft(); QC.publish('draft', { ht_code: P.ht, form: P.form, fields: P.draft[P.form] }, 'phone'); }
 function pushFocus() { QC.publish('focus', { ht_code: P.ht, form: P.form }, 'phone'); }
 
@@ -324,7 +324,7 @@ async function selectContract(ht, quiet) {
   if (!ht) { P.ht = null; P.contract = null; P.status = null; P.latest = { drum: null, travel_drive: null }; store('qcp_ht', null); renderMeta(); idleHero(); return; }
   try {
     const d = await api('GET', '/contracts/' + encodeURIComponent(ht));
-    if (P.ht !== d.contract.ht_code) P.draft = { drum: {}, travel_drive: {} };
+    if (P.ht !== d.contract.ht_code) { P.draft = { drum: {}, travel_drive: {} }; P.vids = { drum: [], travel_drive: [] }; }
     P.ht = d.contract.ht_code; P.contract = d.contract; P.status = { status: d.status, reason: d.status_reason }; P.latest = d.latest;
     store('qcp_ht', P.ht); saveDraft();
     if (!quiet) { pushFocus(); idleHero(); }
@@ -360,11 +360,12 @@ function liveHTML(p) {
   return t || '<span class="c-dim">（没有识别到声音）</span>';
 }
 function applyParse(p, from) {
-  $('live').className = 'live'; $('live').innerHTML = liveHTML(p);
+  $('live').className = 'live'; $('live').innerHTML = `<span>${liveHTML(p)}</span>`;
   if (p.form === 'contract') return applyContractParse(p);
   const kind = p.form, names = Object.keys(p.fields || {});
   if (kind !== P.form) { P.form = kind; store('qcp_form', kind); }
   names.forEach(n => P.draft[kind][n] = p.fields[n]);
+  if (p.voice_id && !P.vids[kind].includes(p.voice_id)) P.vids[kind].push(p.voice_id);
   P.fresh = names;
   renderMeta();
   if (!names.length) {
@@ -373,7 +374,7 @@ function applyParse(p, from) {
     readback(QC.readbackVoice(p, kind)); return;
   }
   const n = names.find(x => QC.prejudge(kind, x, p.fields[x])?.cls === 'ng') || names[names.length - 1], f = QC.fieldMeta(kind, n), j = QC.prejudge(kind, n, p.fields[n]);
-  setHero({ title: f.label + (names.length > 1 ? `  等 ${names.length} 项` : ''), note: p.notes?.[n] || (from === 'screen' ? '大屏输入' : ''), big: p.fields[n], unit: f.unit, txt: f.type === 'text',
+  setHero({ title: f.label + (names.length > 1 ? `  等 ${names.length} 项` : ''), note: p.notes?.[n] || (from === 'screen' ? '大屏输入' : from === 'demo' ? '演示' : ''), big: p.fields[n], unit: f.unit, txt: f.type === 'text',
     verdict: j.cls === 'ok' ? '在范围内 · 待提交' : j.verdict, cls: j.cls === 'ok' ? 'dim' : j.cls, lines: [j.calc, j.src].filter(Boolean) });
   const bads = names.map(x => [x, QC.prejudge(kind, x, p.fields[x])]).filter(([, y]) => y && y.cls === 'ng');
   if (bads.length) { const [x] = bads[0], fm = QC.fieldMeta(kind, x); island('ng', `${fm.label} 超出范围 · 请复测`, `${p.fields[x]} ${fm.unit || ''}，允许 ${QC.rangeText(QC.ruleOf(kind, x))}`, 6000); }
@@ -394,7 +395,8 @@ async function submit() {
   const body = {}; QC.fieldsOf(P.form).forEach(f => { const v = P.draft[P.form][f.name]; body[f.name] = v == null || v === '' ? (P.latest[P.form]?.[f.name] ?? null) : v; });
   $('sub').disabled = true;
   try {
-    const r = await api('POST', `/contracts/${encodeURIComponent(P.ht)}/records/${P.form}?source=phone`, body);
+    const vq = P.vids[P.form].length ? '&voice_ids=' + P.vids[P.form].slice(-50).join(',') : '';
+    const r = await api('POST', `/contracts/${encodeURIComponent(P.ht)}/records/${P.form}?source=phone${vq}`, body);
     showRecord(r, P.form, 'phone');
   } catch (e) {
     if (e.fields) { island('ng', '有字段填写不对', Object.values(e.fields).join('；'), 4000); }
@@ -405,7 +407,7 @@ async function submit() {
 function showRecord(r, kind, from) {
   const v = r.validation, ok = v && v.is_qualified === 1;
   P.latest[kind] = r.record; P.status = r.contract_status;
-  if (ok) P.draft[kind] = {};
+  if (ok) { P.draft[kind] = {}; P.vids[kind] = []; }
   saveDraft();
   if (kind !== P.form) { P.form = kind; store('qcp_form', kind); }
   renderMeta();
@@ -499,12 +501,21 @@ $('ta').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey)
 document.addEventListener('keydown', e => { if (/INPUT|TEXTAREA/.test(e.target.tagName)) return; if (e.code === 'Space' && !e.repeat) { e.preventDefault(); startRec(P.form); } });
 document.addEventListener('keyup', e => { if (e.code === 'Space' && P.rec) { e.preventDefault(); stopRec(); } });
 
+/* ---------- 演示字幕 ---------- */
+function onDemo(d) {
+  if (d.state === 'step') $('hint').innerHTML = `<span style="color:var(--lime)">演示 ${d.index + 1}/${d.total}</span> · ${esc(d.caption || '')}`;
+  else $('hint').textContent = '按住说话 · 松开识别';
+}
+
 /* ---------- 和大屏联动 ---------- */
 QC.onEvent(ev => {
   const d = ev.data || {};
   if (ev.source === 'phone') return;                                   // 自己发的不再处理
-  if (ev.type === 'voice' && d.ht_code === P.ht && d.form !== 'contract') { applyParse(d, 'screen'); }
-  else if (ev.type === 'record' && d.ht_code === P.ht) { showRecord(d, d.kind, 'screen'); }
+  if (ev.type === 'voice' && d.form !== 'contract' && d.ht_code && (d.ht_code === P.ht || ev.source === 'demo')) { (d.ht_code === P.ht ? Promise.resolve() : selectContract(d.ht_code, true)).then(() => applyParse(d, ev.source)); }
+  else if (ev.type === 'draft' && ev.source === 'demo' && d.ht_code === P.ht && QC.KINDS[d.form]) { P.draft[d.form] = { ...(d.fields || {}) }; saveDraft(); renderMeta(); }
+  else if (ev.type === 'demo') { onDemo(d); }
+  else if (ev.type === 'focus' && ev.source === 'demo' && d.ht_code) { if (d.form && KINDS[d.form]) { P.form = d.form; store('qcp_form', P.form); } selectContract(d.ht_code, true).then(() => { idleHero(); idleLive(); }); }
+  else if (ev.type === 'record' && d.ht_code === P.ht) { showRecord(d, d.kind, ev.source); }
   else if (ev.type === 'focus' && ev.source === 'screen' && d.ht_code) {
     const msg = d.reason || '主管切换了检验对象';
     if (d.form && KINDS[d.form]) { P.form = d.form; store('qcp_form', P.form); }
