@@ -87,7 +87,7 @@ const HT = process.env.QC_TEST_CONTRACT || '20300101-10';
     await A.waitForSelector('input[name="primer_thickness_ratio"]');
     await A.fill('#vtxt', '底漆厚度约八十微米，面漆厚度99%，附着力1%');
     await A.click('#vgo');
-    await A.waitForFunction(() => document.querySelector('input[name="primer_thickness_ratio"]').value === '约八十微米');
+    await A.waitForFunction(() => document.querySelector('input[name="primer_thickness_ratio"]').value === '80'); // 底漆按数值多测点校验：「约八十微米」只取数值
     await A.screenshot({ path: path.join(OUT, '05_后台_油漆语音.png') });
     await A.goto(B + 'admin.html#/rules');
     await A.waitForSelector('input');

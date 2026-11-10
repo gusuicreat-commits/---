@@ -57,7 +57,7 @@ const HT = process.env.QC_TEST_CONTRACT || '20300102-10';
   for (const [kind, title, text, values] of [
    ['travel_drive', '大车传动', '减速机铭牌 ZQ500，电机铭牌 YZR160，噪音82dB', { noise: '82', reducer_nameplate: 'ZQ500', motor_nameplate: 'YZR160' }],
    ['control_cabinet', '控制柜', '绝缘电阻五百兆欧，控制线力矩一点二牛米，电气间隙八毫米', { insulation_resistance: '500', control_wire_torque: '1.2', electrical_clearance: '8' }],
-   ['travel_paint', '大车油漆', '底漆厚度约八十微米，面漆厚度99%，附着力1%', { primer_thickness_ratio: '约八十微米', total_thickness_ratio: '99', adhesion_loss_ratio: '1' }],
+   ['travel_paint', '大车油漆', '底漆厚度约九十八微米，面漆厚度99%，附着力1%', { primer_thickness_ratio: '98', total_thickness_ratio: '99', adhesion_loss_ratio: '1' }],
   ]) {
    await p.click(`#fKind [data-k="${kind}"]`);
    assert.equal(await p.locator('#cvTitle').textContent(), title + '参数语音填表');
