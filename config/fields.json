@@ -1,0 +1,19 @@
+{
+  "drum_param": {
+    "kind": "drum", "label": "卷筒",
+    "fields": [
+      {"name": "diameter", "label": "直径", "unit": "mm", "type": "number", "validate": true},
+      {"name": "length",   "label": "长度", "unit": "mm", "type": "number", "validate": true},
+      {"name": "thick",    "label": "厚度", "unit": "mm", "type": "number", "validate": true},
+      {"name": "light",    "label": "光段", "unit": "mm", "type": "number", "validate": true}
+    ]
+  },
+  "travel_drive_param": {
+    "kind": "travel_drive", "label": "大车传动",
+    "fields": [
+      {"name": "reducer_nameplate", "label": "减速机铭牌", "type": "text", "max_len": 255, "validate": false},
+      {"name": "motor_nameplate",   "label": "电机铭牌",   "type": "text", "max_len": 255, "validate": false},
+      {"name": "noise",             "label": "噪声", "unit": "dB", "type": "number", "validate": true}
+    ]
+  }
+}
