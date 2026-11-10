@@ -311,6 +311,46 @@ tr.flash td{animation:rowflash 2s}
 .btn-s.demo{color:var(--lime);border-color:rgba(198,244,63,.4)} .btn-s.demo:hover{background:var(--lime-d)}
 .btn-s.stop{color:var(--red);border-color:rgba(255,90,78,.45)}
 
+/* 录入抽屉 */
+.dw-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .25s;z-index:60}
+.dw-bg.on{opacity:1;pointer-events:auto}
+.dw{position:fixed;top:0;right:0;bottom:0;width:min(480px,100vw);background:var(--s1);border-left:1px solid var(--line2);z-index:61;transform:translateX(100%);transition:transform .3s var(--ease);display:flex;flex-direction:column}
+.dw.on{transform:none}
+.dw-h{display:flex;align-items:center;gap:12px;padding:20px 24px;border-bottom:1px solid var(--line)}
+.dw-h h3{font:600 17px var(--sans)}
+.dw-h .x{margin-left:auto;font-size:20px;color:var(--tx3);width:32px;height:32px;border-radius:8px}
+.dw-h .x:hover{background:var(--s3);color:var(--tx)}
+.dw-b{flex:1;overflow:auto;padding:20px 24px;display:flex;flex-direction:column;gap:18px}
+.dw-f{padding:16px 24px;border-top:1px solid var(--line);display:flex;gap:10px}
+.seg{display:flex;padding:3px;border-radius:10px;background:var(--s2);border:1px solid var(--line)}
+.seg button{flex:1;height:32px;border-radius:7px;font-size:13.5px;color:var(--tx3)}
+.seg button.on{background:var(--s3);color:var(--tx)}
+.fi{display:flex;flex-direction:column;gap:6px}
+.fi label{display:flex;justify-content:space-between;font-size:12.5px;color:var(--tx2)}
+.fi label em{font-style:normal;font:11.5px var(--mono);color:var(--tx3)}
+.fi .in{display:flex;align-items:center;background:var(--s2);border:1px solid var(--line2);border-radius:10px;padding:0 12px;transition:border-color .2s}
+.fi .in:focus-within{border-color:rgba(198,244,63,.55)}
+.fi input,.fi select{flex:1;min-width:0;height:42px;background:none;border:0;outline:none;font:400 16px var(--mono);color:var(--tx)}
+.fi select{font-family:var(--sans);font-size:14px}
+.fi select option{background:var(--s2)}
+.fi .u{font:12px var(--mono);color:var(--tx3);margin-left:8px}
+.fi .hint{font-size:12px;color:var(--tx3);min-height:16px}
+.fi.ok .in{border-color:rgba(198,244,63,.4)} .fi.ok .hint{color:var(--lime)}
+.fi.ng .in{border-color:rgba(255,90,78,.6)} .fi.ng .hint{color:#ff9d95}
+.fi.warn .hint{color:var(--amber)}
+.fi.dft input{color:var(--violet)}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px 14px}
+.fgrid .full{grid-column:1/-1}
+.dw .res{border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.6}
+.dw .res.ok{background:var(--lime-d);border:1px solid rgba(198,244,63,.35);color:#e5ffa8}
+.dw .res.ng{background:var(--red-d);border:1px solid rgba(255,90,78,.4);color:#ffd0cc}
+.btn-l{flex:1;height:46px;border-radius:11px;background:var(--lime);color:#0a0a0b;font-weight:600;font-size:15px}
+.btn-l:disabled{opacity:.4}
+.btn-g{height:46px;padding:0 18px;border-radius:11px;border:1px solid var(--line2);color:var(--tx2)}
+.btn-g:hover{color:var(--tx)}
+.sec-h .add{font-size:12.5px;color:#0a0a0b;background:var(--lime);border-radius:7px;padding:4px 10px;font-weight:600}
+.row{cursor:pointer} .row:hover{background:rgba(255,255,255,.03)}
+
 /* bottom bar */
 .ctl{display:flex;align-items:center;gap:14px;padding:0 28px;border-top:1px solid var(--line);background:rgba(8,8,10,.85)}
 .ctl .micro{white-space:nowrap}
@@ -352,7 +392,7 @@ tr.flash td{animation:rowflash 2s}
   <!-- 实时检验 -->
   <section class="view live on" id="v-live">
     <div class="col">
-      <div class="sec-h"><span class="micro">Sheet · 检验表</span><span class="tag" id="sync">—</span></div>
+      <div class="sec-h"><span class="micro">Sheet · 检验表</span><span style="display:flex;gap:8px;align-items:center"><span class="tag" id="sync">—</span><button class="add" id="addBtn" title="手动填写参数">＋ 录入</button></span></div>
       <div class="ctsel"><select id="ctSel"></select></div>
       <div class="ctname" id="ctName"></div>
       <div class="prog"><span class="big-n" id="sheetN">0<small>/7</small></span><span>项已录</span></div>
@@ -433,6 +473,24 @@ tr.flash td{animation:rowflash 2s}
   </div>
 </footer>
 <div class="toasts" id="toasts"></div>
+<div class="dw-bg" id="dwBg"></div>
+<aside class="dw" id="dw">
+  <div class="dw-h"><h3>手动录入</h3><span class="micro">提交后两端同步</span><button class="x" id="dwX">×</button></div>
+  <div class="dw-b">
+    <div class="fi"><label>合同</label><div class="in"><select id="fCt"></select></div></div>
+    <div id="fNew" hidden>
+      <div class="fgrid">
+        <div class="fi"><label>合同号<em>日期-序号</em></label><div class="in"><input id="nHt" placeholder="20261110-10"></div><span class="hint" id="nHtH"></span></div>
+        <div class="fi"><label>录入日期</label><div class="in"><input id="nDate" placeholder="YYYY-MM-DD"></div></div>
+        <div class="fi full"><label>客户名称</label><div class="in"><input id="nName" style="font-family:var(--sans)" placeholder="例如：某某重工（样例）"></div><span class="hint" id="nNameH"></span></div>
+      </div>
+    </div>
+    <div class="seg" id="fKind"><button data-k="drum">卷筒参数</button><button data-k="travel_drive">大车传动参数</button></div>
+    <div class="fgrid" id="fFields"></div>
+    <div id="fRes"></div>
+  </div>
+  <div class="dw-f"><button class="btn-g" id="fClr">清空</button><button class="btn-l" id="fGo">提交并校验</button></div>
+</aside>
 
 <script src="common.js"></script>
 <script>
@@ -486,13 +544,14 @@ function renderSheet(flash = []) {
       cnt[s.cls === 'ok' ? 'ok' : s.cls === 'ng' ? 'ng' : s.cls === 'fix' ? 'fix' : 'none']++;
       segs += `<i class="${s.cls}"></i>`;
       const rule = f.type === 'text' ? '不校验' : QC.rangeText(QC.ruleOf(k, f.name));
-      rows += `<div class="row ${s.cls || 'pending'} ${flash.includes(k + '.' + f.name) ? 'flash' : ''}"><i class="dot"></i>
+      rows += `<div data-k="${k}" data-f="${f.name}" class="row ${s.cls || 'pending'} ${flash.includes(k + '.' + f.name) ? 'flash' : ''}"><i class="dot"></i>
         <span class="nm">${esc(f.label)}<em>${esc(rule)}</em></span>
         <span class="val">${s.v == null ? '<span class="c-dim">—</span>' : `<b>${esc(s.v)}</b>${f.unit ? `<span class="u">${esc(f.unit)}</span>` : ''}${s.draft ? '<span class="d">待提交</span>' : ''}`}</span></div>`;
     });
   });
   $('sheetN').innerHTML = `${filled}<small>/${total}</small>`;
   $('segs').innerHTML = segs; $('rows').innerHTML = rows;
+  $('rows').querySelectorAll('.row').forEach(r => r.onclick = () => openForm(r.dataset.k, r.dataset.f));
   $('sheetFoot').innerHTML = `<div><b class="c-ok">${cnt.ok}</b><span>合格</span></div><div><b class="c-ng">${cnt.ng}</b><span>超范围</span></div><div><b class="c-fix">${cnt.fix}</b><span>待提交</span></div><div><b class="c-dim">${cnt.none}</b><span>未录</span></div>`;
   $('sync').textContent = d ? d.status : '—'; $('sync').className = 'tag ' + (d ? { '合格': 'lim', '不合格': 'amb', '未录全': '', '待校验': 'amb' }[d.status] : '');
   const dn = Object.keys(S.draft[S.form] || {}).length;
@@ -876,6 +935,86 @@ $('dmBtn').onclick = async () => {
   } catch (e) { toast(esc(e.message), 'ng'); }
 };
 
+/* ---------- 手动录入抽屉 ---------- */
+const F = { ht: null, kind: 'drum' };
+const NEW = '__new__';
+function dwOpen(on) { $('dw').classList.toggle('on', on); $('dwBg').classList.toggle('on', on); }
+async function openForm(kind, focusName) {
+  F.ht = S.ht || NEW; F.kind = kind || S.form || 'drum';
+  $('fCt').innerHTML = `<option value="${NEW}">＋ 新建合同…</option>` + S.contracts.map(c => `<option value="${esc(c.ht_code)}">${esc(c.ht_code)}　${esc(c.name)}　· ${esc(c.status)}</option>`).join('');
+  $('fCt').value = F.ht; $('fRes').innerHTML = '';
+  await formCt(); renderFormFields(true); dwOpen(true);
+  setTimeout(() => { const el = focusName ? $('fv_' + focusName) : (F.ht === NEW ? $('nName') : $('fFields').querySelector('input')); el && el.focus(); }, 320);
+}
+async function formCt() {
+  const isNew = F.ht === NEW; $('fNew').hidden = !isNew; $('fGo').textContent = isNew ? '创建合同并提交' : '提交并校验';
+  if (isNew) { try { const sg = await api('GET', '/contracts/suggest'); $('nHt').value = sg.ht_code || ''; $('nHtH').textContent = sg.ht_code ? '已按今天自动编号，可修改' : '今天的合同号已用完，请手动填写其他日期'; } catch (e) {} $('nDate').value = QC.todayStr(); }
+  F.latest = null;
+  if (!isNew) { try { F.latest = (await api('GET', '/contracts/' + encodeURIComponent(F.ht))).latest; } catch (e) {} }
+}
+function renderFormFields(fill) {
+  document.querySelectorAll('#fKind button').forEach(b => b.classList.toggle('on', b.dataset.k === F.kind));
+  const last = F.latest?.[F.kind] || {}, draft = F.ht === S.ht ? (S.draft[F.kind] || {}) : {};
+  $('fFields').innerHTML = QC.fieldsOf(F.kind).map(f => {
+    const v = fill ? (draft[f.name] ?? '') : '', isText = f.type === 'text';
+    const rule = isText ? '不校验' : QC.rangeText(QC.ruleOf(F.kind, f.name)) + ' ' + (f.unit || '');
+    return `<div class="fi ${isText ? 'full' : ''} ${draft[f.name] != null && fill ? 'dft' : ''}" id="fw_${f.name}"><label>${esc(f.label)}<em>${esc(rule)}</em></label>
+      <div class="in"><input id="fv_${f.name}" data-n="${f.name}" value="${esc(v)}" ${isText ? 'style="font-family:var(--sans)"' : 'inputmode="decimal"'} placeholder="${last[f.name] != null && last[f.name] !== '' ? '上次 ' + esc(last[f.name]) + '（留空沿用）' : (isText ? '自由文本' : '0.00')}">${f.unit ? `<span class="u">${esc(f.unit)}</span>` : ''}</div>
+      <span class="hint"></span></div>`;
+  }).join('');
+  $('fFields').querySelectorAll('input').forEach(i => { i.oninput = () => judgeField(i); judgeField(i); i.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('fGo').click(); } }; });
+}
+function judgeField(i) {
+  const n = i.dataset.n, w = $('fw_' + n), f = QC.fieldMeta(F.kind, n), v = i.value.trim(), h = w.querySelector('.hint');
+  w.classList.remove('ok', 'ng', 'warn');
+  if (!v || f.type === 'text') { h.textContent = ''; return; }
+  const num = v.replace(/[０-９．]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+  if (!/^-?\d+(\.\d+)?$/.test(num)) { w.classList.add('ng'); h.textContent = '请填数字'; return; }
+  if (((num.split('.')[1] || '').replace(/0+$/, '')).length > 2) { w.classList.add('ng'); h.textContent = '最多两位小数'; return; }
+  const j = QC.prejudge(F.kind, n, num); w.classList.add(j.cls === 'ok' ? 'ok' : j.cls === 'ng' ? 'ng' : 'warn'); h.textContent = j.cls === 'ok' ? '在范围内' : j.verdict + (j.calc ? '：' + j.calc : '');
+}
+$('addBtn').onclick = () => openForm(S.form);
+$('dwX').onclick = $('dwBg').onclick = () => dwOpen(false);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') dwOpen(false); });
+$('fCt').onchange = async () => { F.ht = $('fCt').value; $('fRes').innerHTML = ''; await formCt(); renderFormFields(true); };
+document.querySelectorAll('#fKind button').forEach(b => b.onclick = () => { F.kind = b.dataset.k; $('fRes').innerHTML = ''; renderFormFields(true); });
+$('fClr').onclick = () => { $('fFields').querySelectorAll('input').forEach(i => { i.value = ''; judgeField(i); }); $('fRes').innerHTML = ''; };
+$('fGo').onclick = async () => {
+  const body = {}; let bad = false;
+  QC.fieldsOf(F.kind).forEach(f => {
+    const i = $('fv_' + f.name), v = i.value.trim().replace(/[０-９．]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+    if ($('fw_' + f.name).classList.contains('ng') && !/超出|低于/.test($('fw_' + f.name).querySelector('.hint').textContent)) bad = true;
+    const last = F.latest?.[F.kind]?.[f.name];
+    body[f.name] = v === '' ? (last ?? null) : v;
+  });
+  if (bad) { toast('有字段填写格式不对', 'ng'); return; }
+  if (!Object.values(body).some(v => v != null && v !== '')) { toast('至少填写一项', 'ng'); return; }
+  $('fGo').disabled = true;
+  try {
+    let ht = F.ht;
+    if (ht === NEW) {
+      const name = $('nName').value.trim(); if (!name) { $('nNameH').textContent = '请填写客户名称'; $('fGo').disabled = false; return; }
+      $('nNameH').textContent = '';
+      try { const c = await api('POST', '/contracts?source=screen', { ht_code: $('nHt').value.trim(), name, date: $('nDate').value.trim() || undefined }); ht = c.ht_code; }
+      catch (e) { $('nHtH').textContent = e.message + (e.suggestion ? `，可用 ${e.suggestion}` : ''); if (e.suggestion) $('nHt').value = e.suggestion; $('fGo').disabled = false; return; }
+      F.ht = ht; await loadContracts();
+      $('fCt').innerHTML = `<option value="${NEW}">＋ 新建合同…</option>` + S.contracts.map(c => `<option value="${esc(c.ht_code)}">${esc(c.ht_code)}　${esc(c.name)}　· ${esc(c.status)}</option>`).join('');
+      $('fCt').value = ht; $('fNew').hidden = true; $('fGo').textContent = '提交并校验';
+    }
+    if (ht !== S.ht) await focus(ht, F.kind, { push: true, reason: '主管切换了检验对象' });
+    const vq = ht === S.ht && S.dvids[F.kind].length ? '&voice_ids=' + S.dvids[F.kind].slice(-50).join(',') : '';
+    const r = await api('POST', `/contracts/${encodeURIComponent(ht)}/records/${F.kind}?source=screen${vq}`, body);
+    const v = r.validation, ok = v && v.is_qualified === 1;
+    $('fRes').innerHTML = `<div class="res ${ok ? 'ok' : 'ng'}"><b>${KIND_LABEL[F.kind]}参数${v ? (ok ? '合格' : '不合格') : '已保存，校验未完成'}</b> · 记录 #${r.record.id}<br>${ok ? '合同状态：' + esc(r.contract_status.status) + '（' + esc(r.contract_status.reason) + '）' : v ? v.failures.map(esc).join('<br>') : esc(r.warning || '')}</div>`;
+    F.latest = (await api('GET', '/contracts/' + encodeURIComponent(ht))).latest;
+    if (!S.hasBus) handleRecord({ source: 'screen', data: { ...r, kind: F.kind, ht_code: ht } });
+  } catch (e) {
+    if (e.fields) Object.entries(e.fields).forEach(([k, m]) => { const w = $('fw_' + k); if (w) { w.classList.add('ng'); w.querySelector('.hint').textContent = m; } });
+    else toast(esc(e.message), 'ng');
+  }
+  $('fGo').disabled = false;
+};
+
 /* ---------- 事件 ---------- */
 async function handleVoice(ev) {
   const p = ev.data; S.voices.unshift({ ev, p }); if (S.voices.length > 200) S.voices.pop();
@@ -944,8 +1083,8 @@ QC.presence('screen', p => {
   await loadContracts(); await loadReviews(); await loadLearned();
   try { const ds = await api('GET', '/demo/status'); if (ds.running) onDemo({ state: 'step', index: ds.index, total: ds.total, caption: '演示进行中' }); } catch (e) {}
   // 恢复：优先跟手机最近一次 focus
-  try { const r = await api('GET', '/events?after=0&limit=500'); const f = [...r.items].reverse().find(x => x.type === 'focus' && x.data?.ht_code); if (f) { S.ht = f.data.ht_code; S.form = f.data.form && KINDS[f.data.form] ? f.data.form : 'drum'; } r.items.filter(x => x.type === 'voice').forEach(x => S.voices.unshift({ ev: x, p: x.data })); } catch (e) {}
-  if (!S.ht) S.ht = load('qcs_ht', null);
+  try { const r = await api('GET', '/events?after=0&limit=500'); const has = new Set(S.contracts.map(c => c.ht_code)); const f = [...r.items].reverse().find(x => x.type === 'focus' && has.has(x.data?.ht_code)); if (f) { S.ht = f.data.ht_code; S.form = f.data.form && KINDS[f.data.form] ? f.data.form : 'drum'; } r.items.filter(x => x.type === 'voice').forEach(x => S.voices.unshift({ ev: x, p: x.data })); } catch (e) {}
+  if (!S.ht) { const h = load('qcs_ht', null); if (S.contracts.some(c => c.ht_code === h)) S.ht = h; }
   await loadDetail(); if (!S.detail) S.ht = null;
   $('ttsSw').classList.toggle('on', S.tts);
   renderChips(); renderLive(); idleStage();

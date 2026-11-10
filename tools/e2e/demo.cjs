@@ -1,12 +1,12 @@
 // 一键演示 + 复核学习纠错 + 证据追溯（真实后端 + 真实 FunASR + 假麦克风）
 // 用法：node tools/e2e/demo.cjs <输出目录>
 const { chromium } = require('/Users/mac/Desktop/代码解释器/node_modules/playwright');
-const B = 'http://localhost:8600/'; const OUT = process.argv[2] || '.'; const A = __dirname + '/audio/';
+const B = process.env.QC_BASE || 'http://localhost:8600/'; const ORIGIN = new URL(B).origin; const OUT = process.argv[2] || '.'; const A = __dirname + '/audio/';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
   const br = await chromium.launch({ channel: 'chrome', args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', `--use-file-for-fake-audio-capture=${A}a1.wav%noloop`, '--autoplay-policy=no-user-gesture-required'] });
-  const sc = await br.newContext({ viewport: { width: 1600, height: 900 } }), ph = await br.newContext({ viewport: { width: 470, height: 960 } });
-  await ph.grantPermissions(['microphone'], { origin: 'http://localhost:8600' });
+  const sc = await br.newContext({ ignoreHTTPSErrors: true, viewport: { width: 1600, height: 900 } }), ph = await br.newContext({ ignoreHTTPSErrors: true, viewport: { width: 470, height: 960 } });
+  await ph.grantPermissions(['microphone'], { origin: ORIGIN });
   const S = await sc.newPage(), P = await ph.newPage(); const errs = [];
   [S, P].forEach((p, i) => { p.on('pageerror', e => errs.push((i ? '手机 ' : '大屏 ') + e.message)); p.on('console', m => m.type() === 'error' && errs.push((i ? '手机 ' : '大屏 ') + m.text())); });
   // 清理上次学到的「光蛋」，保证可重复运行
@@ -36,11 +36,11 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   await P.click('#tabs button[data-k="drum"]'); await sleep(600);
   const box = await P.$('#mic').then(e => e.boundingBox());
   await P.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await P.mouse.down(); await sleep(4700); await P.mouse.up();
-  await P.waitForFunction(() => /直径/.test(document.getElementById('live').textContent), null, { timeout: 20000 }); await sleep(1500);
-  console.log('手机录音识别:', await P.textContent('#live'));
+  await P.waitForFunction(() => /直径/.test(document.getElementById('q').textContent), null, { timeout: 20000 }); await sleep(1500);
+  console.log('手机录音识别:', await P.textContent('#q'));
 
   // 3) 听不懂的口音 → 复核 → 学进纠错表
-  await P.click('#kb'); await sleep(400); await P.fill('#ta', '光蛋三百一十'); await P.click('#send'); await sleep(2000);
+  await S.fill('#mInput', '光蛋三百一十'); await S.press('#mInput', 'Enter'); await sleep(2000);
   await S.click('#nav button[data-v="asr"]'); await sleep(1500);
   const card = (await S.$$('#rvCards .cx[data-rv]')).find ? await (async () => { for (const c of await S.$$('#rvCards .cx[data-rv]')) if ((await c.textContent()).includes('光蛋')) return c; })() : null;
   console.log('待复核:', (await card.textContent()).replace(/\s+/g, ' ').slice(0, 60));
@@ -48,8 +48,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   await S.screenshot({ path: `${OUT}/d13_大屏_复核.png` });
   await (await card.$('button[data-act="learn"]')).click(); await sleep(1800);
   await S.screenshot({ path: `${OUT}/d14_大屏_学进纠错表.png` });
-  await P.click('#kb'); await sleep(400); await P.fill('#ta', '光蛋三百零五'); await P.click('#send'); await sleep(2000);
-  console.log('学习后再说「光蛋三百零五」→ 手机:', await P.textContent('#live'), '| 大屏:', (await S.textContent('#asrRows tr:first-child')).replace(/\s+/g, ' '));
+  await S.fill('#mInput', '光蛋三百零五'); await S.press('#mInput', 'Enter'); await sleep(2000);
+  console.log('学习后再说「光蛋三百零五」→ 手机光段:', await P.$eval('input[data-f="light"]', e => e.value), '| 大屏:', (await S.textContent('#asrRows tr:first-child')).replace(/\s+/g, ' '));
 
   // 4) 证据追溯：选有录音的那条并回放
   await S.click('#nav button[data-v="evi"]'); await sleep(1200);
