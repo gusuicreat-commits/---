@@ -78,7 +78,8 @@ def post_event(body: ClientEvent):
         valid = False
     if not valid:
         raise Invalid("BAD_EVENT", "事件内容不合法")
-    return bus.publish(body.type, body.data, body.source)
+    return bus.publish(body.type, body.data,
+                       body.source if body.source in ("phone", "screen") else None)
 
 
 class Presence(BaseModel):

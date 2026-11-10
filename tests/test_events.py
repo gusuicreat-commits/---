@@ -340,6 +340,8 @@ def test_voice_config(client):
     response = client.get("/api/voice/config")
     assert response.status_code == 200
     config = response.json()
-    assert set(config) == {"forms", "corrections", "hotwords", "retract_words"}
+    assert set(config) == {"forms", "corrections", "hotwords", "retract_words", "learned"}
     assert set(config["forms"]) >= {"drum", "travel_drive", "contract"}
-    assert config == {key: parser.load_voice_config()[key] for key in config}
+    base = parser.load_voice_config()
+    assert {k: config[k] for k in ("forms", "hotwords", "retract_words")} == {k: base[k] for k in ("forms", "hotwords", "retract_words")}
+    assert config["corrections"] == {**base["corrections"], **config["learned"]}

@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Date, DateTime, Integer, String, UniqueConstraint
+from sqlalchemy import Date, DateTime, Float, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from app.dec import Dec2
@@ -54,3 +54,34 @@ class Rule(Base):
 
 
 MODEL_BY_TABLE = {"drum_param": DrumParam, "travel_drive_param": TravelDriveParam}
+
+
+class VoiceLog(Base):
+    __tablename__ = "voice_log"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_bj)
+    ht_code: Mapped[str | None] = mapped_column(String(11), index=True)
+    form: Mapped[str] = mapped_column(String(32))
+    source: Mapped[str | None] = mapped_column(String(16))
+    audio_path: Mapped[str | None] = mapped_column(String(255))
+    duration_s: Mapped[float | None] = mapped_column(Float)
+    elapsed_ms: Mapped[int | None] = mapped_column(Integer)
+    text: Mapped[str] = mapped_column(Text)
+    corrected: Mapped[str] = mapped_column(Text)
+    result: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16))
+    record_kind: Mapped[str | None] = mapped_column(String(32))
+    record_id: Mapped[int | None] = mapped_column(Integer)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime)
+    resolution: Mapped[str | None] = mapped_column(Text)
+
+
+class LearnedCorrection(Base):
+    __tablename__ = "learned_correction"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    wrong: Mapped[str] = mapped_column(String(32), unique=True)
+    right: Mapped[str] = mapped_column(String(32))
+    source: Mapped[str] = mapped_column(String(32))
+    voice_log_id: Mapped[int | None] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_bj)
+    hits: Mapped[int] = mapped_column(Integer, default=0)
