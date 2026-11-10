@@ -76,6 +76,18 @@ class VoiceLog(Base):
     resolution: Mapped[str | None] = mapped_column(Text)
 
 
+class DemoClip(Base):
+    __tablename__ = "demo_clip"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    step: Mapped[int] = mapped_column(Integer, unique=True, nullable=False)
+    form: Mapped[str] = mapped_column(String(32))
+    text: Mapped[str] = mapped_column(Text)
+    audio_path: Mapped[str] = mapped_column(String(255))
+    duration_s: Mapped[float | None] = mapped_column(Float)
+    source_voice_id: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_bj)
+
+
 class LearnedCorrection(Base):
     __tablename__ = "learned_correction"
     id: Mapped[int] = mapped_column(primary_key=True)

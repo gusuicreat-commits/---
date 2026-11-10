@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import threading
+from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
 from uuid import uuid4
@@ -11,10 +12,10 @@ from uuid import uuid4
 from sqlalchemy import delete, or_, select
 
 from app.config import ROOT, get_settings
-from app.errors import AppError, Conflict, Invalid
+from app.errors import AppError, Conflict, Invalid, NotFound
 from app.events import bus
 from app.fields import table_by_kind
-from app.models import Contract, MODEL_BY_TABLE, VoiceLog
+from app.models import Contract, DemoClip, MODEL_BY_TABLE, VoiceLog
 from app.services import contracts, export, records, voicelog
 from app.services.status import latest_records
 from app.timeutil import today_bj
@@ -26,6 +27,44 @@ def load_script():
         path = ROOT / path
     with path.open(encoding="utf-8") as stream:
         return json.load(stream)
+
+
+def clip_dict(clip):
+    return {"text": clip.text, "duration_s": clip.duration_s,
+            "source_voice_id": clip.source_voice_id,
+            "audio_url": f"/api/demo/clips/{clip.step}/audio",
+            "created_at": clip.created_at.strftime("%Y-%m-%d %H:%M:%S")}
+
+
+def clip_audio_path(audio_path):
+    root = get_settings().demo_audio_dir.resolve()
+    try:
+        target = (root / audio_path).resolve()
+        if not target.is_relative_to(root) or not target.is_file():
+            raise NotFound("演示录音文件不存在")
+    except (OSError, ValueError):
+        raise NotFound("演示录音文件不存在") from None
+    return target
+
+
+def delete_clip_audio(audio_path):
+    try:
+        target = clip_audio_path(audio_path)
+    except NotFound:
+        return
+    target.unlink(missing_ok=True)
+
+
+class _ClipEvents:
+    """只给本步骤解析产生的语音事件补充演示片段编号。"""
+
+    def __init__(self, publisher, step):
+        self.publisher, self.step = publisher, step
+
+    def publish(self, type, data, source=None):
+        if type == "voice":
+            data = {**data, "demo_clip": self.step}
+        return self.publisher.publish(type, data, source)
 
 
 def _demo_contract_query():
@@ -64,6 +103,8 @@ def purge_demo_contract(session, ht_code) -> dict:
             target = (root / audio_path).resolve()
             if not target.is_relative_to(root):
                 raise ValueError("录音路径超出录音目录")
+            if target.is_relative_to(get_settings().demo_audio_dir.resolve()):
+                raise ValueError("不能删除长期保存的演示录音")
             target.unlink(missing_ok=True)
         except (OSError, ValueError):
             logging.exception("删除演示录音失败：%s", audio_path)
@@ -91,8 +132,24 @@ def run_script(session_factory, steps, ht_code, run_id=None, *, speed=1.0,
                                            "step": step}, "demo")
                 if "say" in step:
                     form = step["form"]
-                    result = voicelog.parse(session, step["say"], form, ht_code, "demo",
-                                            event_bus=publisher)
+                    clip = session.scalar(select(DemoClip).where(DemoClip.step == index))
+                    if clip is None:
+                        result = voicelog.parse(session, step["say"], form, ht_code, "demo",
+                                                event_bus=publisher)
+                    else:
+                        audio_path = clip_audio_path(clip.audio_path)
+                        publisher.publish("demo", {"state": "audio", **common, "index": index,
+                                                   "audio_url": f"/api/demo/clips/{index}/audio",
+                                                   "duration_s": clip.duration_s}, "demo")
+                        duration = clip.duration_s if clip.duration_s is not None else 3
+                        if stop_event.wait(max(0, duration) + 0.3):
+                            publisher.publish("demo", {"state": "stopped", **common}, "demo")
+                            return
+                        result = voicelog.parse(
+                            session, clip.text, form, ht_code, "demo",
+                            audio=audio_path.read_bytes(), filename=audio_path.name,
+                            asr={"text": clip.text, "duration_s": clip.duration_s},
+                            event_bus=_ClipEvents(publisher, index))
                     drafts.setdefault(form, {}).update(result["fields"])
                     voice_ids.setdefault(form, []).append(result["voice_id"])
                     publisher.publish("draft", {"ht_code": ht_code, "form": form,
@@ -143,6 +200,14 @@ class DemoRunner:
     def status(self):
         with self._lock:
             return dict(self._status)
+
+    @contextmanager
+    def edit_clips(self):
+        """修改片段与启动共用锁，确保检查状态后不会并发启动。"""
+        with self._lock:
+            if self._status["running"]:
+                raise Conflict("DEMO_RUNNING", "演示进行中，停止后再改")
+            yield
 
     def start(self, speed=1.0):
         with self._lock:
