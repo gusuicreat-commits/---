@@ -1,0 +1,23 @@
+{
+  "forms": {
+    "contract": {
+      "ht_code": {"label": "合同号",   "type": "ht_code", "keywords": ["合同编号", "合同号", "合同"]},
+      "name":    {"label": "客户名称", "type": "text",    "keywords": ["客户名称", "客户", "单位"]},
+      "date":    {"label": "录入日期", "type": "date",    "keywords": ["录入日期", "日期"]}
+    },
+    "drum": {
+      "diameter": {"label": "直径", "type": "length", "keywords": ["直径"]},
+      "length":   {"label": "长度", "type": "length", "keywords": ["长度", "长"]},
+      "thick":    {"label": "厚度", "type": "length", "keywords": ["厚度", "壁厚", "厚"]},
+      "light":    {"label": "光段", "type": "length", "keywords": ["光段"]}
+    },
+    "travel_drive": {
+      "reducer_nameplate": {"label": "减速机铭牌", "type": "text",  "keywords": ["减速机铭牌", "减速机"], "strict_keywords": ["减速机铭牌"]},
+      "motor_nameplate":   {"label": "电机铭牌",   "type": "text",  "keywords": ["电机铭牌", "电机"],     "strict_keywords": ["电机铭牌"]},
+      "noise":             {"label": "噪声",       "type": "noise", "keywords": ["噪声", "噪音"]}
+    }
+  },
+  "corrections": {"光端": "光段", "直经": "直径", "燥声": "噪声", "造声": "噪声", "后度": "厚度", "卷同": "卷筒"},
+  "hotwords": ["卷筒", "光段", "直径", "长度", "厚度", "壁厚", "减速机", "电机", "铭牌", "噪声", "分贝", "毫米", "合同号"],
+  "retract_words": ["不对", "说错了", "更正", "改成", "重说"]
+}
