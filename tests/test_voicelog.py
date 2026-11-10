@@ -136,22 +136,22 @@ def test_filters_and_id_limit(client, contract, good_drum):
 
 
 def test_review_learn_runtime_hits_events(client, session, evidence_environment):
-    parsed = say(client, "直尽一千二", source="phone")
+    parsed = say(client, "吃紧一千二", source="phone")
     voice_id = parsed["voice_id"]
     assert parsed["fields"] == {}
     assert any(item["type"] == "review" and item["data"]["action"] == "new"
                for item in evidence_environment.since(0))
     result = client.post(f"/api/review/{voice_id}/resolve", json={
-        "action": "learn", "wrong": " 直尽 ", "right": " 直径 "})
+        "action": "learn", "wrong": " 吃紧 ", "right": " 直径 "})
     assert result.status_code == 200, result.text
     data = result.json()
     assert data["reparsed"]["fields"] == {"diameter": "1200"}
     assert data["voice"]["status"] == "resolved"
     assert data["voice"]["resolution"]["reparsed"] == data["reparsed"]
     assert data["correction"]["source"] == "复核"
-    assert say(client, "直尽一千二百五十")["fields"] == {"diameter": "1250"}
+    assert say(client, "吃紧一千二百五十")["fields"] == {"diameter": "1250"}
     config = client.get("/api/voice/config").json()
-    assert config["corrections"]["直尽"] == config["learned"]["直尽"] == "直径"
+    assert config["corrections"]["吃紧"] == config["learned"]["吃紧"] == "直径"
     assert session.scalar(select(LearnedCorrection)).hits == 1
     repeated = client.post(f"/api/review/{voice_id}/resolve", json={"action": "ignore"})
     assert repeated.status_code == 409 and repeated.json()["error"]["code"] == "ALREADY_RESOLVED"
@@ -162,9 +162,9 @@ def test_review_learn_runtime_hits_events(client, session, evidence_environment)
 
 @pytest.mark.parametrize("wrong,right,message", [
     ("不存在", "直径", "原话里没有「不存在」"), ("", "直径", None),
-    ("直尽", "直尽", None), ("直尽", " ", None), ("字" * 17, "直径", None)])
+    ("吃紧", "吃紧", None), ("吃紧", " ", None), ("字" * 17, "直径", None)])
 def test_invalid_review_correction(client, wrong, right, message):
-    voice_id = say(client, "直尽一千二")["voice_id"]
+    voice_id = say(client, "吃紧一千二")["voice_id"]
     response = client.post(f"/api/review/{voice_id}/resolve", json={
         "action": "learn", "wrong": wrong, "right": right})
     assert response.status_code == 422 and response.json()["error"]["code"] == "BAD_CORRECTION"
@@ -181,14 +181,14 @@ def test_ignore_and_manual_corrections(client, evidence_environment):
     assert client.get("/api/review").json()["items"] == []
     assert client.get("/api/review?status=ignored").json()["items"][0]["id"] == voice_id
     assert client.get("/api/review?status=all").json()["items"][0]["id"] == voice_id
-    added = client.post("/api/corrections", json={"wrong": "直尽", "right": "直径"}).json()
+    added = client.post("/api/corrections", json={"wrong": "吃紧", "right": "直径"}).json()
     assert added["source"] == "手动"
-    assert say(client, "直尽一千二")["fields"] == {"diameter": "1200"}
-    updated = client.post("/api/corrections", json={"wrong": "直尽", "right": "长度"}).json()
+    assert say(client, "吃紧一千二")["fields"] == {"diameter": "1200"}
+    updated = client.post("/api/corrections", json={"wrong": "吃紧", "right": "长度"}).json()
     assert updated["id"] == added["id"]
-    assert say(client, "直尽一千二")["fields"] == {"length": "1200"}
+    assert say(client, "吃紧一千二")["fields"] == {"length": "1200"}
     assert client.delete(f"/api/corrections/{added['id']}").status_code == 204
-    assert say(client, "直尽一千二")["fields"] == {}
+    assert say(client, "吃紧一千二")["fields"] == {}
     assert client.get("/api/corrections").json()["learned"] == []
     assert evidence_environment.since(0)[-2]["type"] == "voice"
 

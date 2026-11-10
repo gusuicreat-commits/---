@@ -53,7 +53,13 @@ _NUMBER_START = re.compile(r"[\d零〇一幺二两三四五六七八九十百千
 _UNIT = re.compile(r"\s*(毫米|厘米|公分|分贝|mm|cm|db|米|m)")
 _CODE = re.compile(r"(\d{8})\s*[-]?\s*(\d{2})(?!\d)")
 _DATE_DIGITS = r"[\d零〇一幺二两三四五六七八九十百千万]+"
-_VALUE_FILLERS = re.compile(r"^(?:\s|等于|是|为|:|：|大概|大约|约|差不多|在)+")
+_VALUE_FILLERS = re.compile(
+    r"^(?:\s|等于|是|为|:|：|大概齐|大约摸|大概|大约|约莫|约|差不多|差不离|在|"
+    r"得有|能有|有|估摸着|估摸|得|整)+"
+)
+_VALUE_PARTICLES = re.compile(r"[嘞哩咧唻啦呢啊呀哈嘛了吧哟]+")
+_NEGATIVE_PREFIX = re.compile(r"(?:没有|木有|冇|没)\s*(?:测|量)?\s*$")
+_NEGATIVE_SUFFIX = re.compile(r"^\s*(?:还没测|没测|没量)")
 _SPOKEN_DIGITS = re.compile(r"[0-9零〇一幺二两三四五六七八九]+")
 _UNCERTAIN_NUMBER = re.compile(r"[\d零〇一幺二两三四五六七八九十百千万点.]+[几多来]")
 
@@ -64,8 +70,23 @@ def _pronunciations(ch: str) -> frozenset[str]:
     return frozenset(pinyin(ch, heteronym=True, style=Style.NORMAL)[0])
 
 
+@lru_cache(maxsize=4096)
+def _dialect_pronunciations(ch: str) -> frozenset[str]:
+    """只合并指定声母和完整韵母，避免把 iang 等韵母也截成 an。"""
+    sounds = set()
+    for sound in _pronunciations(ch):
+        match = re.fullmatch(r"(zh|ch|sh|[bpmfdtnlgkhjqxrzcsyw]?)([a-z]+)", sound)
+        if match is None:
+            continue
+        initial, final = match.groups()
+        initial = {"zh": "z", "ch": "c", "sh": "s", "n": "l"}.get(initial, initial)
+        final = {"ang": "an", "eng": "en", "ing": "in"}.get(final, final)
+        sounds.add(initial + final)
+    return frozenset(sounds)
+
+
 def _keyword_hits(clause: str, forms: dict) -> list[dict]:
-    """先选不重叠的精确关键词，再在剩余窗口中查找同音词。"""
+    """依次选取精确、普通同音、口音模糊命中，后者不得覆盖前者。"""
     definitions = [
         (form, field, keyword)
         for form, fields in forms.items()
@@ -73,12 +94,12 @@ def _keyword_hits(clause: str, forms: dict) -> list[dict]:
         for keyword in definition["keywords"]
     ]
     exact = []
-    exact_keywords = set()
     for form, field, keyword in definitions:
         for match in re.finditer(re.escape(keyword), clause, flags=re.IGNORECASE):
-            if len(keyword) == 1 and not _NUMBER_START.match(clause, match.end()):
+            if (len(keyword) == 1 and not _NUMBER_START.match(clause, match.end())
+                    and not _NEGATIVE_PREFIX.search(clause[:match.start()])
+                    and not _NEGATIVE_SUFFIX.match(clause[match.end():])):
                 continue
-            exact_keywords.add(keyword)
             exact.append({"form": form, "field": field, "keyword": keyword,
                           "start": match.start(), "end": match.end(), "via": "exact"})
 
@@ -92,25 +113,31 @@ def _keyword_hits(clause: str, forms: dict) -> list[dict]:
         return selected
 
     hits = select(exact, [])
-    fuzzy = []
     uncertain_numbers = list(_UNCERTAIN_NUMBER.finditer(clause))
-    for form, field, keyword in definitions:
-        if len(keyword) < 2 or keyword in exact_keywords:
-            continue
-        pronunciations = [_pronunciations(ch) for ch in keyword]
-        for start in range(len(clause) - len(keyword) + 1):
-            end = start + len(keyword)
-            # 「一点几」中的「点几」不能被同音匹配为「电机」，截断数值。
-            if any(start < number.end() and number.start() < end for number in uncertain_numbers):
+    for via, pronounce in (("pinyin", _pronunciations), ("fuzzy", _dialect_pronunciations)):
+        candidates = []
+        for form, field, keyword in definitions:
+            if len(keyword) < 2:
                 continue
-            if any(start < hit["end"] and hit["start"] < end for hit in hits):
-                continue
-            window = clause[start:end]
-            if all(_pronunciations(ch) & sounds
-                   for ch, sounds in zip(window, pronunciations)):
-                fuzzy.append({"form": form, "field": field, "keyword": keyword,
-                              "start": start, "end": end, "via": "pinyin"})
-    return sorted(hits + select(fuzzy, hits), key=lambda item: item["start"])
+            pronunciations = [pronounce(ch) for ch in keyword]
+            for start in range(len(clause) - len(keyword) + 1):
+                end = start + len(keyword)
+                # 「一点几」中的「点几」不能被同音匹配为「电机」，截断数值。
+                if any(start < number.end() and number.start() < end for number in uncertain_numbers):
+                    continue
+                if any(start < hit["end"] and hit["start"] < end for hit in hits):
+                    continue
+                if not all(pronounce(ch) & sounds
+                           for ch, sounds in zip(clause[start:end], pronunciations)):
+                    continue
+                if via == "fuzzy":
+                    number = find_number(_VALUE_FILLERS.sub("", clause[end:]))
+                    if number is None or number[1] != 0:
+                        continue
+                candidates.append({"form": form, "field": field, "keyword": keyword,
+                                   "start": start, "end": end, "via": via})
+        hits += select(candidates, hits)
+    return sorted(hits, key=lambda item: item["start"])
 
 
 def _clean_value(s: str) -> str:
@@ -200,9 +227,7 @@ def _parse_value(s: str, field: str, definition: dict, keyword: str, today: date
     value, _, end = number
     unit_match = _UNIT.match(s, end)
     unit = unit_match[1] if unit_match else None
-    # 无单位时必须是完整读数，避免把普通词语里的数字当成测量结果。
-    if unit_match is None and s[end:].strip():
-        return None, None, "没有说出数值"
+    value_end = unit_match.end() if unit_match else end
     length_units = {"毫米", "厘米", "公分", "mm", "cm", "米", "m"}
     if ((kind == "length" and unit in {"分贝", "db"})
             or (kind == "noise" and unit in length_units)):
@@ -220,6 +245,11 @@ def _parse_value(s: str, field: str, definition: dict, keyword: str, today: date
                     return None, None, "数值说法无法确定"
                 digits = cn_digits_to_ascii(fraction.group())
                 value = Decimal(f"{int(value)}.{digits}")
+                value_end = fraction.end()
+    # 只容许完整读数后接语气词，既不截断数字，也不跳过普通文字。
+    tail = s[value_end:].strip()
+    if tail and not _VALUE_PARTICLES.fullmatch(tail):
+        return None, None, "没有说出数值"
     with localcontext() as context:
         context.prec = max(28, len(value.as_tuple().digits) + 8)
         value = (value * factor).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
@@ -250,10 +280,25 @@ def parse_text(text: str, form: str, today: date) -> dict:
         result["notes"].pop(field, None)
         if note:
             result["notes"][field] = note
-        result["matched"].append({"field": field, "keyword": keyword, "via": via, "value": value})
+        matched = {"field": field, "keyword": keyword, "via": via, "value": value}
+        if via == "fuzzy":
+            matched["fuzzy"] = True
+        result["matched"].append(matched)
         return True
 
-    for clause in re.split(r"[，,。；;！!？?、\n]", corrected):
+    clause_pattern = r"[，,。；;！!？?、\n]"
+    # 按规范化后的分隔符切分原文，保留否定子句里的原字、空格和全角数字。
+    original_clauses = [""]
+    for char in text:
+        if re.fullmatch(clause_pattern, unicodedata.normalize("NFKC", char)):
+            original_clauses.append("")
+        else:
+            original_clauses[-1] += char
+    replacements = []
+    clause_offset = 0
+    for clause_index, clause in enumerate(re.split(clause_pattern, corrected)):
+        offset = clause_offset
+        clause_offset += len(clause) + 1
         if not clause.strip():
             continue
         retracts = [word for word in config["retract_words"]
@@ -266,6 +311,16 @@ def parse_text(text: str, form: str, today: date) -> dict:
                 if hit["form"] != form:
                     continue
                 end = hits[index + 1]["start"] if index + 1 < len(hits) else len(clause)
+                start = hits[index - 1]["end"] if index else 0
+                if (_NEGATIVE_PREFIX.search(clause[start:hit["start"]])
+                        or _NEGATIVE_SUFFIX.match(clause[hit["end"]:end])):
+                    result["rejected"].append({
+                        "field": hit["field"], "said": original_clauses[clause_index],
+                        "reason": "说还没测",
+                    })
+                    continue
+                if hit["via"] == "fuzzy":
+                    replacements.append((offset + hit["start"], offset + hit["end"], hit["keyword"]))
                 said = _clean_value(clause[hit["end"]:end])
                 if assign(hit["field"], hit["keyword"], said, hit["via"]):
                     last_field, last_keyword = hit["field"], hit["keyword"]
@@ -278,6 +333,8 @@ def parse_text(text: str, form: str, today: date) -> dict:
             retract_pending = False
         elif not retracts:
             retract_pending = False
+    for start, end, keyword in reversed(replacements):
+        result["corrected"] = result["corrected"][:start] + keyword + result["corrected"][end:]
     if not result["fields"]:
         result["message"] = "未识别到参数"
     return result

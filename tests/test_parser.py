@@ -312,7 +312,7 @@ def test_pinyin_matches_polyphonic_characters(text):
     }]
 
 
-@pytest.mark.parametrize("text", ["直近一千二", "资径一千二"])
+@pytest.mark.parametrize("text", ["吃紧一千二", "制约一千二"])
 def test_pinyin_does_not_match_different_pronunciations(text):
     result = parse_text(text, "drum", TODAY)
     assert result["fields"] == {}
