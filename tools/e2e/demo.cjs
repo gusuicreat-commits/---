@@ -29,7 +29,10 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   console.log('演示结束 导出闸门:', await S.textContent('#gateP'), '| 合同:', await S.$eval('#ctSel', e => e.value));
   await S.screenshot({ path: `${OUT}/d12_大屏_演示完成.png` }); await P.screenshot({ path: `${OUT}/d12_手机_演示完成.png` });
 
-  // 2) 手机真录音（a1），供证据回放
+  // 2) 手机换到另一个（非演示）合同再录音，避免演示合同因混入真人语音而不能回收
+  const other = (await (await sc.request.get(B + 'api/contracts')).json()).items.find(c => c.name !== '演示客户（样例）' && c.status === '未录全');
+  await P.click('#ctBtn'); await sleep(900); await P.click(`#ctList .ci[data-ht="${other.ht_code}"]`); await sleep(1500);
+  console.log('手机换到合同', other.ht_code);
   await P.click('#tabs button[data-k="drum"]'); await sleep(600);
   const box = await P.$('#mic').then(e => e.boundingBox());
   await P.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await P.mouse.down(); await sleep(4700); await P.mouse.up();

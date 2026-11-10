@@ -404,7 +404,7 @@ tr.flash td{animation:rowflash 2s}
   <!-- 合同台账 -->
   <section class="view pane" id="v-led" style="grid-template-columns:1fr">
     <div class="panel"><div class="ph"><h3>合同台账</h3><span class="micro" id="ledN"></span>
-      <div class="r"><input class="search" id="ledQ" placeholder="搜合同号 / 客户"><div class="filters" id="ledF"></div><button class="btn-s l" id="expAll">批量导出合格合同</button></div></div>
+      <div class="r"><input class="search" id="ledQ" placeholder="搜合同号 / 客户"><div class="filters" id="ledF"></div><button class="btn-s" id="dmReset" title="删除所有由一键演示建的合同（真实数据不受影响）">清理演示合同</button><button class="btn-s l" id="expAll">批量导出合格合同</button></div></div>
       <table><thead><tr><th>合同号</th><th>客户</th><th>录入日期</th><th>状态</th><th>原因</th><th></th></tr></thead><tbody id="ledRows"></tbody></table></div>
     <div class="panel"><div class="ph"><h3>导出文件</h3><span class="micro" id="expN"></span></div>
       <table><thead><tr><th>文件</th><th>合同号</th><th>日期</th><th>大小</th><th>生成时间</th><th></th></tr></thead><tbody id="expRows"></tbody></table></div>
@@ -521,19 +521,20 @@ function renderClosed() {
   $('closed').innerHTML = '<span class="micro">Today · 本场记录</span>' + (S.log.slice(0, 6).map(x => `<div class="${x.ok ? '' : 'x'}">${esc(x.t)}　${esc(x.text)}</div>`).join('') || '<div style="opacity:.6">本场还没有提交记录</div>');
 }
 function renderGate() {
-  const g = $('gate'), d = S.detail;
+  const g = $('gate'), d = S.detail; S.gateDl = null;
   if (!d) { g.className = 'gate lock'; $('gateBtn').textContent = '导出 Excel'; $('gateP').textContent = '请先选择合同'; return; }
   if (d.status === '合格') { g.className = 'gate open'; $('gateBtn').textContent = `导出 ${d.contract.ht_code} Excel →`; $('gateP').textContent = '两类参数最新记录均合格'; }
   else { g.className = 'gate lock'; $('gateBtn').textContent = '🔒 导出 Excel'; $('gateP').textContent = `不能导出：${d.status_reason}${d.rules.configured < d.rules.total ? `（规则已配置 ${d.rules.configured}/${d.rules.total}）` : ''}`; }
 }
 $('gateBtn').onclick = async () => {
+  if (S.gateDl) { location.href = S.gateDl; return; }
   if ($('gate').className !== 'gate open') return;
   $('gateBtn').textContent = '正在导出…';
   try {
     const r = await api('POST', `/contracts/${encodeURIComponent(S.ht)}/export?source=screen`);
     const dd = (r.file.match(/_(\d{8})\.xlsx$/) || [])[1] || '';
     $('gate').className = 'gate done'; $('gateBtn').textContent = '✓ 已导出 · 点击下载';
-    $('gateBtn').onclick = () => location.href = `/api/exports/${encodeURIComponent(r.ht_code)}/${dd}`;
+    S.gateDl = `/api/exports/${encodeURIComponent(r.ht_code)}/${dd}`;
     $('gateP').innerHTML = `${esc(r.file)} · ${r.sheets.map(s => s.ok ? esc(s.name) : `<span class="c-ng">${esc(s.name)} 失败</span>`).join(' / ')}`;
     toast(`已导出 <b class="mono">${esc(r.file)}</b>`, 'ok');
   } catch (e) { toast(esc(e.message), 'ng'); renderGate(); }
@@ -623,7 +624,7 @@ async function presentVoice(p, src) {
 function presentRecord(d, src) {
   const v = d.validation, ok = v && v.is_qualified === 1, k = d.kind;
   pipe(5, !ok, ['', '', '', v ? (ok ? '全部合格' : `${v.failures.length} 项不合格`) : '校验未完成', `已入库 #${d.record.id}`]);
-  setHero({ title: `${d.ht_code} · ${KIND_LABEL[k]}参数 · 记录 #${d.record.id}`, tag: src === 'screen' ? '大屏提交' : '手机提交', big: v ? (ok ? '合格' : '不合格') : '待校验', word: true,
+  setHero({ title: `${d.ht_code} · ${KIND_LABEL[k]}参数 · 记录 #${d.record.id}`, tag: { screen: '大屏提交', demo: '演示提交' }[src] || '手机提交', big: v ? (ok ? '合格' : '不合格') : '待校验', word: true,
     verdict: `合同状态：${d.contract_status.status}`, cls: v ? (ok ? 'ok' : 'ng') : 'warn', src: d.contract_status.reason,
     alert: v && !ok ? { cls: 'ng', html: `<b>不合格</b>${v.failures.map(esc).join('；')}` } : !v ? { cls: 'warn', html: esc(d.warning || '校验未完成') } : null });
   readback(QC.readbackRecord(d, k));
@@ -731,6 +732,10 @@ $('mSubmit').onclick = async () => {
   const vq = S.dvids[S.form].length ? '&voice_ids=' + S.dvids[S.form].slice(-50).join(',') : '';
   try { const r = await api('POST', `/contracts/${encodeURIComponent(S.ht)}/records/${S.form}?source=screen${vq}`, body); if (!S.hasBus) handleRecord({ source: 'screen', data: { ...r, kind: S.form, ht_code: S.ht } }); }
   catch (e) { toast(esc(e.message + (e.fields ? '：' + Object.values(e.fields).join('；') : '')), 'ng'); }
+};
+$('dmReset').onclick = async () => {
+  if (!confirm('删除所有「一键演示」建的合同、记录和录音？真实合同不受影响。')) return;
+  try { const r = await api('POST', '/demo/reset'); toast(r.deleted.length ? `已清理 ${r.deleted.length} 个演示合同` : '没有演示合同', 'ok'); await loadContracts(); await loadReviews(); renderLed(); } catch (e) { toast(esc(e.message), 'ng'); }
 };
 $('ttsSw').onclick = () => { S.tts = !S.tts; store('qcs_tts', S.tts); $('ttsSw').classList.toggle('on', S.tts); if (S.tts) QC.speak('回读播报已打开'); };
 $('ctSel').onchange = () => focus($('ctSel').value || null, null, { push: false });
@@ -911,7 +916,8 @@ QC.onEvent(async ev => {
     else if (ev.type === 'review') { await loadReviews(); if (d.action === 'new') toast(`<b>待复核</b>　「${esc(d.voice?.text || '')}」没有听懂，已转主管复核`, 'fix'); }
     else if (ev.type === 'corrections') { await loadLearned(); }
     else if (ev.type === 'demo') onDemo(d);
-    else if (ev.type === 'export') { if (S.view === 'led') renderLed(); if (d.action === 'one' && ev.source !== 'screen') toast(`已导出 <b class="mono">${esc(d.file || '')}</b>`, 'ok'); }
+    else if (ev.type === 'export') { if (S.view === 'led') renderLed();
+      if (d.action === 'one' && d.ht_code === S.ht && ev.source !== 'screen' && d.file) { const dd = (d.file.match(/_(\d{8})\.xlsx$/) || [])[1] || ''; $('gate').className = 'gate done'; $('gateBtn').textContent = '✓ 已导出 · 点击下载'; S.gateDl = `/api/exports/${encodeURIComponent(d.ht_code)}/${dd}`; $('gateP').textContent = d.file.split('/').pop(); } if (d.action === 'one' && ev.source !== 'screen') toast(`已导出 <b class="mono">${esc(d.file || '')}</b>`, 'ok'); }
   } catch (e) { console.error(e); }
 });
 QC.bus.onState = m => { S.hasBus = m === 'live' || m === 'poll'; };
