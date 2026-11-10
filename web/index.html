@@ -4,56 +4,58 @@
 <meta charset="utf-8">
 <link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>质检实时录入 · 产品参数校验</title>
+<title>质检实时录入</title>
 <style>
-:root{--tx:#f3f3f5;--tx2:#a3a3ad;--tx3:#66666f;--line:rgba(255,255,255,.08);--lime:#c6f43f;
+:root{--tx:#f3f3f5;--tx2:#a3a3ad;--tx3:#85858f;--line:rgba(255,255,255,.08);--lime:#4cbf86;--acc:#5b8def; --acc-fill:#2f6fe4; --acc-fill-h:#3d7cf0;
   --sans:-apple-system,"SF Pro Text","PingFang SC","Helvetica Neue",sans-serif;--disp:"SF Pro Display",-apple-system,"PingFang SC",sans-serif;--mono:"SF Mono",ui-monospace,Menlo,monospace}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{min-height:100%}
 body{background:#08080a;color:var(--tx);font:15px/1.6 var(--sans);-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center;padding:48px 24px}
-body::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(900px 500px at 50% 0%,rgba(198,244,63,.07),transparent 65%)}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(900px 500px at 50% 0%,rgba(91,141,239,.07),transparent 65%)}
 .w{position:relative;max-width:1040px;width:100%}
-.micro{font:500 11px/1.2 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--tx3)}
-h1{font:200 clamp(56px,8vw,96px)/1 var(--disp);letter-spacing:-.02em;margin:22px 0 18px}
-h1 b{font-weight:600;color:var(--lime)}
-.lead{font-size:18px;color:var(--tx2);max-width:640px}
+.micro{font:500 13px/1.3 var(--sans);letter-spacing:.04em;color:var(--tx3)}
+.ic{width:1em;height:1em;flex:none;display:inline-block;vertical-align:-.14em}
+h1{font:500 clamp(56px,8vw,96px)/1 var(--disp);letter-spacing:-.02em;margin:22px 0 18px}
+h1 b{font-weight:600;color:var(--acc)}
+.lead{font-size:17px;color:var(--tx2);max-width:640px}
 .cards{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px;margin:48px 0 28px}
-a.card{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:20px;padding:30px 30px 26px;background:rgba(255,255,255,.02);transition:border-color .25s,transform .25s,background .25s;position:relative;overflow:hidden}
-a.card:hover{border-color:rgba(198,244,63,.45);transform:translateY(-2px);background:rgba(198,244,63,.03)}
+a.card{display:block;text-decoration:none;color:inherit;border:1px solid transparent;border-radius:20px;padding:30px 30px 26px;background:#0e0e11;transition:border-color .25s,transform .25s,background .25s;position:relative;overflow:hidden}
+a.card:hover{border-color:rgba(91,141,239,.45);transform:translateY(-2px);background:rgba(91,141,239,.03)}
 .card h2{font:600 24px/1.2 var(--disp);margin:14px 0 10px}
 .card p{color:var(--tx2);font-size:14px}
-.card .go{position:absolute;right:28px;top:28px;font:20px var(--mono);color:var(--tx3);transition:color .25s,transform .25s}
-a.card:hover .go{color:var(--lime);transform:translate(3px,-3px)}
+.card .go{position:absolute;right:28px;top:28px;display:flex;font-size:20px;color:var(--tx3);transition:color .25s,transform .25s}
+a.card:hover .go{color:var(--acc);transform:translate(3px,-3px)}
 .card .f{margin-top:22px;font:12px var(--mono);color:var(--tx3)}
-.both{display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 22px;border-radius:12px;background:var(--lime);color:#0a0a0b;font-weight:600;font-size:15px;border:0;cursor:pointer}
+.both{display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 22px;border-radius:12px;background:var(--acc-fill);color:#fff;font-weight:600;font-size:15px;border:0;cursor:pointer}
 .both:hover{filter:brightness(1.06)}
 .row{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
 .row span{color:var(--tx3);font-size:13px}
-.notes{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:48px;border-top:1px solid var(--line)}
-.notes div{padding:22px 24px 0 0}
-.notes div+div{padding-left:24px;border-left:1px solid var(--line)}
+.notes{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:48px;border-top:1px solid var(--line)}
+.notes div{padding:22px 0 0}
+.notes div+div{padding-left:0}
 .notes h3{font-size:14px;font-weight:600;margin:10px 0 6px}
 .notes p{font-size:13px;color:var(--tx2)}
-code{font:12.5px var(--mono);color:var(--lime);background:rgba(198,244,63,.08);padding:2px 6px;border-radius:5px}
-#lan{font:14px var(--mono);color:var(--lime)}
+code{font:13px var(--mono);color:var(--acc);background:rgba(91,141,239,.08);padding:2px 6px;border-radius:5px}
+#lan{font:14px var(--mono);color:var(--acc)}
 @media (max-width:760px){.cards,.notes{grid-template-columns:1fr}.notes div+div{padding-left:0;border-left:0}}
-.st{display:flex;gap:18px;flex-wrap:wrap;margin-top:22px;font-size:13px;color:var(--tx3)}.st i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#38383f;margin-right:7px}.st .on i{background:var(--lime)}.st .off i{background:#ffb547}
+.st{display:flex;gap:18px;flex-wrap:wrap;margin-top:22px;font-size:13px;color:var(--tx3)}.st i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#55555e;margin-right:7px}.st .on i{background:var(--lime)}.st .off i{background:#ffb547}
 @media (max-width:900px){.cards{grid-template-columns:1fr}}
+.both:hover{background:var(--acc-fill-h)}
 </style>
 </head>
 <body>
 <div class="w">
-  <div class="micro">Weihua × AI Hackathon · 13 号选题 · 产品参数校验系统 v7</div>
+  <div class="micro">卫华 × AI 黑客松 · 13 号选题</div>
   <h1>质检实时录入<b>.</b></h1>
   <p class="lead">起重机出厂检验的语音录入与参数校验。质检员按住说「参数 + 数值」，本机 FunASR 识别、三层纠错、按规则当场判定；四类参数都合格的合同才能导出 Excel。</p>
   <div class="st" id="st"><span id="s1"><i></i>主程序</span><span id="s2"><i></i>语音识别</span><span id="s3"><i></i>实时联动</span><span id="s4"></span></div>
 
   <div class="cards">
-    <a class="card" href="screen.html" target="_blank"><span class="micro">01 · Cockpit</span><span class="go">↗</span><h2>主管驾驶舱</h2><p>投影 / 大屏。实时识别管线、检验表、不合格派单复测、导出闸门、识别纠错、验证看板。</p><div class="f">screen.html · 底部可键入代录</div></a>
-    <a class="card" href="phone.html" target="_blank"><span class="micro">02 · Inspector</span><span class="go">↗</span><h2>质检员手机端</h2><p>现场用。按住说话、大字回读、超范围即时提醒、确认后提交入库。</p><div class="f">phone.html · 电脑上按住空格说话</div></a>
-    <a class="card" href="admin.html" target="_blank"><span class="micro">03 · Admin</span><span class="go">↗</span><h2>管理后台</h2><p>合同增删改、手动录入、历史记录、重新校验、规则配置、导出文件。</p><div class="f">admin.html</div></a>
+    <a class="card" href="screen.html" target="_blank"><span class="micro">01 · 大屏</span><span class="go" data-ic="ext"></span><h2>主管驾驶舱</h2><p>投影 / 大屏。实时识别管线、检验表、不合格派单复测、导出闸门、识别纠错、验证看板。</p><div class="f">screen.html · 底部可键入代录</div></a>
+    <a class="card" href="phone.html" target="_blank"><span class="micro">02 · 手机</span><span class="go" data-ic="ext"></span><h2>质检员手机端</h2><p>现场用。按住说话、大字回读、超范围即时提醒、确认后提交入库。</p><div class="f">phone.html · 电脑上按住空格说话</div></a>
+    <a class="card" href="admin.html" target="_blank"><span class="micro">03 · 后台</span><span class="go" data-ic="ext"></span><h2>管理后台</h2><p>合同增删改、手动录入、历史记录、重新校验、规则配置、导出文件。</p><div class="f">admin.html</div></a>
   </div>
-  <div class="row"><button class="both" id="both">同时打开大屏和手机端 →</button><span>两端通过主程序的实时事件流联动：手机说一句，大屏立刻看到识别、纠错与判定。</span></div>
+  <div class="row"><button class="both" id="both" data-ic="arrow">同时打开大屏和手机端</button><span>两端通过主程序的实时事件流联动：手机说一句，大屏立刻看到识别、纠错与判定。</span></div>
 
   <div class="notes">
     <div><span class="micro">同一台电脑</span><h3>直接打开即可</h3><p>localhost 下浏览器允许用麦克风，手机端页面在电脑上也能按住空格说话。</p></div>
@@ -62,6 +64,8 @@ code{font:12.5px var(--mono);color:var(--lime);background:rgba(198,244,63,.08);p
   </div>
 </div>
 <script>
+const ICONS={ext:'<path d="M7 17 17 7M9 7h8v8"/>',arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>'};
+document.querySelectorAll('[data-ic]').forEach(el=>el.insertAdjacentHTML('beforeend',`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[el.dataset.ic]}</svg>`));
 document.getElementById('both').onclick=()=>{
   const W=screen.availWidth, H=screen.availHeight;
   window.open('screen.html','qc_screen',`left=0,top=0,width=${Math.round(W*.72)},height=${H}`);

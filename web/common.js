@@ -188,11 +188,37 @@
     const m = { bypass: '干净，跳过', light: '轻度', strong: '强' }[d.action] || d.action;
     return `${m}${d.snr_db != null ? ` · 信噪比 ${Number(d.snr_db).toFixed(1)} dB` : ''}`;
   }
+  /* ---------- 线条图标（统一一套，替代 ▶ ■ ↗ ✓ ✕ 🔒 等字符） ---------- */
+  const ICONS = {
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    x: '<path d="M18 6 6 18M6 6l12 12"/>',
+    lock: '<rect x="4.5" y="11" width="15" height="10" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/>',
+    play: '<path d="M7.5 4.8v14.4L19 12z"/>',
+    stop: '<rect x="6.5" y="6.5" width="11" height="11" rx="1.5"/>',
+    ext: '<path d="M7 17 17 7M9 7h8v8"/>',
+    arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    audio: '<path d="M4 10v4M8 6v12M12 3v18M16 8v8M20 10.5v3"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    alert: '<path d="M12 8v5M12 16.5v.01"/><circle cx="12" cy="12" r="9"/>',
+  };
+  const icon = (name, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+
+  /* 四类参数各自的最新状态：合格 / 不合格 / 待校验 / 缺失 */
+  const KIND_SHORT = { drum: '卷筒', travel_drive: '传动', control_cabinet: '控制柜', travel_paint: '油漆' };
+  function kindStates(latest) {
+    return Object.keys(KINDS).map(k => {
+      const r = latest?.[k];
+      const st = !r ? ['no', '缺失'] : r.is_qualified === 1 ? ['ok', '合格'] : r.is_qualified === 0 ? ['ng', '不合格'] : ['warn', '待校验'];
+      return { kind: k, label: KIND_SHORT[k], cls: st[0], text: st[1] };
+    });
+  }
+  const kindCells = latest => `<span class="kc">${kindStates(latest).map(s => `<span class="kc-i ${s.cls}" title="${KIND_LABEL[s.kind]}参数：${s.text}"><span>${s.label}</span><b>${s.text}</b></span>`).join('')}</span>`;
+
   const nowBJ = () => new Date(Date.now() + 8 * 3600e3);
   const hhmmss = () => nowBJ().toISOString().slice(11, 19);
   const todayStr = () => nowBJ().toISOString().slice(0, 10);
 
   window.QC = { esc, KINDS, KIND_LABEL, STATUS_CLS, load, store, api, ApiError, G, loadFields, loadRules, fieldsOf, fieldMeta, ruleOf, rangeText, configured,
     prejudge, readbackVoice, readbackRecord, bus, onEvent, connect, publish, presence, clientId, voiceStatus, micSupport, recorder, sendAudio, sendText,
-    speak, denoiseText, hhmmss, todayStr, unitWord };
+    speak, denoiseText, hhmmss, todayStr, unitWord, icon, KIND_SHORT, kindStates, kindCells };
 })();

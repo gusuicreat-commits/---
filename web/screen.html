@@ -9,52 +9,72 @@
 :root{
   --bg:#08080a; --s1:#0e0e11; --s2:#141418; --s3:#1b1b20;
   --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.13);
-  --tx:#f3f3f5; --tx2:#a3a3ad; --tx3:#66666f; --tx4:#38383f;
-  --lime:#c6f43f; --lime-d:rgba(198,244,63,.10);
-  --red:#ff5a4e;  --red-d:rgba(255,90,78,.11);
-  --amber:#ffb547; --amber-d:rgba(255,181,71,.10);
-  --violet:#aa9cff; --violet-d:rgba(170,156,255,.11);
+  --tx:#f3f3f5; --tx2:#a3a3ad; --tx3:#85858f; --tx4:#38383f;
+  --acc:#5b8def; --acc-fill:#2f6fe4; --acc-fill-h:#3d7cf0; --acc-d:rgba(91,141,239,.12); --acc-l:rgba(91,141,239,.45);
+  --lime:#4cbf86; --lime-d:rgba(76,191,134,.10);
+  --red:#ec6a60;  --red-d:rgba(236,106,96,.11);
+  --amber:#e2a446; --amber-d:rgba(226,164,70,.10);
+  --violet:var(--acc); --violet-d:var(--acc-d);
   --sans:-apple-system,"SF Pro Text","PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
   --disp:"SF Pro Display",-apple-system,"PingFang SC","Helvetica Neue",sans-serif;
   --mono:"SF Mono","JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
   --ease:cubic-bezier(.2,.7,.2,1);
+  /* 字号只用这几档：12 / 13 / 14 / 15 / 17 / 20 / 24 / 28（数字展示另有 34 / 44 / 56） */
+  /* 实时检验页随屏幕缩放：--u 取宽、高中更紧的一边，1920×1080 时为 19.2px */
+  --u:min(1vw,1.78vh);
+  --fl-label:clamp(12px,calc(var(--u)*.74),14px);
+  --fl-body:clamp(13px,calc(var(--u)*.84),16px);
+  --fl-name:clamp(13px,calc(var(--u)*.9),17px);
+  --fl-val:clamp(14px,calc(var(--u)*1.06),21px);
+  --fl-gap:clamp(10px,calc(var(--u)*.8),16px);
+  --i-check:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+  --i-x:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E");
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{background:var(--bg);color:var(--tx);font:14px/1.55 var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased;display:grid;grid-template-rows:64px 1fr 52px}
+body{background:var(--bg);color:var(--tx);font:14px/1.55 var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased;display:grid;grid-template-rows:64px 1fr 52px;grid-template-columns:minmax(0,1fr)}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:radial-gradient(1100px 520px at 50% -8%,rgba(198,244,63,.055),transparent 62%),
-  linear-gradient(var(--line) 1px,transparent 1px) 0 0/56px 56px,linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/56px 56px;
-  -webkit-mask-image:radial-gradient(ellipse at 50% 30%,#000 10%,transparent 75%);mask-image:radial-gradient(ellipse at 50% 30%,#000 10%,transparent 75%);opacity:.5}
+  background:radial-gradient(1100px 520px at 50% -8%,rgba(91,141,239,.035),transparent 62%)}
 body>*{position:relative;z-index:1}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 input,select{font:inherit;color:inherit}
+input::placeholder{color:var(--tx3);opacity:1}
 a{color:inherit;text-decoration:none}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.micro{font:500 10.5px/1.2 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--tx3)}
+.micro{font:500 12px/1.3 var(--sans);letter-spacing:.02em;color:var(--tx3)}
+.ic{width:1.05em;height:1.05em;flex:none;display:inline-block;vertical-align:-.16em}
+.btn-s .ic,.nav .ic{width:1em;height:1em}
+/* 可滚动列表的上下边缘渐隐：由 fadeEdges() 按滚动位置设置 --ft / --fb */
+.fade{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 var(--ft,0px),#000 calc(100% - var(--fb,0px)),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 var(--ft,0px),#000 calc(100% - var(--fb,0px)),transparent 100%)}
+/* 四类参数状态小格 */
+.kc{display:inline-flex;gap:4px;flex-wrap:wrap}
+.kc-i{display:inline-flex;align-items:baseline;gap:5px;padding:3px 8px;border-radius:6px;background:var(--s2);font-size:12px;line-height:1.4;color:var(--tx3);white-space:nowrap}
+.kc-i b{font-weight:500;color:var(--c,var(--tx3))}
+.kc-i.ok{--c:var(--lime)} .kc-i.ng{--c:var(--red)} .kc-i.warn{--c:var(--amber)} .kc-i.no b{font-weight:400}
 ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:6px}::-webkit-scrollbar-track{background:transparent}
 .c-ok{color:var(--lime)} .c-ng{color:var(--red)} .c-warn{color:var(--amber)} .c-fix{color:var(--violet)} .c-dim{color:var(--tx3)}
-.tag{font:500 10px/1 var(--mono);letter-spacing:.08em;border:1px solid var(--line2);color:var(--tx3);border-radius:4px;padding:3px 6px;white-space:nowrap}
-.tag.amb{color:var(--amber);border-color:rgba(255,181,71,.35)} .tag.vio{color:var(--violet);border-color:rgba(170,156,255,.4)} .tag.lim{color:var(--lime);border-color:rgba(198,244,63,.35)}
+.tag{font:500 12px/1 var(--sans);border:1px solid var(--line2);color:var(--tx2);border-radius:5px;padding:4px 7px;white-space:nowrap}
+.tag.amb,.tag.vio,.tag.lim{color:var(--tx2);border-color:var(--line2)}
+.tag.st-ok{color:var(--lime);border-color:rgba(76,191,134,.4)} .tag.st-ng{color:var(--red);border-color:rgba(236,106,96,.45)} .tag.st-warn{color:var(--amber);border-color:rgba(226,164,70,.4)}
 
 /* header */
 .hd{display:flex;align-items:center;gap:28px;padding:0 28px;border-bottom:1px solid var(--line);background:rgba(8,8,10,.7);backdrop-filter:blur(12px)}
 .mark{display:flex;align-items:center;gap:12px;white-space:nowrap}
 .mark b{font:600 17px/1 var(--disp);letter-spacing:.06em}
-.mark b i{font-style:normal;color:var(--lime)}
+.mark b i{font-style:normal;color:var(--acc)}
 .mark .sep{width:1px;height:16px;background:var(--line2)}
 .nav{display:flex;gap:4px;margin-left:12px}
-.nav button,.nav a{position:relative;padding:8px 14px;color:var(--tx3);font-size:13.5px;transition:color .2s}
+.nav button,.nav a{position:relative;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding:8px clamp(9px,.75vw,14px);color:var(--tx3);font-size:14px;transition:color .2s}
 .nav button:hover,.nav a:hover{color:var(--tx2)}
 .nav button.on{color:var(--tx)}
-.nav button.on::after{content:"";position:absolute;left:50%;bottom:-13px;width:18px;height:2px;margin-left:-9px;background:var(--lime);border-radius:2px}
-.nav .badge{display:none;margin-left:6px;font:600 10px/16px var(--mono);min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--red);color:#0b0b0d;vertical-align:1px}
+.nav button.on::after{content:"";position:absolute;left:50%;bottom:-13px;width:18px;height:2px;margin-left:-9px;background:var(--acc);border-radius:2px}
+.nav .badge{display:none;margin-left:1px;font:600 12px/18px var(--mono);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red);color:#0b0b0d;text-align:center}
 .nav .badge.show{display:inline-block}
-.nav a::after{content:" ↗";color:var(--tx4)}
+.nav a .ic{color:var(--tx3)}
 .hd-r{margin-left:auto;display:flex;align-items:center;gap:22px;white-space:nowrap}
 .dev{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--tx3)}
 .dev i{width:7px;height:7px;border-radius:50%;background:var(--tx4)}
-.dev.on i{background:var(--lime);box-shadow:0 0 0 3px rgba(198,244,63,.15)} .dev.on{color:var(--tx2)}
+.dev.on i{background:var(--lime);box-shadow:0 0 0 3px rgba(76,191,134,.15)} .dev.on{color:var(--tx2)}
 .dev.off i{background:var(--amber)}
 .clock{font-size:15px;color:var(--tx);letter-spacing:.04em}
 
@@ -63,17 +83,18 @@ a{color:inherit;text-decoration:none}
 .view.on{display:grid}
 
 /* live */
-.live{grid-template-columns:minmax(220px,20%) minmax(0,1fr) minmax(270px,26%)}
-.col{min-height:0;display:flex;flex-direction:column;padding:26px 28px}
+.live{grid-template-columns:minmax(220px,19%) minmax(0,1fr) minmax(280px,25%)}
+.col{min-height:0;display:flex;flex-direction:column;padding:clamp(16px,calc(var(--u)*1.2),28px) clamp(16px,calc(var(--u)*1.3),30px)}
 .col+.col{border-left:1px solid var(--line)}
 .sec-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px}
-.prog{display:flex;align-items:baseline;gap:10px}
-.big-n{font:200 44px/1 var(--disp);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
-.big-n small{font-size:20px;color:var(--tx3);font-weight:300;margin-left:2px}
-.prog span:last-child{color:var(--tx3);font-size:12.5px}
+.live .sec-h .micro{font-size:var(--fl-label);color:var(--tx2)}
+.prog{display:flex;align-items:baseline;gap:8px;flex:none}
+.big-n{font:400 44px/1 var(--disp);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.big-n small{font-size:20px;color:var(--tx3);font-weight:400;margin-left:2px}
+.prog span:last-child{color:var(--tx3);font-size:var(--fl-label)}
 .ctsel{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 .ctsel select{flex:1;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:9px;padding:8px 10px;font:500 14px var(--mono);outline:none}
-.ctname{font-size:12.5px;color:var(--tx3);margin:-8px 0 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctname{font-size:13px;color:var(--tx3);margin:-8px 0 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .segs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;margin:14px 0 16px}
 .segs i{height:4px;border-radius:2px;background:var(--tx4);transition:background .4s}
 .segs i.ok{background:var(--lime)} .segs i.ng{background:var(--red)} .segs i.warn{background:var(--amber)} .segs i.fix{background:var(--violet)}
@@ -81,28 +102,28 @@ a{color:inherit;text-decoration:none}
 .grp{margin:14px 0 6px;display:flex;align-items:center;gap:10px}
 .grp::after{content:"";flex:1;height:1px;background:var(--line)}
 .grp:first-child{margin-top:0}
-.grp .q{font-size:11.5px}
+.grp .q{font-size:12px}
 .row{display:grid;grid-template-columns:8px 1fr auto;align-items:center;gap:12px;padding:7px 10px;margin:0 -10px;border-radius:8px;position:relative}
 .row .dot{width:6px;height:6px;border-radius:50%;background:var(--tx4)}
 .row.ok .dot{background:var(--lime)} .row.ng .dot{background:var(--red);box-shadow:0 0 0 3px var(--red-d)} .row.warn .dot{background:var(--amber)} .row.fix .dot{background:var(--violet);box-shadow:0 0 0 3px var(--violet-d)}
-.row .nm{font-size:13.5px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .nm{font-size:14px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row:not(.pending) .nm{color:var(--tx)}
-.row .nm em{font-style:normal;color:var(--tx3);margin-left:8px;font:11px var(--mono)}
-.row .val{font:400 13.5px/1 var(--mono);text-align:right;white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis}
-.row .val .u{color:var(--tx3);font-size:10.5px;margin-left:3px}
-.row .val .d{color:var(--violet);font-size:10.5px;margin-left:6px}
+.row .nm em{font-style:normal;color:var(--tx3);margin-left:8px;font:12px var(--mono)}
+.row .val{font:400 14px/1 var(--mono);text-align:right;white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis}
+.row .val .u{color:var(--tx3);font-size:12px;margin-left:3px}
+.row .val .d{color:var(--violet);font-size:12px;margin-left:6px}
 .row.ng .val b{color:var(--red);font-weight:500} .row.fix .val b{color:var(--violet);font-weight:500}
 .row .val b{font-weight:400}
-.row.flash{animation:rowflash 2s var(--ease)}
-@keyframes rowflash{0%{background:rgba(198,244,63,.16)}100%{background:transparent}}
-.sheet-foot{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);margin-top:14px;padding-top:14px}
-.sheet-foot div{display:flex;flex-direction:column;gap:2px}
-.sheet-foot b{font:300 22px/1 var(--disp);font-variant-numeric:tabular-nums}
-.sheet-foot span{font-size:11.5px;color:var(--tx3)}
+.row.flash{animation:rowflash 2.4s var(--ease)}
+@keyframes rowflash{0%,30%{background:rgba(91,141,239,.28)}100%{background:transparent}}
+.sheet-foot{display:flex;flex-wrap:wrap;gap:6px clamp(18px,calc(var(--u)*1.8),36px);margin-top:14px}
+.sheet-foot div{display:flex;align-items:baseline;gap:6px}
+.sheet-foot b{font:500 20px/1 var(--disp);font-variant-numeric:tabular-nums}
+.sheet-foot span{font-size:var(--fl-label);color:var(--tx3)}
 
 .stage{position:relative;overflow:hidden}
 .stage::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(70% 55% at 50% 58%,var(--glow,transparent),transparent 70%);transition:background .6s}
-.stage.ok{--glow:rgba(198,244,63,.06)} .stage.ng{--glow:rgba(255,90,78,.12)} .stage.warn{--glow:rgba(255,181,71,.09)}
+.stage.ok{--glow:transparent} .stage.ng{--glow:rgba(236,106,96,.045)} .stage.warn{--glow:rgba(226,164,70,.035)}
 .stage>*{position:relative;flex-shrink:0}
 .stage>.hero{flex-shrink:1;min-height:0}
 .stg-top{display:flex;align-items:center;gap:14px}
@@ -112,149 +133,151 @@ a{color:inherit;text-decoration:none}
 @keyframes blink{50%{opacity:.25}}
 .stg-top .r{margin-left:auto;display:flex;gap:10px;align-items:center}
 .pipe{list-style:none;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:22px 0 4px}
-.pipe li{display:flex;flex-direction:column;gap:9px;font:500 11.5px/1 var(--sans);color:var(--tx3);transition:color .3s}
+.pipe li{display:flex;flex-direction:column;gap:9px;font:500 12px/1 var(--sans);color:var(--tx3);transition:color .3s}
 .pipe li::before{content:"";height:2px;border-radius:2px;background:var(--tx4);transition:background .3s}
-.pipe li span{font-family:var(--mono);font-size:10.5px;margin-right:6px;color:var(--tx4)}
-.pipe li small{font:400 11px var(--mono);color:var(--tx3);min-height:13px}
+.pipe li span{font-family:var(--mono);font-size:12px;margin-right:6px;color:var(--tx4)}
+.pipe li small{font:400 12px var(--mono);color:var(--tx3);min-height:13px}
 .pipe li.done{color:var(--tx2)} .pipe li.done::before{background:var(--tx2)}
-.pipe li.act{color:var(--tx)} .pipe li.act::before{background:linear-gradient(90deg,var(--lime),rgba(198,244,63,.25),var(--lime));background-size:200% 100%;animation:shim 1s linear infinite}
-.pipe li.act span{color:var(--lime)}
-.pipe li.bad::before{background:var(--red)} .pipe li.bad{color:#ff9d95}
+.pipe li.act{color:var(--tx)} .pipe li.act::before{background:linear-gradient(90deg,var(--acc),rgba(91,141,239,.25),var(--acc));background-size:200% 100%;animation:shim 1s linear infinite}
+.pipe li.act span{color:var(--acc)}
+.pipe li.bad::before{background:var(--red)} .pipe li.bad{color:#f0a39b}
 @keyframes shim{to{background-position:-200% 0}}
 #wave{width:100%;height:44px;display:block;margin:14px 0 6px}
 .tr{font:400 clamp(22px,1.9vw,34px)/1.5 var(--sans);letter-spacing:.01em;min-height:2.6em;color:var(--tx)}
 .tr.idle{color:var(--tx4)}
-.tr .caret{display:inline-block;width:2px;height:.95em;background:var(--lime);margin-left:3px;vertical-align:-.1em;animation:blink .8s infinite}
+.tr .caret{display:inline-block;width:2px;height:.95em;background:var(--acc);margin-left:3px;vertical-align:-.1em;animation:blink .8s infinite}
 .tr ruby{ruby-position:over}
-.toclip{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}.toclip select{max-width:520px;height:30px;background:var(--card2,#19191c);color:inherit;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:0 8px;font-size:12.5px}
+.toclip{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}.toclip select{max-width:520px;height:30px;background:var(--card2,#19191c);color:inherit;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:0 8px;font-size:13px}
 .tr ruby b{color:var(--violet);font-weight:500}
 .tr rt{font-size:.42em;color:var(--red);text-decoration:line-through;letter-spacing:.05em;opacity:.9}
-.tr mark{background:none;color:var(--lime);text-decoration:underline;text-decoration-color:rgba(198,244,63,.35);text-underline-offset:6px}
-.tr .rj{color:var(--amber);text-decoration:underline wavy rgba(255,181,71,.5);text-underline-offset:6px}
+.tr mark{background:none;color:var(--tx);text-decoration:underline;text-decoration-color:rgba(91,141,239,.6);text-underline-offset:6px}
+.tr .rj{color:var(--amber);text-decoration:underline wavy rgba(226,164,70,.5);text-underline-offset:6px}
 .cn{min-height:22px;font-size:13px;color:var(--tx2);display:flex;flex-wrap:wrap;gap:6px 16px}
 .cn span{display:inline-flex;align-items:center;gap:7px}
-.cn span::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--violet)}
-.cn span.tb::before{background:var(--amber)} .cn span.hm::before{background:var(--tx2)} .cn span.okk::before{background:var(--lime)} .cn span.bad::before{background:var(--red)}
+.cn span::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--tx3)}
+.cn span.tb::before{background:var(--acc)} .cn span.hm::before{background:var(--tx3)} .cn span.okk::before{background:var(--tx3)} .cn span.bad::before{background:var(--red)}
 .hero{margin-top:auto;padding:8px 0 4px;transition:opacity .35s;overflow:hidden}
 .hero.dimmed{opacity:.18}
-.h-item{font-size:18px;color:var(--tx2);display:flex;align-items:center;gap:10px}
-.h-val{font:200 clamp(80px,min(8.4vw,15vh),168px)/.95 var(--disp);letter-spacing:-.05em;font-variant-numeric:tabular-nums;margin:6px 0 10px -4px;display:flex;align-items:baseline;white-space:nowrap}
+.h-item{font-size:17px;color:var(--tx2);display:flex;align-items:center;gap:10px}
+.h-val{font:400 clamp(80px,min(8.4vw,15vh),168px)/.95 var(--disp);letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin:6px 0 10px -4px;display:flex;align-items:baseline;white-space:nowrap}
 .h-val.word{font-size:clamp(64px,min(6.4vw,12vh),124px);letter-spacing:-.02em}
 .h-val.txt{font-size:clamp(40px,3.6vw,64px);letter-spacing:0;white-space:normal}
-.h-val small{font:300 24px/1 var(--disp);color:var(--tx3);letter-spacing:0;margin-left:12px}
+.h-val small{font:400 24px/1 var(--disp);color:var(--tx3);letter-spacing:0;margin-left:12px}
 .hero.ng .h-val span{color:var(--red)} .hero.warn .h-val span{color:var(--amber)} .hero.ok .h-val.word span{color:var(--lime)}
-.h-verdict{display:flex;align-items:center;gap:12px;font:600 26px/1.2 var(--sans)}
+.h-verdict{display:flex;align-items:center;gap:12px;font:600 28px/1.2 var(--sans)}
 .h-verdict::before{content:"";width:12px;height:12px;border-radius:3px;background:currentColor}
 .hero.ok .h-verdict{color:var(--lime)} .hero.ng .h-verdict{color:var(--red)} .hero.warn .h-verdict{color:var(--amber)} .hero.dim .h-verdict{color:var(--tx2)}
 .hero.dim .h-verdict::before{display:none}
 .h-calc{margin-top:10px;font-size:15px;color:var(--tx2)}
-.h-src{margin-top:6px;font-size:12.5px;color:var(--tx3)}
-.h-alert{margin-top:10px;display:none;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;font-size:13.5px;max-width:680px}
+.h-src{margin-top:6px;font-size:13px;color:var(--tx3)}
+.h-alert{margin-top:10px;display:none;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;font-size:14px;max-width:680px}
 .h-alert.show{display:inline-flex;animation:rise .4s var(--ease)}
-.h-alert.ng{background:var(--red-d);color:#ffd0cc;border:1px solid rgba(255,90,78,.35)}
-.h-alert.warn{background:var(--amber-d);color:#ffe2b8;border:1px solid rgba(255,181,71,.35)}
+.h-alert.ng{background:var(--red-d);color:#f6c7c2;border:1px solid rgba(236,106,96,.35)}
+.h-alert.warn{background:var(--amber-d);color:#ffe2b8;border:1px solid rgba(226,164,70,.35)}
 @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .rb{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
 .rb .spk{display:flex;gap:3px;align-items:center;height:22px;margin-top:2px}
 .rb .spk i{width:3px;height:6px;border-radius:2px;background:var(--tx4)}
-.rb.on .spk i{background:var(--lime);animation:eq .9s ease-in-out infinite}
+.rb.on .spk i{background:var(--acc);animation:eq .9s ease-in-out infinite}
 .rb.on .spk i:nth-child(2){animation-delay:.15s}.rb.on .spk i:nth-child(3){animation-delay:.3s}.rb.on .spk i:nth-child(4){animation-delay:.45s}
 @keyframes eq{0%,100%{height:5px}50%{height:20px}}
 .rb p{font-size:17px;line-height:1.6;color:var(--tx)}
 .rb p.idle{color:var(--tx3)}
 .rb .micro{display:block;margin-bottom:6px}
 
-.ex-n{display:flex;align-items:baseline;gap:10px;margin-bottom:18px}
-.ex-n span:last-child{color:var(--tx3);font-size:12.5px}
+.ex-n{display:flex;align-items:baseline;gap:10px;margin-bottom:16px}
+.ex-n span:last-child{color:var(--tx3);font-size:var(--fl-label)}
 .ex-n.hot .big-n{color:var(--red)}
-.cards{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:10px;margin-right:-8px;padding-right:8px}
-.cx{border:1px solid var(--line);border-radius:12px;padding:14px 16px 12px 18px;background:rgba(255,255,255,.018);position:relative;animation:rise .4s var(--ease)}
-.cx::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:2px;border-radius:2px;background:var(--c,var(--tx3))}
+.cards{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px;margin-right:-8px;padding-right:8px}
+.cx{border-radius:12px;padding:14px 16px 12px 18px;background:var(--s1);position:relative;animation:rise .4s var(--ease)}
+.cx::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 2px 2px 0;background:var(--c,var(--tx3))}
 .cx.ng{--c:var(--red)} .cx.warn{--c:var(--amber)} .cx.fix{--c:var(--violet)}
-.cx.cur{border-color:var(--line2);background:rgba(255,255,255,.035)}
+.cx.cur{background:var(--s2)}
+.panel .cx{background:var(--s2)}
 .cx-h{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.cx-h .micro{color:var(--c)}
-.cx-h .t{margin-left:auto;font:11px var(--mono);color:var(--tx3)}
-.cx h4{font:600 15px var(--mono);margin-bottom:3px}
-.cx h4 small{font:400 12px var(--sans);color:var(--tx3);margin-left:8px}
-.cx p{font-size:12.5px;color:var(--tx2);line-height:1.55}
-.cx-a{display:flex;flex-wrap:wrap;margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
-.cx-a button{font-size:12.5px;color:var(--tx2);padding:3px 0;transition:color .2s}
+.cx-h .micro{color:var(--c);font-weight:600}
+.cx-h .t{margin-left:auto;font:12px var(--mono);color:var(--tx3)}
+.cx h4{font:600 var(--fl-body) var(--mono);margin-bottom:3px}
+.cx h4 small{font:400 13px var(--sans);color:var(--tx3);margin-left:8px}
+.cx p{font-size:13px;color:var(--tx2);line-height:1.55}
+.cx .kc{margin-top:6px}
+.cx-a{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:10px}
+.cx-a button{font-size:13px;color:var(--tx2);padding:3px 0;transition:color .2s}
 .cx-a button:hover{color:var(--tx)}
-.cx-a button+button{margin-left:14px;padding-left:14px;border-left:1px solid var(--line)}
-.cx-a button.p{color:var(--violet)} .cx-a button.p:hover{color:#cdc4ff}
+.cx-a button.p{color:var(--acc)} .cx-a button.p:hover{color:#a9c4f7}
 .empty-x{color:var(--tx3);font-size:13px;line-height:1.7;padding:6px 0}
-.closed{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);max-height:132px;overflow:hidden;display:flex;flex-direction:column;gap:5px}
+.closed{margin-top:16px;max-height:132px;overflow:hidden;display:flex;flex-direction:column;gap:5px}
 .closed .micro{margin-bottom:4px}
-.closed div{font-size:12px;color:var(--tx3);display:flex;gap:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.closed div::before{content:"✓";color:var(--lime)}
-.closed div.x::before{content:"×";color:var(--red)}
+.closed div{font-size:12px;color:var(--tx3);display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.closed div::before{content:"";width:12px;height:12px;flex:none;background:var(--lime);-webkit-mask:var(--i-check) center/contain no-repeat;mask:var(--i-check) center/contain no-repeat}
+.closed div.x::before{background:var(--red);-webkit-mask-image:var(--i-x);mask-image:var(--i-x)}
+.closed div.none::before{display:none}
 .gate{margin-top:16px}
 .gate button{width:100%;height:54px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:15px;font-weight:600;transition:all .3s}
-.gate.lock button{background:var(--s2);border:1px solid var(--line2);color:var(--tx3);cursor:not-allowed}
-.gate.open button{background:var(--lime);color:#0a0a0b}
+.gate.lock button{background:var(--s2);color:var(--tx3);cursor:not-allowed}
+.gate.open button{background:var(--acc-fill);color:#fff}
 .gate.open button:hover{filter:brightness(1.06)}
-.gate.done button{background:transparent;border:1px solid rgba(198,244,63,.4);color:var(--lime)}
-.gate p{margin-top:9px;font-size:12px;color:var(--tx3);text-align:center}
-.gate.lock p{color:#ff9d95}
-.gate p a{color:var(--lime);text-decoration:underline;text-underline-offset:3px}
+.gate.done button{background:transparent;border:1px solid rgba(76,191,134,.4);color:var(--lime)}
+.gate p{margin-top:9px;font-size:13px;color:var(--tx3);text-align:center}
+.gate.lock p{color:var(--tx2)}
+.gate p a{color:var(--acc);text-decoration:underline;text-underline-offset:3px}
+.gate .kc{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-top:8px}
+.gate .kc-i{flex-direction:column;align-items:center;gap:1px;padding:6px 2px}
 
 /* panes */
 .pane{padding:30px 32px;overflow:auto;gap:24px;align-content:start}
 .ph{display:flex;align-items:center;gap:12px;margin-bottom:16px}
 .ph h3{font:600 15px/1.2 var(--sans)}
 .ph .r{margin-left:auto;display:flex;gap:10px;align-items:center}
-.panel{border:1px solid var(--line);border-radius:16px;padding:22px 24px;background:rgba(255,255,255,.015);min-width:0}
+.panel{border-radius:16px;padding:22px 24px;background:var(--s1);min-width:0}
 table{width:100%;border-collapse:collapse}
-th{font:500 10.5px/1 var(--mono);letter-spacing:.12em;color:var(--tx3);text-align:left;padding:0 12px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font:500 12px/1 var(--sans);letter-spacing:.02em;color:var(--tx3);text-align:left;padding:0 12px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
 td{padding:11px 12px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
 tr:last-child td{border-bottom:0}
 td.m{font-family:var(--mono);font-variant-numeric:tabular-nums}
 td.t3{color:var(--tx3)} td.t2{color:var(--tx2)}
 tbody tr.click{cursor:pointer} tbody tr.click:hover td{background:rgba(255,255,255,.025)}
 tr.flash td{animation:rowflash 2s}
-.del{color:var(--red);text-decoration:line-through;opacity:.85}
+.del{color:var(--tx3);text-decoration:line-through}
 .ins{color:var(--violet);font-weight:500}
-.chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--tx2);white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);white-space:nowrap}
 .chip::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--c,var(--tx3))}
-.chip.py{--c:var(--violet)} .chip.tb{--c:var(--amber)} .chip.ok{--c:var(--lime)} .chip.ng{--c:var(--red)} .chip.warn{--c:var(--amber)} .chip.fix{--c:var(--violet)}
-.btn-s{font-size:12.5px;color:var(--violet);border:1px solid rgba(170,156,255,.4);border-radius:7px;padding:5px 12px;white-space:nowrap}
-.btn-s:hover{background:var(--violet-d)}
-.btn-s.l{color:#0a0a0b;background:var(--lime);border-color:var(--lime);font-weight:600}
+.chip.py{--c:var(--tx2)} .chip.tb{--c:var(--tx2)} .chip.ok{--c:var(--lime)} .chip.ng{--c:var(--red)} .chip.warn{--c:var(--amber)} .chip.fix{--c:var(--violet)}
+.btn-s{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--tx2);border:1px solid var(--line2);border-radius:7px;padding:5px 12px;white-space:nowrap}
+.btn-s:hover{color:var(--tx);border-color:rgba(255,255,255,.28)} .btn-s[data-del]:hover,.btn-s.danger:hover{color:var(--red);border-color:rgba(236,106,96,.45)}
+.btn-s.l{color:#fff;background:var(--acc-fill);border-color:var(--acc-fill);font-weight:600}
 .btn-s:disabled{opacity:.4;cursor:not-allowed}
 .filters{display:flex;gap:6px}
-.filters button{font-size:12.5px;color:var(--tx3);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+.filters button{font-size:13px;color:var(--tx3);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
 .filters button.on{color:var(--tx);border-color:var(--line2);background:rgba(255,255,255,.04)}
 .search{background:var(--s2);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:13px;outline:none;width:200px}
 
 .asr{grid-template-columns:1fr 1fr;grid-auto-rows:min-content}
-.trio{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-.trio>div{padding:24px 26px;position:relative}
-.trio>div+div{border-left:1px solid var(--line)}
-.trio .n{font:200 56px/1 var(--disp);letter-spacing:-.03em;margin:16px 0 12px;font-variant-numeric:tabular-nums}
+.trio{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.trio>div{padding:24px 26px;position:relative;background:var(--s1);border-radius:16px}
+.trio .n{font:400 56px/1 var(--disp);letter-spacing:-.02em;margin:16px 0 12px;font-variant-numeric:tabular-nums}
 .trio h4{font-size:15px;font-weight:600}
-.trio p{font-size:12.5px;color:var(--tx2);line-height:1.65;max-width:420px}
+.trio p{font-size:13px;color:var(--tx2);line-height:1.65;max-width:420px}
 .trio .tag{position:absolute;top:24px;right:24px}
 .fz{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
-.fz span{font:11px var(--mono);color:var(--tx3);border:1px solid var(--line);border-radius:5px;padding:2px 7px}
-.fz span b{color:var(--red);font-weight:400;text-decoration:line-through;margin-right:4px}
+.fz span{font:12px var(--mono);color:var(--tx3);border:1px solid var(--line);border-radius:5px;padding:2px 7px}
+.fz span b{color:var(--tx3);opacity:.7;font-weight:400;text-decoration:line-through;margin-right:4px}
 .span2{grid-column:1/-1}
 
 .ver{grid-template-columns:1fr 1fr;grid-auto-rows:min-content}
-.kpis{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-.kpis>div{padding:24px 26px}
-.kpis>div+div{border-left:1px solid var(--line)}
-.kpis .n{font:200 54px/1 var(--disp);letter-spacing:-.03em;margin:18px 0 10px;font-variant-numeric:tabular-nums}
-.kpis .n small{font-size:22px;color:var(--tx3);margin-left:4px}
-.kpis p{font-size:12.5px;color:var(--tx2)}
+.kpis{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpis>div{padding:24px 26px;background:var(--s1);border-radius:16px}
+.kpis .n{font:400 56px/1 var(--disp);letter-spacing:-.02em;margin:18px 0 10px;font-variant-numeric:tabular-nums}
+.kpis .n small{font-size:24px;color:var(--tx3);margin-left:4px}
+.kpis p{font-size:13px;color:var(--tx2)}
 .kpis .h{display:flex;justify-content:space-between;align-items:center}
 .lad-r{display:grid;grid-template-columns:140px 1fr 70px;align-items:center;gap:18px;padding:11px 0;border-bottom:1px solid var(--line)}
 .lad-r:last-child{border-bottom:0}
-.lad-r .nm{font-size:13.5px;color:var(--tx2)}
-.lad-r .nm small{display:block;font:11px var(--mono);color:var(--tx3)}
+.lad-r .nm{font-size:14px;color:var(--tx2)}
+.lad-r .nm small{display:block;font:12px var(--mono);color:var(--tx3)}
 .lad-r .bar{height:6px;border-radius:3px;background:var(--s3);overflow:hidden}
 .lad-r .bar i{display:block;height:100%;border-radius:3px}
-.lad-r .v{font:300 13px/1.5 var(--mono);text-align:right}
+.lad-r .v{font:400 13px/1.5 var(--mono);text-align:right}
 .stack{display:flex;height:34px;border-radius:9px;overflow:hidden;margin:6px 0 14px}
 .stack i{display:flex;align-items:center;justify-content:center;font:500 12px var(--mono);color:#0a0a0b;min-width:0;overflow:hidden}
 .lgd{display:flex;gap:18px;font-size:12px;color:var(--tx3);flex-wrap:wrap}
@@ -265,90 +288,127 @@ tr.flash td{animation:rowflash 2s}
 .status-ring svg{display:block;width:100%;height:100%;transform:rotate(-90deg)}
 .status-arc{transition:opacity .18s}
 .status-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
-.status-center b{font:300 42px/1.1 var(--disp);font-variant-numeric:tabular-nums}
+.status-center b{font:400 44px/1.1 var(--disp);font-variant-numeric:tabular-nums}
 .status-center span{font-size:12px;color:var(--tx2);margin-top:7px}
 .status-legend{display:flex;flex-direction:column;gap:4px}
 .status-legend button{display:grid;grid-template-columns:8px 1fr auto;gap:9px;align-items:center;text-align:left;padding:9px 10px;border:1px solid transparent;border-radius:8px;font-size:12px;color:var(--tx2)}
 .status-legend button:hover,.status-legend button[aria-pressed=true]{background:var(--s2);border-color:var(--line2)}
-.status-legend button:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+.status-legend button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .status-legend i{width:7px;height:7px;border-radius:2px;background:var(--c)}
 .status-legend b{font:500 15px var(--mono);color:var(--tx)}
-.status-legend small{font:11px var(--mono);color:var(--tx3);margin-left:8px;display:inline-block;min-width:39px;text-align:right}
+.status-legend small{font:12px var(--mono);color:var(--tx3);margin-left:8px;display:inline-block;min-width:39px;text-align:right}
 .chart-block{border-top:1px solid var(--line);padding-top:14px}
 .chart-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .chart-heading h4{font-size:13px;font-weight:500}
-.chart-heading>span,.chart-note{font-size:11px;color:var(--tx2)}
+.chart-heading>span,.chart-note{font-size:12px;color:var(--tx2)}
 .chart-note{line-height:1.7;margin-top:12px}
 .coverage-row+.coverage-row{margin-top:8px}
 .coverage-label{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin-bottom:6px}
-.coverage-label span:last-child{font:11px var(--mono);color:var(--tx2)}
+.coverage-label span:last-child{font:12px var(--mono);color:var(--tx2)}
 .coverage-track{display:flex;height:8px;border-radius:4px;background:var(--s3);overflow:hidden}
 .coverage-track i{height:100%;min-width:0}
-.coverage-legend{margin-top:14px;gap:12px;font-size:10px}
+.coverage-legend{margin-top:14px;gap:12px;font-size:12px}
 .missing-chart{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:end;margin-top:12px}
-.missing-col{text-align:center;min-width:0;font-size:11px;color:var(--tx2)}
+.missing-col{text-align:center;min-width:0;font-size:12px;color:var(--tx2)}
 .missing-col b{display:block;font:400 15px var(--mono);color:var(--tx);margin-bottom:7px}
 .missing-rail{height:48px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid var(--line2);margin-bottom:8px}
 .missing-rail i{width:36px;max-width:80%;background:var(--violet);border-radius:4px 4px 0 0;min-height:0}
-@media(max-width:800px){.ver{grid-template-columns:1fr}.ver .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.ver .kpis>div:nth-child(3){border-left:0}.ver .kpis>div:nth-child(n+3){border-top:1px solid var(--line)}}
+@media(max-width:800px){.ver{grid-template-columns:1fr}.ver .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
-/* live workspace */
-.contract-nav{padding:22px 16px;gap:10px}
-.contract-nav .sec-h,.contract-nav .ctsel{margin-bottom:0}
-.contract-nav .add{width:100%;padding:10px;border-radius:8px;background:var(--lime);color:#0a0a0b;font-weight:600}
-.stage{padding:18px 20px;min-width:0}
-.stage .sec-h{margin-bottom:10px}
-.stage .ctname{white-space:normal;overflow-wrap:anywhere;margin:0 0 8px}
-.detail-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.detail-context{font-size:12px;color:var(--tx3);text-align:right;overflow-wrap:anywhere}
-.stage .big-n{font-size:28px}.stage .big-n small{font-size:16px}
-.stage .segs{margin:10px 0 12px}
-.stage>.rows{flex:1 1 0;min-height:0;overflow:auto}
-.stage .row{grid-template-columns:8px minmax(110px,1fr) minmax(0,1fr);cursor:pointer}
-.stage .row:hover{background:rgba(255,255,255,.035)}
-.stage .row .nm{min-width:0;white-space:normal;overflow-wrap:anywhere}
-.stage .row .nm em{display:block;margin:4px 0 0}
-.stage .row .val{max-width:none;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.5}
-.stage .sheet-foot{margin-top:10px;padding-top:10px}
-.stage .sheet-foot b{font-size:20px}
-.stage>.tr{font-size:15px;line-height:1.5;min-height:0;max-height:45px;overflow:auto;margin-top:12px}
+/* 实时检验：左合同列表 · 中参数明细 · 右待处理。尺寸随屏幕（--u）缩放 */
+.contract-nav{padding-left:clamp(14px,var(--u),20px);padding-right:clamp(14px,var(--u),20px);gap:10px;min-width:0}
+.contract-nav>*{flex-shrink:0}
+.contract-nav .sec-h{margin-bottom:0}
+.contract-nav .add{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:9px;background:var(--acc-fill);color:#fff;font-weight:600;font-size:var(--fl-body)}
+.contract-list{flex:1 1 0;min-height:0;overflow:auto;margin:2px -4px 0;padding:0 4px}
+.contract-item{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:clamp(7px,calc(var(--u)*.5),10px) 10px;border:1px solid transparent;border-radius:8px;font-size:var(--fl-body)}
+.contract-item:hover{background:var(--s2)}
+.contract-item.selected{background:var(--acc-d);border-color:rgba(91,141,239,.5)}
+.contract-item .mono{min-width:0;overflow-wrap:anywhere}
+.contract-status{font-size:var(--fl-label);white-space:nowrap;flex:none}
+.contract-status.c-dim{color:var(--tx3)}
+.contract-pages{flex:none;padding-top:6px;font-size:12px;color:var(--tx3)}
+.page-settings,.page-controls{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.page-controls{margin-top:8px}.page-controls button{padding:5px 8px;border:1px solid var(--line2);border-radius:6px;color:var(--tx2);font-size:12px}
+.page-controls button:disabled{opacity:.35;cursor:default}
+.page-settings select{font-size:12px;background:var(--s2);border:1px solid var(--line2);border-radius:6px;padding:4px;color:var(--tx2)}
+
+.stage{min-width:0;padding-top:clamp(14px,calc(var(--u)*1.1),26px);padding-bottom:clamp(10px,calc(var(--u)*.8),20px)}
+.stage-t{display:flex;align-items:baseline;gap:10px;min-width:0;margin-bottom:clamp(8px,calc(var(--u)*.6),14px)}
+.stage-t .micro{flex:none;font-size:var(--fl-label)}
+.detail-contract{flex:none;font:600 clamp(15px,var(--u),20px)/1.2 var(--mono);color:var(--tx)}
+.stage .ctname{flex:1;min-width:0;margin:0;font-size:var(--fl-label);color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stage-t .tag{align-self:center}
+.detail-heading{display:flex;align-items:center;gap:clamp(12px,var(--u),20px);margin-bottom:clamp(10px,calc(var(--u)*.8),16px)}
+.stage .big-n{font-size:clamp(24px,calc(var(--u)*1.6),32px)}.stage .big-n small{font-size:clamp(15px,calc(var(--u)*.95),18px)}
+.stage .segs{flex:1;min-width:60px;margin:0}
+.detail-context{flex:none;max-width:42%;font-size:var(--fl-label);color:var(--tx3);text-align:right;overflow-wrap:anywhere}
+/* 四类参数田字格：卡片高度跟内容走，放不下时区域内滚动 */
+.stage>#rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:auto;align-content:start;gap:var(--fl-gap);flex:0 1 auto;min-height:0;overflow:auto;margin:0;padding:0}
+.parameter-card{min-width:0;background:var(--s1);border-radius:12px;padding:clamp(10px,calc(var(--u)*.75),16px) clamp(12px,calc(var(--u)*.9),18px)}
+.parameter-card.current{box-shadow:inset 0 0 0 1px rgba(91,141,239,.45)}
+.parameter-card .grp{margin:0 0 clamp(4px,calc(var(--u)*.35),8px);gap:8px}
+.parameter-card .grp::after{display:none}
+.parameter-card .grp .micro{font-size:var(--fl-label);font-weight:600;color:var(--tx2)}
+.parameter-card .grp .q{font-size:var(--fl-label)}
+.stage .parameter-card .row{grid-template-columns:6px minmax(0,1fr) auto;align-items:baseline;gap:0 10px;padding:clamp(4px,calc(var(--u)*.4),9px) 8px;margin:0 -8px;border-radius:7px;cursor:pointer}
+.stage .parameter-card .row:hover{background:rgba(255,255,255,.035)}
+.stage .parameter-card .row .dot{align-self:center}
+.stage .parameter-card .nm{min-width:0;font-size:var(--fl-name);line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stage .parameter-card .nm em{display:inline;margin:0 0 0 8px;font:var(--fl-label) var(--mono);color:var(--tx3)}
+.stage .parameter-card .val{max-width:none;min-width:0;font:400 var(--fl-val)/1.35 var(--mono);text-align:right;white-space:normal;overflow-wrap:anywhere}
+.stage .parameter-card .val .u,.stage .parameter-card .val .d{font-size:var(--fl-label)}
+.stage .parameter-card .lv{grid-column:2/-1;color:var(--red);font-size:12px;line-height:1.4;white-space:normal}
+.stage .sheet-foot{margin-top:clamp(10px,calc(var(--u)*.8),16px)}
+.stage .sheet-foot b{font-size:clamp(17px,calc(var(--u)*1.1),22px)}
+/* 现场语音：占据剩余高度，显示最近一句原话 */
+.tr-box{flex:1 1 auto;min-height:clamp(52px,7vh,120px);display:flex;flex-direction:column;justify-content:center;gap:4px;margin-top:clamp(8px,calc(var(--u)*.6),14px);overflow:hidden}
+.tr-box .live-dot{font-size:var(--fl-label)}
+.stage .tr{font-size:clamp(15px,calc(var(--u)*1.15),24px);line-height:1.55;min-height:0;overflow:auto;margin:0}
+.stage .tr.idle{color:var(--tx3)}
 .live .cx-h{flex-wrap:wrap}.live .cx-h .micro,.live .cx-h .t{white-space:nowrap}
-.voice-panel{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
-.voice-panel summary{display:flex;justify-content:space-between;gap:10px;cursor:pointer;color:var(--tx3);font-size:12px}
+.voice-panel{flex:none}
+.voice-panel summary{display:flex;justify-content:space-between;gap:10px;cursor:pointer;color:var(--tx3);font-size:12px;padding:6px 0 0;list-style:none}
+.voice-panel summary::-webkit-details-marker{display:none}
 .voice-panel summary::after{content:'展开'}
 .voice-panel[open] summary::after{content:'收起'}
-.voice-content{max-height:200px;overflow:auto;margin-top:10px}
+.voice-content{max-height:200px;overflow:auto;margin-top:8px}
 .voice-content .pipe{margin:0 0 8px}.voice-content #wave{height:24px;margin:4px 0}
 .voice-content .hero{margin:6px 0;padding:0}.voice-content .hero.dimmed{opacity:.65}
-.voice-content .h-item{font-size:12px}.voice-content .h-val,.voice-content .h-val.word,.voice-content .h-val.txt{font-size:26px;line-height:1.2;margin:6px 0}
+.voice-content .h-item{font-size:12px}.voice-content .h-val,.voice-content .h-val.word,.voice-content .h-val.txt{font-size:28px;line-height:1.2;margin:6px 0}
 .voice-content .h-val small{font-size:14px}.voice-content .h-verdict{font-size:15px}
-.voice-content .h-calc,.voice-content .rb p{font-size:12px}.voice-content .rb{margin-top:8px;padding-top:8px}
-@media(max-width:1300px){.hd{gap:16px;padding:0 18px}.mark .sep,.mark>.micro{display:none}.hd-r{gap:12px}.nav{margin-left:0}.nav button,.nav a{white-space:nowrap;padding:8px 9px;font-size:12px}}
-@media(max-width:1000px){.hd-r .clock,.hd-r #devPhone{display:none}.col{padding-left:16px;padding-right:16px}.live{grid-template-columns:170px minmax(0,1fr) 260px}}
-
-/* contract pagination and four parameter panels */
-.contract-nav{min-width:0}
-.contract-list{flex:1;min-height:0;overflow:auto;margin:4px -4px;padding:0 4px}
-.contract-item{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:8px 7px;border:1px solid transparent;border-bottom-color:var(--line);border-radius:6px;font-size:12.5px}
-.contract-item:hover{background:var(--s2)}
-.contract-item.selected{background:var(--lime-d);border-color:rgba(198,244,63,.5)}
-.contract-item .mono{min-width:0;overflow-wrap:anywhere}
-.contract-status.c-dim{color:var(--tx2)}
-.contract-status{font-size:11px;white-space:nowrap;flex:none}
-.contract-pages{flex:none;border-top:1px solid var(--line);padding-top:10px;font-size:11px;color:var(--tx3)}
-.page-settings,.page-controls{display:flex;align-items:center;justify-content:space-between;gap:6px}
-.page-controls{margin-top:10px}.page-controls button{padding:5px;border:1px solid var(--line2);border-radius:5px;color:var(--tx2);font-size:11px}
-.page-controls button:disabled{opacity:.3;cursor:default}
-.page-settings select{font-size:11px;background:var(--s2);border:1px solid var(--line2);border-radius:5px;padding:4px;color:var(--tx2)}
-.detail-contract{margin-left:8px;font-size:13px;color:var(--tx);letter-spacing:0}
-.stage>#rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(180px,1fr));gap:10px;margin:0;padding:0}
-.parameter-card{min-width:0;min-height:0;overflow:auto;border:1px solid var(--line2);border-radius:10px;padding:9px}
-.parameter-card.current{border-color:rgba(198,244,63,.35)}
-.parameter-card .grp{margin:0 0 6px;gap:6px}.parameter-card .grp .micro{font-size:11px;letter-spacing:.04em}
-.stage .parameter-card .row{grid-template-columns:6px minmax(0,1fr) minmax(0,1fr);gap:7px;padding:3px 0;margin:0}
-.stage .parameter-card .nm{font-size:12px;line-height:1.3}.stage .parameter-card .nm em{font-size:10px;margin-top:2px}
-.stage .parameter-card .val{font-size:12px;line-height:1.4}
-@media(max-width:1000px){.live{grid-template-columns:205px minmax(0,1fr) 250px}}
+.voice-content .h-calc,.voice-content .rb p{font-size:13px}.voice-content .rb{margin-top:8px;padding-top:8px}
+/* 识别 / 提交结果卡：在参数明细中间弹出，约 3 秒后收起，不挡点击 */
+.stage>.focus{position:absolute;inset:0;z-index:5;display:grid;place-items:center;padding:24px;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
+.stage>.focus.on{opacity:1;visibility:visible}
+.focus::before{content:"";position:absolute;inset:0;background:rgba(8,8,10,.62)}
+.fc{position:relative;width:min(620px,94%);max-height:100%;overflow:hidden;background:var(--s2);border-radius:18px;padding:clamp(18px,calc(var(--u)*1.4),30px) clamp(20px,calc(var(--u)*1.6),34px);box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 0 0 1px var(--fc-line,var(--line2));transform:translateY(10px) scale(.98);transition:transform .3s var(--ease)}
+.focus.on .fc{transform:none}
+.fc.ok{--fc-line:rgba(76,191,134,.5)} .fc.ng{--fc-line:rgba(236,106,96,.55)} .fc.warn{--fc-line:rgba(226,164,70,.5)}
+.fc-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:var(--fl-label);color:var(--tx3)}
+.fc-h b{color:var(--tx2);font-weight:500}
+.fc-q{margin:10px 0 14px;font:500 clamp(18px,calc(var(--u)*1.3),28px)/1.6 var(--sans);color:var(--tx)}
+.fc-q ruby{ruby-position:over}.fc-q ruby b{color:var(--acc);font-weight:600}
+.fc-q rt{font-size:.45em;color:var(--red);text-decoration:line-through}
+.fc-q mark{background:none;color:inherit}.fc-q .rj{color:var(--amber)}
+.fc-l{display:flex;flex-direction:column;gap:clamp(6px,calc(var(--u)*.45),10px)}
+.fc-i{display:grid;grid-template-columns:minmax(0,1fr) auto 5.2em;align-items:baseline;gap:14px;font-size:var(--fl-name);color:var(--tx2)}
+.fc-i b{font:500 clamp(20px,calc(var(--u)*1.5),32px)/1.15 var(--mono);color:var(--tx);text-align:right;overflow-wrap:anywhere}
+.fc-i b small{font:400 var(--fl-label) var(--mono);color:var(--tx3);margin-left:4px}
+.fc-i .s{display:inline-flex;align-items:center;gap:4px;font-size:var(--fl-label);color:var(--c,var(--tx3));white-space:nowrap}
+.fc-i.ok{--c:var(--lime)} .fc-i.ng{--c:var(--red)} .fc-i.ng b{color:var(--red)} .fc-i.warn{--c:var(--amber)}
+.fc-v{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:clamp(12px,calc(var(--u)*.9),18px);font:600 clamp(17px,calc(var(--u)*1.15),24px)/1.3 var(--sans);color:var(--tx2)}
+.fc-v.ok{color:var(--lime)} .fc-v.ng{color:var(--red)} .fc-v.warn{color:var(--amber)}
+.fc-v small{font:400 var(--fl-label)/1.4 var(--sans);color:var(--tx3)}
+.fc-s{margin-top:12px;font-size:var(--fl-label);color:var(--tx3)}
+.fc .kc{margin-top:8px}
+.fc-big{font:600 clamp(40px,calc(var(--u)*3.2),68px)/1.05 var(--sans);margin:10px 0 2px}
+.fc.ok .fc-big{color:var(--lime)} .fc.ng .fc-big{color:var(--red)} .fc.warn .fc-big{color:var(--amber)}
+.fc-f{margin-top:8px;font-size:var(--fl-body);color:#f6c7c2;line-height:1.6}
+@media(max-width:1439px){.mark .sep,.mark>.micro{display:none}}
+@media(max-width:1300px){.hd{gap:16px;padding:0 18px}.hd-r{gap:12px}.nav{margin-left:0}.nav button,.nav a{padding:8px;font-size:13px}}
+@media(max-width:1100px){.hd-r .clock{display:none}}
+@media(max-width:1000px){.hd-r #devPhone{display:none}.col{padding-left:16px;padding-right:16px}.live{grid-template-columns:190px minmax(0,1fr) 250px}}
 
 /* evidence */
 .evi{grid-template-columns:380px 1fr}
@@ -357,16 +417,16 @@ tr.flash td{animation:rowflash 2s}
 .ev-i{padding:11px 14px;border-radius:10px;cursor:pointer;transition:background .2s;border:1px solid transparent;width:100%;text-align:left;display:block}
 .ev-i:hover{background:rgba(255,255,255,.03)}
 .ev-i.on{background:rgba(255,255,255,.045);border-color:var(--line2)}
-.ev-i .r1{display:flex;align-items:center;gap:10px;font-size:13.5px}
-.ev-i .r1 .id{font:11px var(--mono);color:var(--tx3)}
-.ev-i .r1 .t{margin-left:auto;font:11px var(--mono);color:var(--tx3)}
-.ev-i .r2{margin-top:4px;font-size:12.5px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ev-i .au{color:var(--lime);font-size:11px}
+.ev-i .r1{display:flex;align-items:center;gap:10px;font-size:14px}
+.ev-i .r1 .id{font:12px var(--mono);color:var(--tx3)}
+.ev-i .r1 .t{margin-left:auto;font:12px var(--mono);color:var(--tx3)}
+.ev-i .r2{margin-top:4px;font-size:13px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-i .au{display:inline-flex;align-items:center;gap:4px;color:var(--tx2);font-size:12px}
 .evd{padding:30px 34px;overflow:auto;display:flex;flex-direction:column;gap:24px;min-height:0}
-.quote{font:300 34px/1.4 var(--sans);letter-spacing:.01em}
+.quote{font:400 34px/1.4 var(--sans);letter-spacing:.01em}
 .quote::before{content:"“";color:var(--tx3)} .quote::after{content:"”";color:var(--tx3)}
 .player{display:flex;align-items:center;gap:20px;margin-top:18px}
-.play{width:52px;height:52px;border-radius:50%;background:var(--lime);display:grid;place-items:center;flex:none;transition:transform .2s}
+.play{width:52px;height:52px;border-radius:50%;background:var(--acc-fill);display:grid;place-items:center;flex:none;transition:transform .2s}
 .play:hover{transform:scale(1.05)} .play:disabled{background:var(--s3);cursor:not-allowed}
 .player canvas{flex:1;height:56px;min-width:0}
 .ev-meta{margin-top:12px;font-size:12px;color:var(--tx3);display:flex;gap:18px;flex-wrap:wrap}
@@ -400,18 +460,20 @@ tr.flash td{animation:rowflash 2s}
 .kv{display:grid;grid-template-columns:84px 1fr;gap:7px 14px;font-size:13px}
 .kv>span:nth-child(odd){color:var(--tx3)}
 .lf{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
-.lf input{width:96px;background:var(--s2);border:1px solid var(--line2);border-radius:7px;padding:4px 8px;font-size:12.5px;outline:none}
-.lf .arrow{color:var(--tx3)}
+.lf input{width:96px;background:var(--s2);border:1px solid var(--line2);border-radius:7px;padding:4px 8px;font-size:13px;outline:none}
+.lf .arrow{color:var(--tx3);display:inline-flex}
 .lf .q{display:flex;gap:4px;flex-wrap:wrap;width:100%}
-.lf .q button{font-size:11.5px;color:var(--tx3);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+.lf .q button{font-size:12px;color:var(--tx3);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
 .lf .q button:hover{color:var(--tx)}
 .cap{flex:1;min-width:0;display:flex;align-items:center;gap:12px;font-size:14px;color:var(--tx);white-space:nowrap;overflow:hidden}
-.cap .step{font:500 11px var(--mono);color:var(--lime);border:1px solid rgba(198,244,63,.35);border-radius:4px;padding:3px 7px}
+.cap .step{font:500 12px var(--mono);color:var(--acc);border:1px solid rgba(91,141,239,.35);border-radius:4px;padding:3px 7px}
+.cap .play-n{display:inline-flex;align-items:center;gap:6px}
 .ctl select{background:var(--s2);border:1px solid var(--line);border-radius:7px;padding:4px 6px;font-size:12px;outline:none}
 .cap[hidden]{display:none}
 .evlist .ph{flex-wrap:wrap;gap:8px}.evlist .ph h3{white-space:nowrap}.filters button{white-space:nowrap}
-.btn-s.demo{color:var(--lime);border-color:rgba(198,244,63,.4)} .btn-s.demo:hover{background:var(--lime-d)}
-.btn-s.stop{color:var(--red);border-color:rgba(255,90,78,.45)}
+.btn-s.demo{color:var(--acc);border-color:rgba(91,141,239,.4)} .btn-s.demo:hover{background:var(--acc-d)}
+.btn-s .ic.fill{fill:currentColor}
+.btn-s.stop{color:var(--red);border-color:rgba(236,106,96,.45)}
 
 /* 居中录入弹窗 */
 .dw-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .25s;z-index:60}
@@ -421,85 +483,90 @@ tr.flash td{animation:rowflash 2s}
 .dw-h,.dw-f{flex-shrink:0}
 .dw-h{display:flex;align-items:center;gap:12px;padding:20px 24px;border-bottom:1px solid var(--line)}
 .dw-h h3{font:600 17px var(--sans)}
-.dw-h .x{margin-left:auto;font-size:20px;color:var(--tx3);width:32px;height:32px;border-radius:8px}
+.dw-h .x{margin-left:auto;font-size:20px;color:var(--tx3);width:32px;height:32px;border-radius:8px;display:grid;place-items:center}
 .dw-h .x:hover{background:var(--s3);color:var(--tx)}
 .dw-b{flex:1;min-height:0;overflow:auto;padding:20px 24px;display:flex;flex-direction:column;gap:18px}
-.form-error{flex:none;margin:16px 24px 0;padding:12px 14px;border:1px solid rgba(255,90,78,.5);border-radius:10px;background:var(--red-d);color:#ffd0cc;font-size:13.5px;max-height:25dvh;overflow:auto}
+.form-error{flex:none;margin:16px 24px 0;padding:12px 14px;border:1px solid rgba(236,106,96,.5);border-radius:10px;background:var(--red-d);color:#f6c7c2;font-size:14px;max-height:25dvh;overflow:auto}
 .form-error[hidden]{display:none}
 .dw-b>*{flex-shrink:0}
 @media(max-width:600px){.dw .fgrid{grid-template-columns:1fr}.dw .seg{display:grid;grid-template-columns:repeat(2,1fr)}}
 .dw-f{padding:16px 24px;border-top:1px solid var(--line);display:flex;gap:10px}
 .seg{display:flex;padding:3px;border-radius:10px;background:var(--s2);border:1px solid var(--line)}
-.seg button{flex:1;height:32px;border-radius:7px;font-size:13.5px;color:var(--tx3)}
+.seg button{flex:1;height:32px;border-radius:7px;font-size:14px;color:var(--tx3)}
 .seg button.on{background:var(--s3);color:var(--tx)}
 .fi{display:flex;flex-direction:column;gap:6px}
-.fi label{display:flex;justify-content:space-between;font-size:12.5px;color:var(--tx2)}
-.fi label em{font-style:normal;font:11.5px var(--mono);color:var(--tx3)}
+.fi label{display:flex;justify-content:space-between;font-size:13px;color:var(--tx2)}
+.fi label em{font-style:normal;font:12px var(--mono);color:var(--tx3)}
 .fi .in{display:flex;align-items:center;background:var(--s2);border:1px solid var(--line2);border-radius:10px;padding:0 12px;transition:border-color .2s}
-.fi .in:focus-within{border-color:rgba(198,244,63,.55)}
-.fi input,.fi select{flex:1;min-width:0;height:42px;background:none;border:0;outline:none;font:400 16px var(--mono);color:var(--tx)}
+.fi .in:focus-within{border-color:rgba(91,141,239,.55)}
+.fi input,.fi select{flex:1;min-width:0;height:42px;background:none;border:0;outline:none;font:400 17px var(--mono);color:var(--tx)}
 .fi select{font-family:var(--sans);font-size:14px}
 .fi select option{background:var(--s2)}
 .fi .u{font:12px var(--mono);color:var(--tx3);margin-left:8px}
 .fi .hint{font-size:12px;color:var(--tx3);min-height:16px}
-.fi.ok .in{border-color:rgba(198,244,63,.4)} .fi.ok .hint{color:var(--lime)}
-.fi.ng .in{border-color:rgba(255,90,78,.6)} .fi.ng .hint{color:#ff9d95}
+.fi.ok .in{border-color:rgba(76,191,134,.4)} .fi.ok .hint{color:var(--lime)}
+.fi.ng .in{border-color:rgba(236,106,96,.6)} .fi.ng .hint{color:#f0a39b}
 .fi.warn .hint{color:var(--amber)}
 .fi.dft input{color:var(--violet)}
-.fi.voice:not(.ng) .in{border-color:rgba(170,156,255,.65)}
+.fi.voice:not(.ng) .in{border-color:rgba(91,141,239,.65)}
 .fi.voice:not(.ng):not(.warn) input,.fi.voice:not(.ng):not(.warn) .hint{color:var(--violet)}
-.form-voice{margin-top:18px;padding:16px;border:1px solid var(--line2);border-radius:12px;background:var(--s2)}
+.form-voice{margin-top:18px;padding:16px;border-radius:12px;background:var(--s2)}
 .cv-top{display:flex;align-items:center;gap:14px}
-.cv-top>div{flex:1;min-width:0}.cv-top b{font-size:14px}.cv-status{font-size:12.5px;color:var(--tx3);margin-top:4px}
-.cv-mic{width:56px;height:56px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--lime);color:#0a0a0b;touch-action:none;user-select:none}
-.cv-mic:disabled{background:var(--s3);color:var(--tx3);cursor:not-allowed}.cv-mic.rec{background:var(--red);color:white}.cv-mic.busy{background:var(--violet)}
+.cv-top>div{flex:1;min-width:0}.cv-top b{font-size:14px}.cv-status{font-size:13px;color:var(--tx3);margin-top:4px}
+.cv-mic{width:56px;height:56px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--acc-fill);color:#fff;touch-action:none;user-select:none}
+.cv-mic:disabled{background:var(--s3);color:var(--tx3);cursor:not-allowed}.cv-mic.rec{background:var(--red);color:white}.cv-mic.busy{background:var(--acc-fill)}
 .cv-level{height:3px;background:var(--s3);margin-top:10px;border-radius:2px;overflow:hidden}.cv-level i{display:block;width:100%;height:100%;background:var(--red);transform:scaleX(var(--level,0));transform-origin:left}
 .cv-type{display:flex;gap:8px;margin-top:12px}.cv-type input{flex:1;min-width:0;background:var(--s1);border:1px solid var(--line2);border-radius:8px;padding:9px 10px;font-size:13px;outline:none}
 .cv-examples{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.cv-examples button{font-size:12px;color:var(--tx3);border:1px dashed var(--line2);border-radius:6px;padding:4px 8px}
 .cv-result{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;word-break:break-word}.cv-result p{margin-top:5px}.cv-result small{display:block;color:var(--tx3);margin-top:6px}
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px 14px}
 .fgrid .full{grid-column:1/-1}
-.dw .res{border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.6}
-.dw .res.ok{background:var(--lime-d);border:1px solid rgba(198,244,63,.35);color:#e5ffa8}
-.dw .res.ng{background:var(--red-d);border:1px solid rgba(255,90,78,.4);color:#ffd0cc}
-.btn-l{flex:1;height:46px;border-radius:11px;background:var(--lime);color:#0a0a0b;font-weight:600;font-size:15px}
-.btn-l:disabled{opacity:.4}
+.dw .res{border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.6}
+.dw .res.ok{background:var(--lime-d);border:1px solid rgba(76,191,134,.35);color:#c9ecd8}
+.dw .res.ng{background:var(--red-d);border:1px solid rgba(236,106,96,.4);color:#f6c7c2}
+.btn-l{flex:1;height:46px;border-radius:11px;background:var(--acc-fill);color:#fff;font-weight:600;font-size:15px}
+.btn-l:disabled{background:var(--s3);color:var(--tx3);cursor:not-allowed}
 .btn-g{height:46px;padding:0 18px;border-radius:11px;border:1px solid var(--line2);color:var(--tx2)}
 .btn-g:hover{color:var(--tx)}
-.sec-h .add{font-size:12.5px;color:#0a0a0b;background:var(--lime);border-radius:7px;padding:4px 10px;font-weight:600}
+.sec-h .add{font-size:13px;color:#fff;background:var(--acc-fill);border-radius:7px;padding:4px 10px;font-weight:600}
 .row{cursor:pointer} .row:hover{background:rgba(255,255,255,.03)}
 
 /* bottom bar */
 .ctl{display:flex;align-items:center;gap:14px;padding:0 28px;border-top:1px solid var(--line);background:rgba(8,8,10,.85)}
 .ctl .micro{white-space:nowrap}
-.ctl input{flex:1;min-width:0;max-width:560px;background:var(--s2);border:1px solid var(--line);border-radius:9px;height:34px;padding:0 12px;font-size:13.5px;outline:none}
+.ctl input{flex:1 1 140px;min-width:0;max-width:560px;background:var(--s2);border:1px solid var(--line);border-radius:9px;height:34px;padding:0 12px;font-size:14px;outline:none}
 .ctl input:focus{border-color:var(--line2)}
 .ctl .chips{display:flex;gap:6px;overflow:hidden}
 .ctl .chips button{font-size:12px;color:var(--tx3);border:1px solid var(--line);border-radius:999px;padding:4px 10px;white-space:nowrap}
 .ctl .chips button:hover{color:var(--tx2)}
 .ctl .r{margin-left:auto;display:flex;align-items:center;gap:14px;white-space:nowrap}
-.sw{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--tx3)}
+.sw{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx3)}
 .sw i{width:28px;height:16px;border-radius:8px;background:var(--tx4);position:relative;transition:background .2s}
 .sw i::after{content:"";position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform .2s}
-.sw.on i{background:var(--lime)} .sw.on i::after{transform:translateX(12px)}
+.sw.on i{background:var(--acc)} .sw.on i::after{transform:translateX(12px)}
 .toasts{position:fixed;top:78px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:80;pointer-events:none}
-.toast{background:rgba(20,20,24,.95);border:1px solid var(--line2);border-radius:12px;padding:10px 16px;font-size:13.5px;box-shadow:0 20px 50px rgba(0,0,0,.5);animation:rise .3s var(--ease);max-width:640px}
-.toast.ng{border-color:rgba(255,90,78,.5)} .toast.ok{border-color:rgba(198,244,63,.4)} .toast.fix{border-color:rgba(170,156,255,.5)}
+.toast{background:rgba(20,20,24,.95);border:1px solid var(--line2);border-radius:12px;padding:10px 16px;font-size:14px;box-shadow:0 20px 50px rgba(0,0,0,.5);animation:rise .3s var(--ease);max-width:640px}
+.toast.ng{border-color:rgba(236,106,96,.5)} .toast.ok{border-color:rgba(76,191,134,.4)} .toast.fix{border-color:rgba(91,141,239,.5)}
+.contract-nav .add:hover,.btn-l:not(:disabled):hover,.sec-h .add:hover,.gate.open button:hover,.btn-s.l:hover{background:var(--acc-fill-h)}
+/* 合同台账：整行可点，四类状态小格 */
+#ledRows tr.click td{vertical-align:middle}
+#ledRows tr.click:hover td:first-child{color:var(--acc)}
+#ledRows .kc-wait{color:var(--tx3);font-size:12px}
 </style>
 </head>
 <body>
 <header class="hd">
-  <div class="mark"><b>质检实时录入<i>.</i></b><span class="sep"></span><span class="micro">Cockpit · 主管驾驶舱</span></div>
+  <div class="mark"><b>质检实时录入<i>.</i></b><span class="sep"></span><span class="micro">主管驾驶舱</span></div>
   <nav class="nav" id="nav">
     <button data-v="live" class="on">实时检验</button>
     <button data-v="asr">识别纠错<span class="badge" id="rvBadge" style="background:var(--amber)"></span></button>
     <button data-v="evi">证据追溯</button>
     <button data-v="led">合同台账<span class="badge" id="ngBadge"></span></button>
     <button data-v="ver">验证看板</button>
-    <a href="admin.html" target="_blank">管理后台</a>
+    <a href="admin.html" target="_blank" data-ic="ext">管理后台</a>
   </nav>
   <div class="hd-r">
-    <span class="tag amb" title="样例数据，非真实客户">样例数据</span>
+    <span class="tag" title="样例数据，非真实客户">样例数据</span>
     <span class="dev" id="devPhone"><i></i>质检员手机 · 离线</span>
     <span class="dev" id="devAsr"><i></i>语音识别</span>
     <span class="clock mono" id="clock">--:--:--</span>
@@ -511,23 +578,21 @@ tr.flash td{animation:rowflash 2s}
   <section class="view live on" id="v-live">
     <div class="col contract-nav">
       <div class="sec-h"><span class="micro">合同</span></div>
-      <button class="add" id="addBtn" title="录入合同或检验参数">＋ 录入</button>
-      <div class="contract-list" id="contractList" aria-label="合同号列表"></div>
+      <button class="add" id="addBtn" title="录入合同或检验参数" data-ic-start="plus">录入</button>
+      <div class="contract-list fade" id="contractList" aria-label="合同号列表"></div>
       <div class="contract-pages">
         <div class="page-settings"><span id="contractCount"></span><select id="contractPageSize" aria-label="每页合同条数"><option value="20">20条/页</option><option value="50">50条/页</option><option value="100">100条/页</option></select></div>
         <div class="page-controls"><button id="contractPrev" aria-label="上一页合同">上一页</button><span id="contractPageInfo"></span><button id="contractNext" aria-label="下一页合同">下一页</button></div>
       </div>
     </div>
     <div class="col stage" id="stage">
-      <div class="sec-h"><span class="micro">参数明细 <b class="mono detail-contract" id="detailContract"></b></span><span class="tag" id="sync">—</span></div>
-      <div class="ctname" id="ctName"></div>
-      <div class="detail-heading"><div class="prog"><span class="big-n" id="sheetN">0<small>/13</small></span><span>项已录</span></div><span class="detail-context" id="detailContext"></span></div>
-      <div class="segs" id="segs"></div>
-      <div class="rows" id="rows" aria-label="当前合同参数明细"></div>
+      <div class="stage-t"><span class="micro">参数明细</span><b class="detail-contract" id="detailContract"></b><span class="ctname" id="ctName"></span><span class="tag" id="sync">—</span></div>
+      <div class="detail-heading"><div class="prog"><span class="big-n" id="sheetN">0<small>/13</small></span><span>项已录</span></div><div class="segs" id="segs"></div><span class="detail-context" id="detailContext"></span></div>
+      <div class="rows fade" id="rows" aria-label="当前合同参数明细"></div>
       <div class="sheet-foot" id="sheetFoot"></div>
-      <div class="tr idle" id="tr">等待质检员说话…</div>
-      <details class="voice-panel">
-        <summary><span class="live-dot micro" id="liveDot">Live · 现场语音</span><span>识别过程与回读</span></summary>
+      <div class="tr-box"><span class="live-dot micro" id="liveDot">现场语音</span><div class="tr idle" id="tr">等待质检员说话…</div></div>
+      <details class="voice-panel" id="voicePanel">
+        <summary><span>识别过程与回读</span></summary>
         <div class="voice-content">
           <div class="stg-top"><div class="r" id="stgTags"></div></div>
           <ol class="pipe" id="pipe">
@@ -540,15 +605,16 @@ tr.flash td{animation:rowflash 2s}
           <canvas id="wave" width="1400" height="112"></canvas>
           <div class="cn" id="cn"></div>
           <div class="hero dim dimmed" id="hero"></div>
-          <div class="rb" id="rb"><div class="spk"><i></i><i></i><i></i></div><div><span class="micro">Readback · 回读</span><p class="idle" id="rbp">系统会把识别到的每一个数复述给质检员确认。</p></div></div>
+          <div class="rb" id="rb"><div class="spk"><i></i><i></i><i></i></div><div><span class="micro">回读</span><p class="idle" id="rbp">系统会把识别到的每一个数复述给质检员确认。</p></div></div>
         </div>
       </details>
+      <div class="focus" id="focus" aria-live="polite"><div class="fc" id="focusCard"></div></div>
     </div>
     <div class="col">
-      <div class="sec-h"><span class="micro">Exceptions · 待处理</span><span class="tag" id="exTag"></span></div>
+      <div class="sec-h"><span class="micro">待处理</span><span class="tag" id="exTag"></span></div>
       <div class="ex-n" id="exN"><span class="big-n">0</span><span>个合同不合格</span></div>
-      <div class="cards" id="cards"></div>
-      <div class="closed" id="closed"><span class="micro">Today · 本场记录</span></div>
+      <div class="cards fade" id="cards"></div>
+      <div class="closed" id="closed"><span class="micro">本场记录</span></div>
       <div class="gate lock" id="gate"><button id="gateBtn">导出 Excel</button><p id="gateP">请先选择合同</p></div>
     </div>
   </section>
@@ -559,7 +625,7 @@ tr.flash td{animation:rowflash 2s}
     <div class="panel span2"><div class="ph"><h3>本场识别记录</h3><span class="micro" id="asrN"></span><div class="r"><span class="chip okk ok">命中关键词</span><span class="chip py">拼音纠偏</span><span class="chip tb">纠错表</span><span class="chip ng">拒收</span></div></div>
       <table><thead><tr><th>时间</th><th>来源</th><th>原话</th><th>纠错后</th><th>解析</th><th>拒收 / 提示</th><th>识别耗时</th></tr></thead><tbody id="asrRows"></tbody></table></div>
     <div class="panel"><div class="ph"><h3>待复核</h3><span class="micro" id="rvN"></span><div class="r"><span class="micro">听不清不猜 · 主管复核后自动学进纠错表</span></div></div><div class="cards" id="rvCards" style="flex:none;overflow:visible"></div></div>
-    <div class="panel"><div class="ph"><h3>学习到的纠错</h3><span class="micro" id="lcN"></span><div class="r lf" style="margin:0"><input id="lcW" placeholder="听成"><span class="arrow">→</span><input id="lcR" placeholder="应为"><button class="btn-s" id="lcAdd">手动添加</button></div></div>
+    <div class="panel"><div class="ph"><h3>学习到的纠错</h3><span class="micro" id="lcN"></span><div class="r lf" style="margin:0"><input id="lcW" placeholder="听成"><span class="arrow" data-ic="arrow"></span><input id="lcR" placeholder="应为"><button class="btn-s" id="lcAdd">手动添加</button></div></div>
       <table><thead><tr><th>听成</th><th>纠正为</th><th>来源</th><th>命中</th><th>时间</th><th></th></tr></thead><tbody id="lcRows"></tbody></table></div>
     <div class="panel span2" id="clipPanel"><div class="ph"><h3>演示录音</h3><span class="micro" id="clipN"></span><div class="r"><span class="micro">用手机按住说话录好 → 在「证据追溯」里点开那条录音 →「用作演示第 N 步」。演示到这一步时播放真实录音。</span></div></div>
       <table><thead><tr><th>步骤</th><th>表单</th><th>文字台词</th><th>真实录音（演示时优先）</th><th></th></tr></thead><tbody id="clipRows"></tbody></table></div>
@@ -575,7 +641,7 @@ tr.flash td{animation:rowflash 2s}
   <section class="view pane" id="v-led" style="grid-template-columns:1fr">
     <div class="panel"><div class="ph"><h3>合同台账</h3><span class="micro" id="ledN"></span>
       <div class="r"><input class="search" id="ledQ" placeholder="搜合同号 / 客户"><div class="filters" id="ledF"></div><button class="btn-s" id="dmReset" title="删除所有由一键演示建的合同（真实数据不受影响）">清理演示合同</button><button class="btn-s l" id="expAll">批量导出合格合同</button></div></div>
-      <table><thead><tr><th>合同号</th><th>客户</th><th>录入日期</th><th>状态</th><th>原因</th><th></th></tr></thead><tbody id="ledRows"></tbody></table></div>
+      <table><thead><tr><th>合同号</th><th>客户</th><th>录入日期</th><th>状态</th><th>四类参数（最新记录）</th></tr></thead><tbody id="ledRows"></tbody></table></div>
     <div class="panel"><div class="ph"><h3>导出文件</h3><span class="micro" id="expN"></span></div>
       <table><thead><tr><th>文件</th><th>合同号</th><th>日期</th><th>大小</th><th>生成时间</th><th></th></tr></thead><tbody id="expRows"></tbody></table></div>
   </section>
@@ -585,7 +651,7 @@ tr.flash td{animation:rowflash 2s}
     <div class="kpis" id="kpis"></div>
     <div class="panel"><div class="ph"><h3>合同状态分布</h3><span class="micro">按最新记录</span></div><div class="verification-visuals"><div id="dist"></div><div id="verificationDetails"></div></div></div>
     <div class="panel"><div class="ph"><h3>不合格参数排行</h3><span class="micro">最新记录中超出范围的次数</span></div><div id="lad"></div></div>
-    <div class="panel span2"><div class="ph"><h3>当前规则</h3><div class="r"><a class="btn-s" href="admin.html#/rules" target="_blank">去修改规则 ↗</a></div></div>
+    <div class="panel span2"><div class="ph"><h3>当前规则</h3><div class="r"><a class="btn-s" href="admin.html#/rules" target="_blank" data-ic="ext">去修改规则</a></div></div>
       <table><thead><tr><th>表</th><th>参数</th><th>下限</th><th>上限</th><th>单位</th><th>状态</th></tr></thead><tbody id="ruleRows"></tbody></table></div>
   </section>
 </main>
@@ -597,7 +663,7 @@ tr.flash td{animation:rowflash 2s}
   <div class="cap" id="cap" hidden></div>
   <div class="r">
     <select id="dmSpd" title="演示速度"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
-    <button class="btn-s demo" id="dmBtn">▶ 一键演示</button>
+    <button class="btn-s demo" id="dmBtn">一键演示</button>
     <button class="btn-s" id="mSubmit" disabled title="把质检员手机上的待提交草稿提交入库">提交手机草稿</button>
     <button class="sw" id="ttsSw"><i></i>回读播报</button>
   </div>
@@ -605,7 +671,7 @@ tr.flash td{animation:rowflash 2s}
 <div class="toasts" id="toasts"></div>
 <div class="dw-bg" id="dwBg"></div>
 <aside class="dw" id="dw" role="dialog" aria-modal="true" aria-labelledby="formTitle" aria-hidden="true">
-  <div class="dw-h"><h3 id="formTitle">录入与校验</h3><span class="micro">提交后两端同步</span><button class="x" id="dwX" aria-label="关闭录入弹窗">×</button></div>
+  <div class="dw-h"><h3 id="formTitle">录入与校验</h3><span class="micro">提交后两端同步</span><button class="x" id="dwX" aria-label="关闭录入弹窗" data-ic="x"></button></div>
   <div class="form-error" id="fErr" role="alert" hidden></div>
   <div class="dw-b">
     <div class="fi"><label>合同</label><div class="in"><select id="fCt"></select></div></div>
@@ -637,12 +703,37 @@ tr.flash td{animation:rowflash 2s}
 <script src="common.js"></script>
 <script>
 "use strict";
-const { esc, KINDS, KIND_LABEL, STATUS_CLS, api, load, store } = QC;
+const { esc, KINDS, KIND_LABEL, STATUS_CLS, api, load, store, icon } = QC;
 const $ = id => document.getElementById(id);
+// 静态按钮上的线条图标
+document.querySelectorAll('[data-ic]').forEach(el => el.insertAdjacentHTML('beforeend', icon(el.dataset.ic)));
+document.querySelectorAll('[data-ic-start]').forEach(el => el.insertAdjacentHTML('afterbegin', icon(el.dataset.icStart)));
+// 可滚动列表：按滚动位置只在还有内容的一侧渐隐
+function fadeEdges(el) {
+  const upd = () => { el.style.setProperty('--ft', el.scrollTop > 2 ? '22px' : '0px'); el.style.setProperty('--fb', el.scrollTop + el.clientHeight < el.scrollHeight - 2 ? '30px' : '0px'); };
+  el.addEventListener('scroll', upd, { passive: true });
+  new ResizeObserver(upd).observe(el); new MutationObserver(upd).observe(el, { childList: true, subtree: true });
+  upd();
+}
+['contractList', 'cards', 'rows'].forEach(id => fadeEdges($(id)));
 const S = {
   view: 'live', ht: null, contractPage: 1, contractPageSize: 20, form: 'drum', detail: null, contracts: [], draft: Object.fromEntries(Object.keys(KINDS).map(k => [k, {}])),
   voices: [], log: [], reviews: [], learned: [], dvids: Object.fromEntries(Object.keys(KINDS).map(k => [k, []])), evSel: null, evF: '全部', demo: null, tts: load('qcs_tts', false), busy: false, phoneOn: false, ledF: '全部', exports: [], lastRaw: null,
+  kinds: {},   // 合同号 → 四类参数最新记录（只取判定结果，用于台账和待处理的状态小格）
 };
+/* 四类状态缓存：合同列表接口只给总状态，逐个读详情补齐；提交、规则变化时作废 */
+const kindLoading = new Set();
+async function ensureKinds(hts, done) {
+  const need = [...new Set(hts)].filter(ht => !(ht in S.kinds) && !kindLoading.has(ht));
+  if (!need.length) return;
+  need.forEach(ht => kindLoading.add(ht));
+  let i = 0;
+  // 读取失败记为 null（显示原因文字），不反复重试
+  const worker = async () => { while (i < need.length) { const ht = need[i++]; try { const d = await api('GET', '/contracts/' + encodeURIComponent(ht)); S.kinds[ht] = d.latest; } catch (e) { S.kinds[ht] = null; } kindLoading.delete(ht); } };
+  await Promise.all(Array.from({ length: Math.min(6, need.length) }, worker));
+  done && done();
+}
+function dropKinds(ht) { if (ht) delete S.kinds[ht]; else S.kinds = {}; }
 const EX = { control_cabinet: ['绝缘电阻五百兆欧，控制线力矩一点二牛米', '电气间隙八毫米'], travel_paint: ['底漆九十八、九十七、九十六', '面漆99%，附着力百分之一'], drum: ['直径一千二百五十，光段三百', '厚度十二点五毫米', '直径1262'], travel_drive: ['噪音八十二分贝', '电机铭牌 YZR160M2-6'] };
 
 function toast(html, cls = '') { const el = document.createElement('div'); el.className = 'toast ' + cls; el.innerHTML = html; $('toasts').appendChild(el); setTimeout(() => { el.style.transition = 'opacity .4s'; el.style.opacity = 0; setTimeout(() => el.remove(), 400); }, 3600); }
@@ -706,7 +797,8 @@ function cellState(kind, f) {
 }
 function renderSheet(flash = []) {
   const d = S.detail;
-  $('ctName').textContent = d ? `${d.contract.name} · 录入日期 ${d.contract.date}` : '在左上角选择合同，或等待质检员手机端选择';
+  $('ctName').textContent = d ? `${d.contract.name} · 录入日期 ${d.contract.date}` : '在左侧选择合同，或等待质检员手机端选择';
+  if (d) S.kinds[d.contract.ht_code] = d.latest;
   const kinds = Object.keys(KINDS);
   let filled = 0, total = 0, segs = '', rows = '';
   const cnt = { ok: 0, ng: 0, fix: 0, none: 0 };
@@ -721,15 +813,15 @@ function renderSheet(flash = []) {
       const rule = f.type === 'text' && !f.numeric_list ? '不校验' : QC.rangeText(QC.ruleOf(k, f.name));
       rows += `<div data-k="${k}" data-f="${f.name}" class="row ${s.cls || 'pending'} ${flash.includes(k + '.' + f.name) ? 'flash' : ''}"><i class="dot"></i>
         <span class="nm">${esc(f.label)}<em>${esc(rule)}</em></span>
-        <span class="val">${s.v == null ? '<span class="c-dim">—</span>' : `<b>${esc(s.v)}</b>${f.unit ? `<span class="u">${esc(f.unit)}</span>` : ''}${s.draft ? '<span class="d">待提交</span>' : ''}`}</span>${f.numeric_list && s.v != null && QC.prejudge(k,f.name,s.v)?.cls === 'ng' ? `<small style="grid-column:2/-1;color:var(--red);font-size:11px;white-space:normal">${esc(QC.prejudge(k,f.name,s.v).verdict)}</small>` : ''}</div>`;
+        <span class="val">${s.v == null ? '<span class="c-dim">—</span>' : `<b>${esc(s.v)}</b>${f.unit ? `<span class="u">${esc(f.unit)}</span>` : ''}${s.draft ? '<span class="d">待提交</span>' : ''}`}</span>${f.numeric_list && s.v != null && QC.prejudge(k,f.name,s.v)?.cls === 'ng' ? `<small class="lv">${esc(QC.prejudge(k,f.name,s.v).verdict)}</small>` : ''}</div>`;
     });
     rows += '</section>';
   });
   $('sheetN').innerHTML = `${filled}<small>/${total}</small>`;
   $('segs').innerHTML = segs; $('rows').innerHTML = rows;
   $('rows').querySelectorAll('.row').forEach(r => r.onclick = () => openForm(r.dataset.k, r.dataset.f));
-  $('sheetFoot').innerHTML = `<div><b class="c-ok">${cnt.ok}</b><span>合格</span></div><div><b class="c-ng">${cnt.ng}</b><span>超范围</span></div><div><b class="c-fix">${cnt.fix}</b><span>待提交</span></div><div><b class="c-dim">${cnt.none}</b><span>未录</span></div>`;
-  $('sync').textContent = d ? contractStatusLabel(d.status) : '—'; $('sync').className = 'tag ' + (d ? { '合格': 'lim', '不合格': 'amb', '未录全': '', '待校验': 'amb' }[d.status] : '');
+  $('sheetFoot').innerHTML = `<div><b class="${cnt.ok ? 'c-ok' : 'c-dim'}">${cnt.ok}</b><span>合格</span></div><div><b class="${cnt.ng ? 'c-ng' : 'c-dim'}">${cnt.ng}</b><span>超范围</span></div><div><b class="${cnt.fix ? 'c-fix' : 'c-dim'}">${cnt.fix}</b><span>待提交</span></div><div><b class="c-dim">${cnt.none}</b><span>未录</span></div>`;
+  $('sync').textContent = d ? contractStatusLabel(d.status) : '—'; $('sync').className = 'tag ' + (d ? { '合格': 'st-ok', '不合格': 'st-ng', '未录全': '', '待校验': 'st-warn' }[d.status] : '');
   renderParameterContext();
   const dn = Object.keys(S.draft[S.form] || {}).length;
   $('mSubmit').disabled = !S.ht || !dn; $('mSubmit').textContent = dn ? `提交手机草稿（${KIND_LABEL[S.form]} ${dn} 项）` : '提交手机草稿';
@@ -740,11 +832,13 @@ function renderEx() {
   const ng = S.contracts.filter(c => c.status === '不合格'), part = S.contracts.filter(c => c.status === '未录全' || c.status === '待校验');
   $('exN').className = 'ex-n' + (ng.length ? ' hot' : ''); $('exN').innerHTML = `<span class="big-n">${ng.length}</span><span>个合同不合格 · ${part.length} 个未完成</span>`;
   $('exTag').textContent = `共 ${S.contracts.length}`;
-  const list = [...ng.map(c => ({ c, cls: 'ng', lab: 'NG · 不合格' })), ...part.map(c => ({ c, cls: c.status === '待校验' ? 'warn' : 'fix', lab: c.status === '待校验' ? 'Pending · 待校验' : 'Open · 未录全' }))];
-  $('cards').innerHTML = S.reviews.slice(0, 3).map(v => reviewCard(v, true)).join('') + list.slice(0, 30).map(({ c, cls, lab }) => `<div class="cx ${cls} ${c.ht_code === S.ht ? 'cur' : ''}"><div class="cx-h"><span class="micro">${lab}</span><span class="t">${esc(c.date)}</span></div>
-    <h4>${esc(c.ht_code)}<small>${esc(c.name)}</small></h4><p>${esc(c.status_reason || '')}</p>
+  const list = [...ng.map(c => ({ c, cls: 'ng', lab: '不合格' })), ...part.map(c => ({ c, cls: c.status === '待校验' ? 'warn' : 'fix', lab: c.status === '待校验' ? '待校验' : '未录全' }))];
+  const shown = list.slice(0, 30);
+  $('cards').innerHTML = S.reviews.slice(0, 3).map(v => reviewCard(v, true)).join('') + shown.map(({ c, cls, lab }) => `<div class="cx ${cls} ${c.ht_code === S.ht ? 'cur' : ''}"><div class="cx-h"><span class="micro">${lab}</span><span class="t">${esc(c.date)}</span></div>
+    <h4>${esc(c.ht_code)}<small>${esc(c.name)}</small></h4>${S.kinds[c.ht_code] ? QC.kindCells(S.kinds[c.ht_code]) : `<p>${esc(c.status_reason || '')}</p>`}
     <div class="cx-a"><button data-act="see" data-ht="${esc(c.ht_code)}">在大屏查看</button><button class="p" data-act="push" data-ht="${esc(c.ht_code)}" data-reason="${esc(c.status_reason || '')}">${cls === 'ng' ? '派给质检员复测' : '派给质检员补录'}</button></div></div>`).join('')
     || '<div class="empty-x">没有不合格或未完成的合同。</div>';
+  ensureKinds(shown.map(x => x.c.ht_code), renderEx);
   bindReviewCards($('cards'));
   document.querySelectorAll('#cards .cx:not([data-rv]) button').forEach(b => b.onclick = () => {
     const ht = b.dataset.ht, reason = b.dataset.reason;
@@ -754,13 +848,19 @@ function renderEx() {
   });
 }
 function renderClosed() {
-  $('closed').innerHTML = '<span class="micro">Today · 本场记录</span>' + (S.log.slice(0, 6).map(x => `<div class="${x.ok ? '' : 'x'}">${esc(x.t)}　${esc(x.text)}</div>`).join('') || '<div style="opacity:.6">本场还没有提交记录</div>');
+  $('closed').innerHTML = '<span class="micro">本场记录</span>' + (S.log.slice(0, 6).map(x => `<div class="${x.ok ? '' : 'x'}">${esc(x.t)}　${esc(x.text)}</div>`).join('') || '<div class="none">本场还没有提交记录</div>');
 }
+// 不能导出的原因写短：哪几类不合格、缺哪几类
+function gateReason(latest) {
+  const st = QC.kindStates(latest), of = c => st.filter(s => s.cls === c).map(s => s.label).join('、');
+  return [of('ng') && of('ng') + '不合格', of('no') && '缺' + of('no'), of('warn') && of('warn') + '待校验'].filter(Boolean).join('，');
+}
+const DONE_HTML = () => `${icon('check')}已导出 · 点击下载`;
 function renderGate() {
   const g = $('gate'), d = S.detail; S.gateDl = null;
   if (!d) { g.className = 'gate lock'; $('gateBtn').textContent = '导出 Excel'; $('gateP').textContent = '请先选择合同'; return; }
-  if (d.status === '合格') { g.className = 'gate open'; $('gateBtn').textContent = `导出 ${d.contract.ht_code} Excel →`; $('gateP').textContent = '四类参数最新记录均合格'; }
-  else { g.className = 'gate lock'; $('gateBtn').textContent = '🔒 导出 Excel'; $('gateP').textContent = `不能导出：${d.status_reason}${d.rules.configured < d.rules.total ? `（规则已配置 ${d.rules.configured}/${d.rules.total}）` : ''}`; }
+  if (d.status === '合格') { g.className = 'gate open'; $('gateBtn').innerHTML = `导出 ${esc(d.contract.ht_code)} Excel${icon('arrow')}`; $('gateP').textContent = '四类参数最新记录均合格'; }
+  else { g.className = 'gate lock'; $('gateBtn').innerHTML = `${icon('lock')}导出 Excel`; $('gateP').innerHTML = `不能导出：${esc(gateReason(d.latest) || d.status_reason)}${d.rules.configured < d.rules.total ? `（规则已配置 ${d.rules.configured}/${d.rules.total}）` : ''}${QC.kindCells(d.latest)}`; }
 }
 $('gateBtn').onclick = async () => {
   if (S.gateDl) { location.href = S.gateDl; return; }
@@ -769,7 +869,7 @@ $('gateBtn').onclick = async () => {
   try {
     const r = await api('POST', `/contracts/${encodeURIComponent(S.ht)}/export?source=screen`);
     const dd = (r.file.match(/_(\d{8})\.xlsx$/) || [])[1] || '';
-    $('gate').className = 'gate done'; $('gateBtn').textContent = '✓ 已导出 · 点击下载';
+    $('gate').className = 'gate done'; $('gateBtn').innerHTML = DONE_HTML();
     S.gateDl = `/api/exports/${encodeURIComponent(r.ht_code)}/${dd}`;
     $('gateP').innerHTML = `${esc(r.file)} · ${r.sheets.map(s => s.ok ? esc(s.name) : `<span class="c-ng">${esc(s.name)} 失败</span>`).join(' / ')}`;
     toast(`已导出 <b class="mono">${esc(r.file)}</b>`, 'ok');
@@ -836,7 +936,7 @@ function idleStage() {
   renderParameterContext();
   if (S.detail) {
     const d = S.detail;
-    setHero({ title: `${d.contract.ht_code} · 合同状态`, big: d.status, word: true, verdict: d.status_reason, cls: STATUS_CLS[d.status] || 'dim' });
+    setHero({ title: `${d.contract.ht_code} · 合同状态`, big: d.status, word: true, verdict: gateReason(d.latest) || d.status_reason, cls: STATUS_CLS[d.status] || 'dim' });
   } else setHero({ title: '当前没有检验对象', big: '—', verdict: '待开始', cls: 'dim' });
   $('hero').classList.add('dimmed');
 }
@@ -880,13 +980,56 @@ function presentRecord(d, src) {
   const v = d.validation, ok = v && v.is_qualified === 1, k = d.kind;
   pipe(5, !ok, ['', '', '', v ? (ok ? '全部合格' : `${v.failures.length} 项不合格`) : '校验未完成', `已入库 #${d.record.id}`]);
   setHero({ title: `${d.ht_code} · ${KIND_LABEL[k]}参数 · 记录 #${d.record.id}`, tag: { screen: '大屏提交', demo: '演示提交' }[src] || '手机提交', big: v ? (ok ? '合格' : '不合格') : '待校验', word: true,
-    verdict: `合同状态：${d.contract_status.status}`, cls: v ? (ok ? 'ok' : 'ng') : 'warn', src: d.contract_status.reason,
+    verdict: `合同状态：${d.contract_status.status}`, cls: v ? (ok ? 'ok' : 'ng') : 'warn', src: (S.detail?.contract.ht_code === d.ht_code && gateReason(S.detail.latest)) || d.contract_status.reason,
     alert: v && !ok ? { cls: 'ng', html: `<b>不合格</b>${v.failures.map(esc).join('；')}` } : !v ? { cls: 'warn', html: esc(d.warning || '校验未完成') } : null });
   readback(QC.readbackRecord(d, k));
   S.log.unshift({ t: QC.hhmmss().slice(0, 5), ok, text: `${d.ht_code} ${KIND_LABEL[k]} #${d.record.id} ${v ? (ok ? '合格' : '不合格') : '待校验'}` });
   renderClosed();
 }
 function renderLive(flash) { renderSheet(flash); renderGate(); renderContractList(); renderEx(); renderClosed(); if (!S.busy && !S.shown) idleStage(); }
+
+/* ---------- 结果卡：识别或提交后在参数明细中间弹出，几秒后收起，再闪一下更新的行 ---------- */
+const FC = { t: null, flash: [] };
+function flashRows(keys) {
+  keys.forEach(key => {
+    const [k, f] = key.split('.'), r = $('rows').querySelector(`.row[data-k="${k}"][data-f="${f}"]`);
+    if (r) { r.classList.remove('flash'); void r.offsetWidth; r.classList.add('flash'); }
+  });
+}
+function hideFocus() { clearTimeout(FC.t); FC.t = null; $('focus').classList.remove('on'); const keys = FC.flash; FC.flash = []; if (keys.length) flashRows(keys); }
+function showFocus(card, ms, flashKeys = []) {
+  if (S.view !== 'live') { flashRows(flashKeys); return; }
+  clearTimeout(FC.t);
+  $('focusCard').className = 'fc ' + (card.cls || ''); $('focusCard').innerHTML = card.html;
+  FC.flash = flashKeys; $('focus').classList.add('on');
+  FC.t = setTimeout(hideFocus, ms);
+}
+const SRC = { phone: '手机', screen: '大屏', demo: '演示' };
+function voiceCard(p, src) {
+  const names = Object.keys(p.fields || {}), ht = p.ht_code || S.ht;
+  const rej = (p.rejected || []).map(r => `「${r.said || r.field}」${r.reason}`).join('；');
+  const head = `<div class="fc-h"><b>${esc(src === 'demo' ? '演示' : (SRC[src] || '') + (p.asr ? '语音' : '键入'))}</b><span>${esc(KIND_LABEL[p.form] || '')}参数</span>${ht ? `<span class="mono">${esc(ht)}</span>` : ''}</div><div class="fc-q">「${trHTML(p)}」</div>`;
+  if (!names.length) return { cls: 'warn', html: head + `<div class="fc-v warn">${icon('alert')}没有填入参数${rej || p.message ? `<small>${esc(rej || p.message)}</small>` : ''}</div>` };
+  let bad = 0;
+  const items = names.map(n => {
+    const f = QC.fieldMeta(p.form, n) || { label: n }, j = QC.prejudge(p.form, n, p.fields[n]) || { cls: 'dim' };
+    const textOnly = f.type === 'text' && !f.numeric_list;
+    if (!textOnly && j.cls === 'ng') bad++;
+    const cls = textOnly ? '' : ({ ok: 'ok', ng: 'ng', warn: 'warn' }[j.cls] || '');
+    const st = textOnly ? '已记录' : j.cls === 'ok' ? `${icon('check')}在范围内` : j.cls === 'ng' ? `${icon('x')}超范围` : esc(j.verdict || '');
+    return `<div class="fc-i ${cls}"><span>${esc(f.label)}</span><b>${esc(p.fields[n])}${f.unit ? `<small>${esc(f.unit)}</small>` : ''}</b><span class="s">${st}</span></div>`;
+  }).join('');
+  const verdict = bad ? `<div class="fc-v ng">${icon('x')}${bad} 项超范围<small>可照常提交，记为不合格</small></div>`
+    : rej ? `<div class="fc-v warn">${icon('alert')}有内容没有填入<small>${esc(rej)}</small></div>`
+    : `<div class="fc-v ok">${icon('check')}全部在范围内<small>等待提交</small></div>`;
+  return { cls: bad ? 'ng' : rej ? 'warn' : '', html: head + `<div class="fc-l">${items}</div>` + verdict };
+}
+function recordCard(d, src) {
+  const v = d.validation, ok = v && v.is_qualified === 1;
+  const head = `<div class="fc-h"><b>${esc((SRC[src] || '手机') + '提交')}</b><span>${esc(KIND_LABEL[d.kind])}参数 · 记录 #${d.record.id}</span><span class="mono">${esc(d.ht_code)}</span></div>`;
+  const more = v && !ok ? `<div class="fc-f">${v.failures.map(esc).join('<br>')}</div>` : !v ? `<div class="fc-f">${esc(d.warning || '校验未完成')}</div>` : '';
+  return { cls: v ? (ok ? 'ok' : 'ng') : 'warn', html: head + `<div class="fc-big">${v ? (ok ? '合格' : '不合格') : '待校验'}</div>${more}<div class="fc-s">合同状态：${esc(d.contract_status.status)}</div>${QC.kindCells(S.detail?.contract.ht_code === d.ht_code ? S.detail.latest : null)}` };
+}
 
 /* 舞台波形：识别过程中跳动，平时静止 */
 let wseed = Array.from({ length: 120 }, (_, i) => (0.15 + 0.85 * Math.random()) * Math.sin(Math.PI * (i + .5) / 120) ** .6);
@@ -896,7 +1039,7 @@ function waveLoop(t) {
   for (let i = 0; i < n; i++) {
     const a = S.busy ? wseed[i] * (0.55 + 0.45 * Math.abs(Math.sin(t / 110 + i * .45))) : wseed[i] * 0.18;
     const h = Math.max(3, a * H * .92);
-    g.fillStyle = S.busy ? 'rgba(198,244,63,.85)' : 'rgba(255,255,255,.12)';
+    g.fillStyle = S.busy ? 'rgba(91,141,239,.85)' : 'rgba(255,255,255,.12)';
     g.fillRect(i * w + 2, (H - h) / 2, Math.max(1, w - 4), h);
   }
   requestAnimationFrame(waveLoop);
@@ -907,9 +1050,9 @@ function renderASR() {
   const vc = S.vcfg || { corrections: {}, hotwords: [], retract_words: [], forms: {} };
   const kws = Object.values(vc.forms || {}).flatMap(f => Object.values(f).flatMap(x => x.keywords || []));
   $('trio').innerHTML = `
-    <div><span class="micro">Layer 1</span><span class="tag">识别</span><div class="n">${(vc.hotwords || []).length}</div><h4>热词增强（FunASR SeACo）</h4><p>把行业词提前告诉识别模型，降低「光段→光端」这类同音错。</p><div class="fz">${(vc.hotwords || []).map(w => `<span>${esc(w)}</span>`).join('')}</div></div>
-    <div><span class="micro">Layer 2</span><span class="tag amb">纠错表</span><div class="n">${Object.keys(vc.corrections || {}).length}</div><h4>固定纠错表</h4><p>常见误识别直接替换；车间实测后持续补充。</p><div class="fz">${Object.entries(vc.corrections || {}).map(([a, b]) => `<span ${(vc.learned || {})[a] ? 'style="border-color:rgba(170,156,255,.5);color:var(--violet)" title="复核学到的"' : ''}><b>${esc(a)}</b>${esc(b)}</span>`).join('')}</div></div>
-    <div><span class="micro">Layer 3</span><span class="tag vio">拼音</span><div class="n">${kws.length}</div><h4>关键词 + 拼音模糊匹配</h4><p>精确匹配不到时按拼音（含多音字）找参数名；单字关键词必须紧跟数字。撤回词：${(vc.retract_words || []).map(esc).join('、')}。</p><div class="fz">${kws.map(w => `<span>${esc(w)}</span>`).join('')}</div></div>`;
+    <div><span class="micro">第一层</span><span class="tag">识别</span><div class="n">${(vc.hotwords || []).length}</div><h4>热词增强（FunASR SeACo）</h4><p>把行业词提前告诉识别模型，降低「光段→光端」这类同音错。</p><div class="fz">${(vc.hotwords || []).map(w => `<span>${esc(w)}</span>`).join('')}</div></div>
+    <div><span class="micro">第二层</span><span class="tag amb">纠错表</span><div class="n">${Object.keys(vc.corrections || {}).length}</div><h4>固定纠错表</h4><p>常见误识别直接替换；车间实测后持续补充。</p><div class="fz">${Object.entries(vc.corrections || {}).map(([a, b]) => `<span ${(vc.learned || {})[a] ? 'style="border-color:rgba(91,141,239,.5);color:var(--violet)" title="复核学到的"' : ''}><b>${esc(a)}</b>${esc(b)}</span>`).join('')}</div></div>
+    <div><span class="micro">第三层</span><span class="tag vio">拼音</span><div class="n">${kws.length}</div><h4>关键词 + 拼音模糊匹配</h4><p>精确匹配不到时按拼音（含多音字）找参数名；单字关键词必须紧跟数字。撤回词：${(vc.retract_words || []).map(esc).join('、')}。</p><div class="fz">${kws.map(w => `<span>${esc(w)}</span>`).join('')}</div></div>`;
   $('asrN').textContent = `${S.voices.length} 条`;
   renderReviews(); renderLearned();
   $('asrRows').innerHTML = S.voices.map(({ ev, p }) => {
@@ -929,10 +1072,13 @@ async function renderLed() {
   document.querySelectorAll('#ledF button').forEach((b, i) => b.onclick = () => { S.ledF = fs[i]; renderLed(); });
   const items = S.contracts.filter(c => (S.ledF === '全部' || c.status === S.ledF) && (!q || c.ht_code.includes(q) || c.name.includes(q)));
   $('ledN').textContent = `${items.length} / ${S.contracts.length}`;
-  $('ledRows').innerHTML = items.map(c => `<tr class="click" data-ht="${esc(c.ht_code)}"><td class="m">${esc(c.ht_code)}</td><td>${esc(c.name)}</td><td class="m t3">${esc(c.date)}</td>
-    <td><span class="chip ${STATUS_CLS[c.status]}">${esc(c.status)}</span></td><td class="t2">${esc(c.status_reason || '')}</td><td style="text-align:right"><a class="btn-s" href="admin.html#/c/${encodeURIComponent(c.ht_code)}" target="_blank" onclick="event.stopPropagation()">详情 ↗</a></td></tr>`).join('')
-    || '<tr><td colspan="6" class="t3">没有符合条件的合同</td></tr>';
+  // 四类状态小格；还没读到时先占位，读取失败就退回原因文字
+  const kcell = c => S.kinds[c.ht_code] ? QC.kindCells(S.kinds[c.ht_code]) : c.ht_code in S.kinds ? `<span class="t2">${esc(c.status_reason || '')}</span>` : '<span class="kc-wait">读取中…</span>';
+  $('ledRows').innerHTML = items.map(c => `<tr class="click" data-ht="${esc(c.ht_code)}" title="点击在实时检验中打开"><td class="m">${esc(c.ht_code)}</td><td>${esc(c.name)}</td><td class="m t3">${esc(c.date)}</td>
+    <td><span class="chip ${STATUS_CLS[c.status]}">${esc(c.status)}</span></td><td data-kc="${esc(c.ht_code)}">${kcell(c)}</td></tr>`).join('')
+    || '<tr><td colspan="5" class="t3">没有符合条件的合同</td></tr>';
   document.querySelectorAll('#ledRows tr.click').forEach(tr => tr.onclick = () => { focus(tr.dataset.ht); view('live'); });
+  ensureKinds(items.map(c => c.ht_code), () => { if (S.view === 'led') document.querySelectorAll('#ledRows td[data-kc]').forEach(td => { const c = S.contracts.find(x => x.ht_code === td.dataset.kc); if (c) td.innerHTML = kcell(c); }); });
   try { S.exports = (await api('GET', '/exports')).items; } catch (e) { S.exports = []; }
   $('expN').textContent = `${S.exports.length} 个`;
   $('expRows').innerHTML = S.exports.map(x => `<tr><td class="m">${esc(x.rel.split('/').pop())}</td><td class="m">${esc(x.ht_code)}</td><td class="m t3">${esc(x.date)}</td><td class="m t3">${(x.size / 1024).toFixed(1)} KB</td><td class="m t3">${esc(x.mtime)}</td>
@@ -989,7 +1135,7 @@ async function renderVer() {
   const hit = S.voices.length ? Math.round(100 * S.voices.filter(x => Object.keys(x.p.fields || {}).length).length / S.voices.length) : null;
   $('kpis').innerHTML = `
     <div><div class="h"><span class="micro">合同</span><span class="tag">共 ${n}</span></div><div class="n">${ok}<small>/${n}</small></div><p>可导出（四类参数最新记录均合格）</p></div>
-    <div><div class="h"><span class="micro">不合格</span><span class="tag amb">需复测</span></div><div class="n c-ng">${ng}</div><p>${part} 个未录全 · ${pend} 个待校验</p></div>
+    <div><div class="h"><span class="micro">不合格</span><span class="tag st-ng">需复测</span></div><div class="n c-ng">${ng}</div><p>${part} 个未录全 · ${pend} 个待校验</p></div>
     <div><div class="h"><span class="micro">识别耗时</span><span class="tag">本场 ${vs.length} 段语音</span></div><div class="n">${avg ?? '—'}<small>${avg != null ? 'ms' : ''}</small></div><p>FunASR 本机识别，平均每段</p></div>
     <div><div class="h"><span class="micro">一次填入率</span><span class="tag">本场 ${S.voices.length} 句</span></div><div class="n">${hit ?? '—'}<small>${hit != null ? '%' : ''}</small></div><p>说一句至少填入一个字段的比例</p></div>`;
   renderVerificationDistribution(cs);
@@ -1050,7 +1196,7 @@ function renderClips() {
   const steps = (S.script?.steps || []).filter(x => x.say);
   $('clipN').textContent = steps.length ? `${steps.filter(x => x.clip).length}/${steps.length} 步已用真实录音` : '';
   $('clipRows').innerHTML = steps.map(x => `<tr><td class="mono">第 ${x.index + 1} 步</td><td>${esc(KIND_LABEL[x.form] || x.form)}</td><td class="${x.clip ? 'c-dim' : ''}">${x.clip ? `<s>${esc(x.say)}</s>` : esc(x.say)}</td>
-    <td>${x.clip ? `<button class="btn-s" data-play="${x.index}">▶ 试听</button> 「${esc(x.clip.text)}」<span class="c-dim">${x.clip.duration_s ? ' · ' + Number(x.clip.duration_s).toFixed(1) + ' 秒' : ''} · 来自语音 #${x.clip.source_voice_id}</span>` : '<span class="c-dim">未设置，演示时用文字台词</span>'}</td>
+    <td>${x.clip ? `<button class="btn-s" data-play="${x.index}">${icon('play', 'fill')}试听</button> 「${esc(x.clip.text)}」<span class="c-dim">${x.clip.duration_s ? ' · ' + Number(x.clip.duration_s).toFixed(1) + ' 秒' : ''} · 来自语音 #${x.clip.source_voice_id}</span>` : '<span class="c-dim">未设置，演示时用文字台词</span>'}</td>
     <td>${x.clip ? `<button class="btn-s" data-unclip="${x.index}">改回文字</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="5" class="c-dim">演示脚本里没有语音步骤</td></tr>';
   $('clipRows').querySelectorAll('[data-play]').forEach(b => b.onclick = () => playClip(S.script.steps[+b.dataset.play].clip.audio_url));
   $('clipRows').querySelectorAll('[data-unclip]').forEach(b => b.onclick = async () => { try { await api('DELETE', '/demo/clips/' + b.dataset.unclip); toast(`第 ${+b.dataset.unclip + 1} 步改回文字台词`, ''); loadClips(); } catch (e) { toast(esc(e.message), 'ng'); } });
@@ -1066,9 +1212,9 @@ async function loadLearned() {
 function reviewCard(v, compact) {
   const why = [...(v.rejected || []).map(r => `「${r.said || r.field}」${r.reason}`), v.message].filter(Boolean).join('；') || '没有填入参数';
   const labels = v.form && KINDS[v.form] ? QC.fieldsOf(v.form).map(f => f.label) : ['合同号'];
-  return `<div class="cx warn" data-rv="${v.id}"><div class="cx-h"><span class="micro">Review · 待复核</span><span class="t">${esc(v.created_at.slice(11, 16))} · ${esc(KIND_LABEL[v.form] || v.form)}</span></div>
+  return `<div class="cx warn" data-rv="${v.id}"><div class="cx-h"><span class="micro">待复核</span><span class="t">${esc(v.created_at.slice(11, 16))} · ${esc(KIND_LABEL[v.form] || v.form)}</span></div>
     <h4 style="font-family:var(--sans)">「${esc(v.text)}」</h4><p>${esc(why)}${v.ht_code ? ` · ${esc(v.ht_code)}` : ''}</p>
-    ${compact ? '' : `<div class="lf"><input data-w placeholder="原话里听错的词"><span class="arrow">→</span><input data-r placeholder="应为"><div class="q">${labels.map(l => `<button data-l="${esc(l)}">${esc(l)}</button>`).join('')}</div></div>`}
+    ${compact ? '' : `<div class="lf"><input data-w placeholder="原话里听错的词"><span class="arrow">${icon('arrow')}</span><input data-r placeholder="应为"><div class="q">${labels.map(l => `<button data-l="${esc(l)}">${esc(l)}</button>`).join('')}</div></div>`}
     <div class="cx-a">${v.has_audio ? `<button data-act="ev">听原声</button>` : ''}${compact ? '<button class="p" data-act="go">去复核</button>' : '<button class="p" data-act="learn">学进纠错表并重解析</button>'}<button data-act="ign">忽略</button></div></div>`;
 }
 function bindReviewCards(box) {
@@ -1142,7 +1288,7 @@ async function renderEvi() {
     }
   }
   if (!S.evSel && items[0]) S.evSel = items[0].id;
-  $('evList').innerHTML = items.map(v => { const st = VST[v.status] || ['dim', v.status]; return `<button class="ev-i ${v.id === S.evSel ? 'on' : ''}" data-id="${v.id}"><div class="r1"><span class="id">#${v.id}</span><span class="chip ${st[0]}">${st[1]}</span>${v.has_audio ? '<span class="au">♪ 录音</span>' : ''}<span class="t">${esc(v.created_at.slice(5, 16))}</span></div>
+  $('evList').innerHTML = items.map(v => { const st = VST[v.status] || ['dim', v.status]; return `<button class="ev-i ${v.id === S.evSel ? 'on' : ''}" data-id="${v.id}"><div class="r1"><span class="id">#${v.id}</span><span class="chip ${st[0]}">${st[1]}</span>${v.has_audio ? `<span class="au">${icon('audio')}录音</span>` : ''}<span class="t">${esc(v.created_at.slice(5, 16))}</span></div>
     <div class="r2">「${esc(v.text)}」${fieldsText(v) ? ' → ' + esc(fieldsText(v)) : ''}</div></button>`; }).join('') || '<div class="empty-x">没有语音记录</div>';
   $('evList').querySelectorAll('.ev-i').forEach(b => b.onclick = () => { S.evSel = +b.dataset.id; S.reviewTarget = null; renderEvi(); });
   if (S.evSel) await renderEvDetail(S.evSel);
@@ -1156,7 +1302,7 @@ function submissionPanel(v, rec) {
   const status = contractOnly ? '合同信息' : rec ? '已关联检测提交' : linked ? '已关联 · 详情暂不可用' : '尚未关联检测提交';
   const cls = rec ? 'ok' : linked ? 'warn' : 'dim';
   const target = linked ? `${KIND_LABEL[v.record_kind] || v.record_kind}检测记录 #${v.record_id}` : contractOnly ? '用于创建或填写合同' : '暂未找到提交关联';
-  const recordLink = v.ht_code ? `<a class="btn-s" href="admin.html#/c/${encodeURIComponent(v.ht_code)}" target="_blank" rel="noopener">查看该合同的检测记录 ↗</a>` : '';
+  const recordLink = v.ht_code ? `<a class="btn-s" href="admin.html#/c/${encodeURIComponent(v.ht_code)}" target="_blank" rel="noopener">查看该合同的检测记录${icon('ext')}</a>` : '';
   let body;
   if (rec) {
     const r = rec.record, verdict = r.is_qualified === 1 ? '合格' : r.is_qualified === 0 ? '不合格' : '待校验';
@@ -1191,9 +1337,9 @@ async function renderEvDetail(id) {
   const rec = tl.find(x => x.type === 'record' && x.record.id === v.record_id && x.kind === v.record_kind);
   const changed = v.corrected && v.corrected.toLowerCase() !== (v.text || '').normalize('NFKC').toLowerCase();
   $('evd').innerHTML = `
-    <div><div class="ph" style="margin-bottom:10px"><span class="micro">Evidence #${v.id} · 原话</span><span class="chip ${st[0]}" style="margin-left:6px">${st[1]}</span></div>
+    <div><div class="ph" style="margin-bottom:10px"><span class="micro">语音 #${v.id} · 原话</span><span class="chip ${st[0]}" style="margin-left:6px">${st[1]}</span></div>
       <div class="quote">${esc(v.text)}</div>
-      <div class="player"><button class="play" id="evPlay" ${v.has_audio ? '' : 'disabled title="键盘输入，没有录音"'}><svg width="18" height="18" viewBox="0 0 24 24" fill="#0a0a0b"><path d="M7 4l13 8-13 8z"/></svg></button><canvas id="evWave" width="1200" height="112"></canvas></div>
+      <div class="player"><button class="play" id="evPlay" ${v.has_audio ? '' : 'disabled title="键盘输入，没有录音"'}><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M7 4l13 8-13 8z"/></svg></button><canvas id="evWave" width="1200" height="112"></canvas></div>
       <div class="ev-meta"><span>${esc(v.created_at)}</span><span>来源 ${v.source === 'phone' ? '手机' : v.source === 'screen' ? '大屏' : v.source === 'demo' ? '演示' : '—'}</span><span>${v.has_audio ? `录音 ${Number(v.duration_s || 0).toFixed(1)} 秒 · 识别 ${v.elapsed_ms} ms` : '键盘输入'}</span><span>合同 ${esc(v.ht_code || '—')} · ${esc(KIND_LABEL[v.form] || v.form)}</span></div>
       ${v.has_audio && KINDS[v.form] && v.source !== 'demo' ? (() => { const st = (S.script?.steps || []).filter(x => x.say && x.form === v.form); const used = st.find(x => x.clip?.source_voice_id === v.id);
         return st.length ? `<div class="toclip">${used ? `<span class="chip fix">已用作演示第 ${used.index + 1} 步</span>` : ''}<select id="clipStep">${st.map(x => `<option value="${x.index}">第 ${x.index + 1} 步：${esc(x.say)}${x.clip ? '（已有录音，将替换）' : ''}</option>`).join('')}</select><button class="btn-s demo" id="clipGo">用作演示录音</button></div>` : ''; })() : ''}</div>
@@ -1238,14 +1384,14 @@ async function renderEvDetail(id) {
     requestAnimationFrame(loop);
   };
 }
-function paintEv() { const cv = $('evWave'); if (!cv || !cv._b) return; const g = cv.getContext('2d'), W = cv.width, H = cv.height, b = cv._b, n = b.length, w = W / n; g.clearRect(0, 0, W, H); b.forEach((x, i) => { const h = Math.max(4, x * H * .9); g.fillStyle = (evPlayT >= 0 && i / n <= evPlayT) ? '#c6f43f' : 'rgba(255,255,255,.16)'; g.fillRect(i * w + 2, (H - h) / 2, w - 4, h); }); }
+function paintEv() { const cv = $('evWave'); if (!cv || !cv._b) return; const g = cv.getContext('2d'), W = cv.width, H = cv.height, b = cv._b, n = b.length, w = W / n; g.clearRect(0, 0, W, H); b.forEach((x, i) => { const h = Math.max(4, x * H * .9); g.fillStyle = (evPlayT >= 0 && i / n <= evPlayT) ? '#5b8def' : 'rgba(255,255,255,.16)'; g.fillRect(i * w + 2, (H - h) / 2, w - 4, h); }); }
 
 /* ---------- 一键演示 ---------- */
 function onDemo(d) {
   if (d.state === 'clips') { loadClips(); return; }
   if (d.state === 'audio') {
     const a = playClip(d.audio_url); view('live');
-    $('cap').innerHTML = `<span class="step">演示 ${d.index + 1}/${d.total || S.demo?.total || ''}</span><span class="c-ok">▶ 正在播放现场真实录音</span> · 播完后按当时的识别结果解析、判定`;
+    $('cap').innerHTML = `<span class="step">演示 ${d.index + 1}/${d.total || S.demo?.total || ''}</span><span class="c-ok play-n">${icon('audio')}正在播放现场真实录音</span> · 播完后按当时的识别结果解析、判定`;
     pipe(1, false, [`播放录音 ${d.duration_s ? Number(d.duration_s).toFixed(1) + ' 秒' : ''}`]);
     $('tr').className = 'tr'; $('tr').innerHTML = '<span class="c-dim">（真实录音播放中…）</span><span class="caret"></span>'; $('cn').innerHTML = ''; renderParameterContext();
     return;
@@ -1254,8 +1400,10 @@ function onDemo(d) {
   const cap = $('cap');
   if (d.state === 'step') { cap.hidden = false; $('mInput').style.display = 'none'; $('mChips').style.display = 'none'; cap.innerHTML = `<span class="step">演示 ${d.index + 1}/${d.total}</span>${esc(d.caption || '')}`; if (d.index === 0) { S.log = []; } }
   else { cap.hidden = true; $('mInput').style.display = ''; $('mChips').style.display = ''; if (d.state === 'done') toast(`演示完成 · 合同 <b class="mono">${esc(d.ht_code || '')}</b>`, 'ok'); else if (d.state === 'error') toast('演示出错：' + esc(d.message || ''), 'ng'); else if (d.state === 'stopped') toast('演示已停止', ''); }
-  $('dmBtn').textContent = S.demo ? '■ 停止演示' : '▶ 一键演示'; $('dmBtn').className = 'btn-s ' + (S.demo ? 'stop' : 'demo');
+  setDemoBtn();
 }
+function setDemoBtn() { $('dmBtn').innerHTML = S.demo ? `${icon('stop', 'fill')}停止演示` : `${icon('play', 'fill')}一键演示`; $('dmBtn').className = 'btn-s ' + (S.demo ? 'stop' : 'demo'); }
+setDemoBtn();
 $('dmBtn').onclick = async () => {
   try {
     if (S.demo) { await api('POST', '/demo/stop'); onDemo({ state: 'stopped' }); }
@@ -1430,7 +1578,7 @@ function renderFormFields(fill) {
     const v = fill ? (draft[f.name] ?? '') : '', isText = f.type === 'text';
     const rule = isText && !f.numeric_list ? '不校验' : QC.rangeText(QC.ruleOf(F.kind, f.name)) + ' ' + (f.unit || '');
     return `<div class="fi ${isText ? 'full' : ''} ${draft[f.name] != null && fill ? 'dft' : ''}" id="fw_${f.name}"><label>${esc(f.label)}<em>${esc(rule)}</em></label>
-      <div class="in"><input id="fv_${f.name}" data-n="${f.name}" value="${esc(v)}" ${isText ? 'style="font-family:var(--sans)"' : 'inputmode="decimal"'} placeholder="${last[f.name] != null && last[f.name] !== '' ? '上次 ' + esc(last[f.name]) + '（留空沿用）' : (isText ? '自由文本' : '0.00')}">${f.unit ? `<span class="u">${esc(f.unit)}</span>` : ''}</div>
+      <div class="in"><input id="fv_${f.name}" data-n="${f.name}" value="${esc(v)}" ${isText ? 'style="font-family:var(--sans)"' : 'inputmode="decimal"'} placeholder="${last[f.name] != null && last[f.name] !== '' ? '上次 ' + esc(last[f.name]) + '（留空沿用）' : (isText ? '自由文本' : '未填写')}">${f.unit ? `<span class="u">${esc(f.unit)}</span>` : ''}</div>
       <span class="hint"></span></div>`;
   }).join('');
   $('fFields').querySelectorAll('input').forEach(i => { i.oninput = () => { i.closest('.fi').classList.remove('voice'); judgeField(i); }; judgeField(i); i.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('fGo').click(); } }; });
@@ -1508,8 +1656,11 @@ async function handleVoice(ev) {
   if (p.form && KINDS[p.form] && p.form !== S.form) { resetStageContext(); S.form = p.form; renderChips(); }
   if (p.form !== 'contract' && KINDS[p.form] && p.voice_id) S.dvids[p.form].push(p.voice_id);
   if (S.view === 'evi') renderEvi();
-  if (p.form !== 'contract') { Object.entries(p.fields || {}).forEach(([k, v]) => S.draft[p.form][k] = v); renderSheet(Object.keys(p.fields || {}).map(n => p.form + '.' + n)); }
-  S.shown = true; await presentVoice(p, ev.source);
+  if (p.form !== 'contract') { Object.entries(p.fields || {}).forEach(([k, v]) => S.draft[p.form][k] = v); renderSheet(); }
+  S.shown = true;
+  // 结果卡先弹出；收起后再闪一下这句话更新的行
+  if (KINDS[p.form]) { const n = Object.keys(p.fields || {}).length; showFocus(voiceCard(p, ev.source), Math.min(4200, 2600 + 350 * Math.max(0, n - 1)), Object.keys(p.fields || {}).map(f => p.form + '.' + f)); }
+  await presentVoice(p, ev.source);
 }
 async function handleRecord(ev) {
   const d = ev.data;
@@ -1519,7 +1670,8 @@ async function handleRecord(ev) {
   if (S.view === 'evi') renderEvi();
   if (!await loadDetail() || d.ht_code !== S.ht || d.kind !== S.form) return;
   S.shown = true;
-  renderSheet(QC.fieldsOf(d.kind).map(f => d.kind + '.' + f.name)); renderGate();
+  renderSheet(); renderGate();
+  showFocus(recordCard(d, ev.source), 3000, QC.fieldsOf(d.kind).map(f => d.kind + '.' + f.name));
   presentRecord(d, ev.source);
   loadContracts();
   if (S.view === 'ver') renderVer();
@@ -1537,13 +1689,13 @@ QC.onEvent(async ev => {
     else if (ev.type === 'focus' && ev.source !== 'screen') {
       if (d.ht_code && (d.ht_code !== S.ht || d.form !== S.form)) { S.shown = false; await focus(d.ht_code, d.form); renderChips(); if (ev.source === 'phone') toast(`质检员切到 <b class="mono">${esc(d.ht_code)}</b> · ${KIND_LABEL[d.form] || ''}`, 'fix'); }
     }
-    else if (ev.type === 'contract') { await loadContracts(); if (d.contract?.ht_code === S.ht) { if (d.action === 'deleted') await focus(null); else { await loadDetail(); renderLive(); } } if (d.action === 'created') toast(`新合同 <b class="mono">${esc(d.contract.ht_code)}</b> · ${esc(d.contract.name)}`, 'ok'); if (S.view === 'led') renderLed(); }
-    else if (ev.type === 'rules') { await QC.loadRules(); await loadDetail(); await loadContracts(); renderView(); toast('规则已更新，看板按新规则显示', 'fix'); }
+    else if (ev.type === 'contract') { dropKinds(d.contract?.ht_code); await loadContracts(); if (d.contract?.ht_code === S.ht) { if (d.action === 'deleted') await focus(null); else { await loadDetail(); renderLive(); } } if (d.action === 'created') toast(`新合同 <b class="mono">${esc(d.contract.ht_code)}</b> · ${esc(d.contract.name)}`, 'ok'); if (S.view === 'led') renderLed(); }
+    else if (ev.type === 'rules') { dropKinds(); await QC.loadRules(); await loadDetail(); await loadContracts(); renderView(); toast('规则已更新，看板按新规则显示', 'fix'); }
     else if (ev.type === 'review') { await loadReviews(); if (d.action === 'new') toast(`<b>待复核</b>　「${esc(d.voice?.text || '')}」没有听懂，已转主管复核`, 'fix'); }
     else if (ev.type === 'corrections') { await loadLearned(); }
     else if (ev.type === 'demo') onDemo(d);
     else if (ev.type === 'export') { if (S.view === 'led') renderLed();
-      if (d.action === 'one' && d.ht_code === S.ht && ev.source !== 'screen' && d.file) { const dd = (d.file.match(/_(\d{8})\.xlsx$/) || [])[1] || ''; $('gate').className = 'gate done'; $('gateBtn').textContent = '✓ 已导出 · 点击下载'; S.gateDl = `/api/exports/${encodeURIComponent(d.ht_code)}/${dd}`; $('gateP').textContent = d.file.split('/').pop(); } if (d.action === 'one' && ev.source !== 'screen') toast(`已导出 <b class="mono">${esc(d.file || '')}</b>`, 'ok'); }
+      if (d.action === 'one' && d.ht_code === S.ht && ev.source !== 'screen' && d.file) { const dd = (d.file.match(/_(\d{8})\.xlsx$/) || [])[1] || ''; $('gate').className = 'gate done'; $('gateBtn').innerHTML = DONE_HTML(); S.gateDl = `/api/exports/${encodeURIComponent(d.ht_code)}/${dd}`; $('gateP').textContent = d.file.split('/').pop(); } if (d.action === 'one' && ev.source !== 'screen') toast(`已导出 <b class="mono">${esc(d.file || '')}</b>`, 'ok'); }
   } catch (e) { console.error(e); }
 });
 QC.bus.onState = m => { S.hasBus = m === 'live' || m === 'poll'; };
@@ -1578,6 +1730,10 @@ QC.presence('screen', p => {
   $('ttsSw').classList.toggle('on', S.tts);
   renderChips(); renderLive(); idleStage();
   view(load('qcs_view', 'live'));
+  // 高屏（参数区下方空余较多）默认展开「识别过程与回读」；手动展开/收起过就按上次的来
+  const vp = load('qcs_vp', null);
+  $('voicePanel').open = vp != null ? vp : $('v-live').classList.contains('on') && document.querySelector('.tr-box').clientHeight > 300;
+  $('voicePanel').querySelector('summary').addEventListener('click', () => setTimeout(() => store('qcs_vp', $('voicePanel').open), 0));
   QC.connect();
   tickStatus(); setInterval(tickStatus, 1000 * 5); setInterval(() => $('clock').textContent = QC.hhmmss(), 1000);
   setInterval(() => store('qcs_ht', S.ht), 3000);
