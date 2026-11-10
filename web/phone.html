@@ -244,7 +244,7 @@ function rowState(kind, f, v) {
   if (!/^-?\d+(\.\d+)?$/.test(n)) return { cls: 'ng', tip: '请填数字' };
   if (((n.split('.')[1] || '').replace(/0+$/, '')).length > 2) return { cls: 'ng', tip: '最多两位小数' };
   const j = QC.prejudge(kind, f.name, n);
-  return j.cls === 'ng' ? { cls: 'ng', tip: j.verdict.replace(' · 请复测', '') } : j.cls === 'ok' ? { cls: 'ok', tip: '' } : { cls: '', tip: j.verdict };
+  return j.cls === 'ng' ? { cls: 'ng', tip: j.verdict.replace(' · 提交后记为不合格', '') + '·记为不合格' } : j.cls === 'ok' ? { cls: 'ok', tip: '' } : { cls: '', tip: j.verdict };
 }
 function renderForm(fresh = []) {
   const k = P.form, last = P.latest[k] || {}, d = P.draft[k];
@@ -269,7 +269,11 @@ function renderForm(fresh = []) {
   });
   syncSubmit();
 }
-function syncSubmit() { const n = Object.keys(P.draft[P.form]).length; $('sub').disabled = !P.ht || !n; $('sub').textContent = !P.ht ? '先选择合同' : n ? `提交校验（${n} 项）` : (P.latest[P.form] ? '已提交 · 复测直接改数' : '提交校验'); }
+function syncSubmit() {
+  const d = P.draft[P.form], n = Object.keys(d).length, bad = QC.fieldsOf(P.form).filter(f => d[f.name] != null && d[f.name] !== '' && f.type !== 'text' && QC.prejudge(P.form, f.name, halfwidth(d[f.name]).trim())?.cls === 'ng').length;
+  $('sub').disabled = !P.ht || !n;
+  $('sub').textContent = !P.ht ? '先选择合同' : n ? (bad ? `提交（${bad} 项超范围，记为不合格）` : `提交校验（${n} 项）`) : (P.latest[P.form] ? '已提交 · 复测直接重填' : '提交校验');
+}
 function renderBanner() {
   const r = P.result, b = $('banner');
   if (!P.ht) { b.innerHTML = '<div class="banner info">先点上面选择一个合同，或新建合同。</div>'; return; }
@@ -338,7 +342,7 @@ function applyParse(p, from) {
     readback(QC.readbackVoice(p, kind)); return;
   }
   const bad = names.find(n => QC.prejudge(kind, n, p.fields[n])?.cls === 'ng');
-  if (bad) { const f = QC.fieldMeta(kind, bad); island('ng', `${f.label} 超出范围 · 请复测`, `${p.fields[bad]} ${f.unit || ''}，允许 ${QC.rangeText(QC.ruleOf(kind, bad))}`, 6000); }
+  if (bad) { const f = QC.fieldMeta(kind, bad); island('ng', `${f.label} 超出范围`, `${p.fields[bad]} ${f.unit || ''}，允许 ${QC.rangeText(QC.ruleOf(kind, bad))}；可照常提交，记为不合格`, 6000); }
   else if ((p.rejected || []).length) island('warn', '有内容没有填入', p.rejected.map(x => `「${x.said || x.field}」${x.reason}`).join('；'), 4000);
   else island(null);
   readback(QC.readbackVoice(p, kind));
@@ -369,14 +373,14 @@ async function submit() {
 function showRecord(r, kind, from) {
   const v = r.validation, ok = v && v.is_qualified === 1;
   P.latest[kind] = r.record; P.status = r.contract_status;
-  if (ok) { P.draft[kind] = {}; P.vids[kind] = []; P.voiced[kind] = {}; }
+  P.draft[kind] = {}; P.vids[kind] = []; P.voiced[kind] = {};   // 合格与否都算正常提交，表单清空
   saveDraft();
   if (kind !== P.form) { P.form = kind; store('qcp_form', kind); }
   const next = ok && kind === 'drum' && !P.latest.travel_drive ? '下一步：切到「大车传动」' : '';
-  P.result = { ok, title: `${KIND_LABEL[kind]}参数${v ? (ok ? '合格' : '不合格') : '已保存，校验未完成'} · 记录 #${r.record.id}${from === 'screen' ? '（大屏提交）' : from === 'demo' ? '（演示）' : ''}`,
-    lines: ok ? [`合同状态：${r.contract_status.status}${r.contract_status.reason ? '，' + r.contract_status.reason : ''}`, next].filter(Boolean) : v ? [...v.failures, '改好数值后再提交即为复测'] : [r.warning || ''] };
+  P.result = { ok, title: `${v ? (ok ? `${KIND_LABEL[kind]}参数合格` : `已保存 · ${KIND_LABEL[kind]}参数记为不合格`) : '已保存，校验未完成'} · 记录 #${r.record.id}${from === 'screen' ? '（大屏提交）' : from === 'demo' ? '（演示）' : ''}`,
+    lines: ok ? [`合同状态：${r.contract_status.status}${r.contract_status.reason ? '，' + r.contract_status.reason : ''}`, next].filter(Boolean) : v ? [...v.failures, `合同状态：${r.contract_status.status}`, '需要复测时直接重填再提交'] : [r.warning || ''] };
   renderAll();
-  island(ok ? 'ok' : v ? 'ng' : 'warn', ok ? `${KIND_LABEL[kind]}参数合格` : v ? `${KIND_LABEL[kind]}参数不合格` : '校验未完成', ok ? (next || r.contract_status.reason) : v ? v.failures.join('；') : r.warning, ok ? 3200 : 6000);
+  island(ok ? 'ok' : v ? 'ng' : 'warn', ok ? `${KIND_LABEL[kind]}参数合格` : v ? `已提交 · 记为不合格` : '校验未完成', ok ? (next || r.contract_status.reason) : v ? v.failures.join('；') : r.warning, ok ? 3200 : 6000);
   readback(QC.readbackRecord(r, kind));
   if (from === 'phone') pushDraft();
   $('body').scrollTop = 0;

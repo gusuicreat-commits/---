@@ -45,8 +45,8 @@
     const src = configured(r) ? `规则  ${f.label} ${r.min}～${r.max} ${f.unit || ''}` : '规则未配置';
     if (value == null || value === '') return { cls: 'dim', verdict: '未填写', calc: '', src };
     if (!configured(r)) return { cls: 'warn', verdict: '规则未配置', calc: '未配置的参数会被判为不合格', src };
-    if (v < Number(r.min)) return { cls: 'ng', verdict: '低于下限 · 请复测', calc: `${value} < ${r.min}`, src };
-    if (v > Number(r.max)) return { cls: 'ng', verdict: '超出上限 · 请复测', calc: `${value} > ${r.max}`, src };
+    if (v < Number(r.min)) return { cls: 'ng', verdict: '低于下限 · 提交后记为不合格', calc: `${value} < ${r.min}`, src };
+    if (v > Number(r.max)) return { cls: 'ng', verdict: '超出上限 · 提交后记为不合格', calc: `${value} > ${r.max}`, src };
     return { cls: 'ok', verdict: '在范围内', calc: `${r.min} ≤ ${value} ≤ ${r.max}`, src };
   }
 
@@ -72,7 +72,7 @@
     const v = r.validation;
     if (!v) return `已保存，校验未完成，${r.warning || '可稍后补跑校验'}。`;
     if (v.is_qualified === 1) return `${KIND_LABEL[kind]}参数合格，已保存。合同状态：${r.contract_status?.status || ''}。`;
-    return `${KIND_LABEL[kind]}参数不合格：${v.failures.join('；')}。请复测后重新录入。`;
+    return `已保存，${KIND_LABEL[kind]}参数记为不合格：${v.failures.join('；')}。需要复测时重新录入即可。`;
   }
 
   /* ---------- 实时事件 ---------- */

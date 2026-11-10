@@ -673,7 +673,7 @@ async function presentVoice(p, src) {
     pipe(4, !!bad.length, [n1, n2, `${nf} 个字段`, bad.length ? `${bad.length} 项超范围` : '全部在范围内']);
     setHero({ title: `${f.label}${names.length > 1 ? `  · 本句共 ${names.length} 项` : ''}`, tag: p.notes?.[show[0]] || '', big: p.fields[show[0]], unit: f.unit, txt: f.type === 'text',
       verdict: j.cls === 'ok' ? '在范围内 · 待提交' : j.verdict, cls: j.cls === 'ok' ? 'dim' : j.cls, calc: j.calc, src: j.src,
-      alert: bad.length ? { cls: 'ng', html: `<b>超范围</b>${bad.map(([n]) => `${esc(QC.fieldMeta(p.form, n).label)} ${esc(p.fields[n])}`).join('、')} — 已提醒质检员复测，提交后会被判为不合格` } : (p.rejected || []).length ? { cls: 'warn', html: `<b>有内容没有填入</b>${(p.rejected).map(r => esc(`「${r.said || r.field}」${r.reason}`)).join('；')}` } : null });
+      alert: bad.length ? { cls: 'ng', html: `<b>超范围</b>${bad.map(([n]) => `${esc(QC.fieldMeta(p.form, n).label)} ${esc(p.fields[n])}`).join('、')} — 可照常提交，记为不合格` } : (p.rejected || []).length ? { cls: 'warn', html: `<b>有内容没有填入</b>${(p.rejected).map(r => esc(`「${r.said || r.field}」${r.reason}`)).join('；')}` } : null });
     await sleep(250);
     pipe(5, !!bad.length, [n1, n2, `${nf} 个字段`, bad.length ? `${bad.length} 项超范围` : '全部在范围内', '回读 · 等待提交']);
   }
@@ -971,7 +971,7 @@ function judgeField(i) {
   const num = v.replace(/[０-９．]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
   if (!/^-?\d+(\.\d+)?$/.test(num)) { w.classList.add('ng'); h.textContent = '请填数字'; return; }
   if (((num.split('.')[1] || '').replace(/0+$/, '')).length > 2) { w.classList.add('ng'); h.textContent = '最多两位小数'; return; }
-  const j = QC.prejudge(F.kind, n, num); w.classList.add(j.cls === 'ok' ? 'ok' : j.cls === 'ng' ? 'ng' : 'warn'); h.textContent = j.cls === 'ok' ? '在范围内' : j.verdict + (j.calc ? '：' + j.calc : '');
+  const j = QC.prejudge(F.kind, n, num); w.classList.add(j.cls === 'ok' ? 'ok' : j.cls === 'ng' ? 'ng' : 'warn'); h.textContent = j.cls === 'ok' ? '在范围内' : j.cls === 'ng' ? `${j.calc}，${j.verdict.split(' · ')[0]} · 可提交，记为不合格` : j.verdict + (j.calc ? '：' + j.calc : '');
 }
 $('addBtn').onclick = () => openForm(S.form);
 $('dwX').onclick = $('dwBg').onclick = () => dwOpen(false);
@@ -1005,8 +1005,9 @@ $('fGo').onclick = async () => {
     const vq = ht === S.ht && S.dvids[F.kind].length ? '&voice_ids=' + S.dvids[F.kind].slice(-50).join(',') : '';
     const r = await api('POST', `/contracts/${encodeURIComponent(ht)}/records/${F.kind}?source=screen${vq}`, body);
     const v = r.validation, ok = v && v.is_qualified === 1;
-    $('fRes').innerHTML = `<div class="res ${ok ? 'ok' : 'ng'}"><b>${KIND_LABEL[F.kind]}参数${v ? (ok ? '合格' : '不合格') : '已保存，校验未完成'}</b> · 记录 #${r.record.id}<br>${ok ? '合同状态：' + esc(r.contract_status.status) + '（' + esc(r.contract_status.reason) + '）' : v ? v.failures.map(esc).join('<br>') : esc(r.warning || '')}</div>`;
+    $('fRes').innerHTML = `<div class="res ${ok ? 'ok' : 'ng'}"><b>${v ? (ok ? `${KIND_LABEL[F.kind]}参数合格` : `已保存 · ${KIND_LABEL[F.kind]}参数记为不合格`) : '已保存，校验未完成'}</b> · 记录 #${r.record.id}<br>${ok ? '合同状态：' + esc(r.contract_status.status) + '（' + esc(r.contract_status.reason) + '）' : v ? v.failures.map(esc).join('<br>') + '<br>合同状态：' + esc(r.contract_status.status) : esc(r.warning || '')}</div>`;
     F.latest = (await api('GET', '/contracts/' + encodeURIComponent(ht))).latest;
+    renderFormFields(false);   // 合格与否都清空，占位显示刚提交的值
     if (!S.hasBus) handleRecord({ source: 'screen', data: { ...r, kind: F.kind, ht_code: ht } });
   } catch (e) {
     if (e.fields) Object.entries(e.fields).forEach(([k, m]) => { const w = $('fw_' + k); if (w) { w.classList.add('ng'); w.querySelector('.hint').textContent = m; } });
@@ -1029,7 +1030,7 @@ async function handleVoice(ev) {
 async function handleRecord(ev) {
   const d = ev.data;
   if (d.ht_code !== S.ht) await focus(d.ht_code, d.kind);
-  if (d.validation?.is_qualified === 1) { S.draft[d.kind] = {}; S.dvids[d.kind] = []; }
+  S.draft[d.kind] = {}; S.dvids[d.kind] = [];   // 合格与否都算正常提交
   if (S.view === 'evi') renderEvi();
   await loadDetail(); S.shown = true;
   renderSheet(QC.fieldsOf(d.kind).map(f => d.kind + '.' + f.name)); renderGate();
