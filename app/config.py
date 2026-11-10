@@ -16,6 +16,10 @@ class Settings:
         self.asr_url: str = os.environ.get("QC_ASR_URL", "http://127.0.0.1:8601")
         self.web_dir: Path = _path("QC_WEB_DIR", ROOT / "web")
         self.tz: str = os.environ.get("QC_TZ", "Asia/Shanghai")
+        self.storage: str = os.environ.get("QC_STORAGE", "local")
+        self.backup_dir: Path = _path("QC_BACKUP_DIR", ROOT / "data" / "backup")
+        self.backup_keep_days: int = int(os.environ.get("QC_BACKUP_KEEP_DAYS", "30"))
+        self.asr_timeout: float = float(os.environ.get("QC_ASR_TIMEOUT", "90"))
 
 
 def get_settings() -> Settings:

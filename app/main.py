@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -7,7 +8,8 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import OperationalError
 from starlette.exceptions import HTTPException
 
-from app.api import contracts, records, rules, validation
+from app import backup
+from app.api import contracts, export, records, rules, validation, voice
 from app.config import get_settings
 from app.db import get_engine, init_db
 from app.errors import AppError
@@ -15,7 +17,15 @@ from app.fields import load_fields
 
 
 def create_app() -> FastAPI:
-    application = FastAPI(title="产品参数校验系统")
+    @asynccontextmanager
+    async def lifespan(application):
+        try:
+            backup.ensure_today()
+        except Exception:
+            logging.exception("每日数据库备份失败")
+        yield
+
+    application = FastAPI(title="产品参数校验系统", lifespan=lifespan)
     application.state.engine = get_engine()
     init_db(application.state.engine)
 
@@ -49,7 +59,8 @@ def create_app() -> FastAPI:
     def fields():
         return load_fields()
 
-    for router in (contracts.router, records.router, rules.router, validation.router):
+    for router in (contracts.router, records.router, rules.router, validation.router,
+                   export.router, voice.router):
         application.include_router(router)
     web_dir = get_settings().web_dir
     if web_dir.exists():

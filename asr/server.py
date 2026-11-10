@@ -3,6 +3,7 @@ import logging
 import shutil
 import subprocess
 import tempfile
+import threading
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -58,15 +59,18 @@ def create_app(engine=None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
-        if not injected:
+        def load_model():
             try:
                 recognizer.load()
-            except Exception:
+            except Exception as exc:
+                application.state.load_error = str(exc)
                 logger.exception("识别模型加载失败")
+        threading.Thread(target=load_model, daemon=True, name="asr-model-loader").start()
         yield
 
     application = FastAPI(lifespan=lifespan)
     application.state.engine = recognizer
+    application.state.load_error = None
     application.add_middleware(
         CORSMiddleware,
         allow_origins=["http://127.0.0.1:8600", "http://localhost:8600"],
@@ -81,6 +85,7 @@ def create_app(engine=None) -> FastAPI:
             "ok": loaded, "engine": recognizer.name, "loaded": loaded,
             "denoise_enabled": config.denoise,
             "frontend_available": denoise.load_frontend(config.frontend_dir) is not None,
+            "load_error": application.state.load_error,
         }
 
     @application.post("/transcribe")

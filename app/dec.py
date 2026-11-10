@@ -33,11 +33,12 @@ def to_dec2(raw) -> Decimal | None:
         raise BadNumber() from None
     if not value.is_finite():
         raise BadNumber()
-    if value.as_tuple().exponent < -2:
-        raise TooManyDecimals()
     with localcontext() as context:
         context.prec = max(28, len(value.as_tuple().digits) + max(value.adjusted(), 0) + 3)
-        return value.quantize(Decimal("0.01"))
+        quantized = value.quantize(Decimal("0.01"))
+        if value != quantized:
+            raise TooManyDecimals()
+        return quantized
 
 
 def fmt(d: Decimal | None) -> str:

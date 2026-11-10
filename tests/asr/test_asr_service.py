@@ -4,6 +4,8 @@ import json
 import shutil
 import subprocess
 import sys
+import threading
+import time
 from pathlib import Path
 
 import numpy as np
@@ -74,6 +76,7 @@ def test_missing_frontend_passthrough(audio_bytes):
     assert health == {
         "ok": True, "engine": "fake", "loaded": True,
         "denoise_enabled": True, "frontend_available": False,
+        "load_error": None,
     }
 
 
@@ -308,6 +311,49 @@ def test_default_engine_startup_uses_fake():
         assert client.get("/health").json()["engine"] == "fake"
     with pytest.raises(ValueError, match="不支持的识别引擎"):
         make_engine("unknown")
+
+
+def test_model_load_runs_in_background(monkeypatch):
+    finished = threading.Event()
+
+    class SlowEngine(FakeEngine):
+        loaded = False
+
+        def load(self):
+            time.sleep(0.3)
+            self.loaded = True
+            finished.set()
+
+    engine = SlowEngine()
+    monkeypatch.setattr(server, "make_engine", lambda kind: engine)
+    with TestClient(server.create_app()) as client:
+        health = client.get("/health").json()
+        assert health["loaded"] is False
+        assert health["load_error"] is None
+        response = upload(client, b"audio")
+        assert response.status_code == 503
+        assert response.json()["error"]["code"] == "ASR_NOT_READY"
+        assert finished.wait(timeout=2)
+        assert client.get("/health").json()["loaded"] is True
+
+
+def test_model_load_failure_exposed_and_logged(monkeypatch, caplog):
+    class FailedEngine(FakeEngine):
+        loaded = False
+
+        def load(self):
+            raise RuntimeError("模拟模型加载故障")
+
+    application = server.create_app(FailedEngine())
+    with TestClient(application) as client:
+        deadline = time.monotonic() + 2
+        health = client.get("/health").json()
+        while health["load_error"] is None and time.monotonic() < deadline:
+            time.sleep(0.01)
+            health = client.get("/health").json()
+        assert health["load_error"] == "模拟模型加载故障"
+        assert health["loaded"] is False
+    assert "识别模型加载失败" in caplog.text
 
 
 def test_cors():

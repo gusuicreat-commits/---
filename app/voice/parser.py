@@ -11,6 +11,9 @@ from pathlib import Path
 
 from pypinyin import Style, pinyin
 
+from app import htcode
+from app.dec import fmt
+
 from .numbers import cn_digits_to_ascii, find_number, parse_cn_number
 
 
@@ -36,6 +39,7 @@ _CODE = re.compile(r"(\d{8})\s*[-]?\s*(\d{2})(?!\d)")
 _DATE_DIGITS = r"[\d零〇一幺二两三四五六七八九十百千万]+"
 _VALUE_FILLERS = re.compile(r"^(?:\s|等于|是|为|:|：|大概|大约|约|差不多|在)+")
 _SPOKEN_DIGITS = re.compile(r"[0-9零〇一幺二两三四五六七八九]+")
+_UNCERTAIN_NUMBER = re.compile(r"[\d零〇一幺二两三四五六七八九十百千万点.]+[几多来]")
 
 
 @lru_cache(maxsize=4096)
@@ -73,12 +77,16 @@ def _keyword_hits(clause: str, forms: dict) -> list[dict]:
 
     hits = select(exact, [])
     fuzzy = []
+    uncertain_numbers = list(_UNCERTAIN_NUMBER.finditer(clause))
     for form, field, keyword in definitions:
         if len(keyword) < 2 or keyword in exact_keywords:
             continue
         pronunciations = [_pronunciations(ch) for ch in keyword]
         for start in range(len(clause) - len(keyword) + 1):
             end = start + len(keyword)
+            # 「一点几」中的「点几」不能被同音匹配为「电机」，截断数值。
+            if any(start < number.end() and number.start() < end for number in uncertain_numbers):
+                continue
             if any(start < hit["end"] and hit["start"] < end for hit in hits):
                 continue
             window = clause[start:end]
@@ -95,13 +103,7 @@ def _clean_value(s: str) -> str:
 
 def _check_ht_code(value: str) -> bool:
     """检查合同日期真实有效，序号为十至九十的整十数。"""
-    if not re.fullmatch(r"\d{8}-\d{2}", value):
-        return False
-    try:
-        date(int(value[:4]), int(value[4:6]), int(value[6:8]))
-    except ValueError:
-        return False
-    return int(value[-2:]) in range(10, 91, 10)
+    return htcode.check(value) is None
 
 
 def _parse_ht_code(s: str, today: date) -> tuple[str | None, str | None]:
@@ -171,6 +173,8 @@ def _parse_value(s: str, field: str, definition: dict, keyword: str, today: date
         return value, None, None if value else "没有说出数值"
 
     s = _VALUE_FILLERS.sub("", s)
+    if kind in {"length", "noise"} and _UNCERTAIN_NUMBER.match(s):
+        return None, None, "数值说法无法确定"
     number = find_number(s)
     if number is None or number[1] != 0:
         return None, None, "没有说出数值"
@@ -200,7 +204,7 @@ def _parse_value(s: str, field: str, definition: dict, keyword: str, today: date
     with localcontext() as context:
         context.prec = max(28, len(value.as_tuple().digits) + 8)
         value = (value * factor).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-    return format(value, "f").rstrip("0").rstrip("."), note, None
+    return fmt(value), note, None
 
 
 def parse_text(text: str, form: str, today: date) -> dict:
