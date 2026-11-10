@@ -1,0 +1,17 @@
+{
+  "name": "演示客户（样例）",
+  "steps": [
+    {"focus": "drum", "wait_ms": 1200, "caption": "质检员选好合同，开始测卷筒"},
+    {"say": "直径一千二百六十二，长度三千", "form": "drum", "wait_ms": 3500, "caption": "直径超上限，当场提醒复测"},
+    {"say": "直径一千二百五十二", "form": "drum", "wait_ms": 3500, "caption": "复测后重报，数值更新"},
+    {"say": "后度二十，光端三百", "form": "drum", "wait_ms": 3500, "caption": "车间口音：纠错表把后度/光端纠正"},
+    {"say": "厚度等一下再测", "form": "drum", "wait_ms": 3500, "caption": "说不出数值：不猜，转主管复核"},
+    {"submit": "drum", "wait_ms": 3000, "caption": "卷筒参数提交：合格"},
+    {"focus": "travel_drive", "wait_ms": 1200, "caption": "切到大车传动"},
+    {"say": "减速机铭牌 ZQ500 样例，电机铭牌 YZR160M2-6 样例，噪声九十一", "form": "travel_drive", "wait_ms": 3500, "caption": "噪声超标"},
+    {"submit": "travel_drive", "wait_ms": 3000, "caption": "提交：大车传动不合格，导出被锁"},
+    {"say": "噪声八十二", "form": "travel_drive", "wait_ms": 3500, "caption": "复测后重报"},
+    {"submit": "travel_drive", "wait_ms": 3000, "caption": "复测合格，合同整体合格"},
+    {"export": true, "wait_ms": 2000, "caption": "导出 Excel"}
+  ]
+}

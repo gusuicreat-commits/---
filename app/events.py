@@ -24,7 +24,7 @@ class EventBus:
             with self._lock:
                 event = {"id": self._last_id + 1, "boot": BOOT,
                          "ts": now_bj().strftime("%Y-%m-%d %H:%M:%S"),
-                         "type": type, "source": source if source in ("phone", "screen") else None,
+                         "type": type, "source": source if source in ("phone", "screen", "demo") else None,
                          "data": data}
                 self._events.append(event)
                 self._last_id = event["id"]

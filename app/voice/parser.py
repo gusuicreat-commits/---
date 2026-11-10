@@ -17,6 +17,22 @@ from app.dec import fmt
 from .numbers import cn_digits_to_ascii, find_number, parse_cn_number
 
 
+_learned_corrections: dict[str, str] = {}
+
+
+def set_learned_corrections(mapping: dict[str, str]) -> None:
+    global _learned_corrections
+    _learned_corrections = dict(mapping)
+
+
+def learned_corrections() -> dict[str, str]:
+    return dict(_learned_corrections)
+
+
+def corrections() -> dict[str, str]:
+    return {**load_voice_config()["corrections"], **_learned_corrections}
+
+
 @lru_cache(maxsize=1)
 def load_voice_config() -> dict:
     """读取配置；环境变量可指定配置文件，相对路径以仓库根目录为基准。"""
@@ -215,10 +231,10 @@ def parse_text(text: str, form: str, today: date) -> dict:
     config = load_voice_config()
     if form not in {"contract", "drum", "travel_drive"}:
         raise ValueError("不支持的表单类型")
-    corrected = text
-    for wrong, right in sorted(config["corrections"].items(), key=lambda item: -len(item[0])):
-        corrected = re.sub(re.escape(wrong), lambda match: right, corrected, flags=re.IGNORECASE)
-    corrected = unicodedata.normalize("NFKC", corrected)
+    corrected = unicodedata.normalize("NFKC", text)
+    for wrong, right in sorted(corrections().items(), key=lambda item: -len(item[0])):
+        corrected = re.sub(re.escape(unicodedata.normalize("NFKC", wrong)),
+                           lambda match: right, corrected, flags=re.IGNORECASE)
     result = {"text": text, "corrected": corrected, "fields": {}, "notes": {},
               "matched": [], "rejected": [], "message": None}
     last_field = None

@@ -6,28 +6,37 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import Session, sessionmaker
 from starlette.exceptions import HTTPException
 
 from app import backup
-from app.api import contracts, events, export, records, rules, validation, voice
+from app.api import contracts, demo, evidence, events, export, records, rules, validation, voice
 from app.config import get_settings
 from app.db import get_engine, init_db
+from app.demo import DemoRunner
 from app.errors import AppError
 from app.fields import load_fields
+from app.services import voicelog
 
 
 def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(application):
+        with Session(application.state.engine) as session:
+            voicelog.refresh_corrections(session)
         try:
             backup.ensure_today()
         except Exception:
             logging.exception("每日数据库备份失败")
-        yield
+        try:
+            yield
+        finally:
+            application.state.demo.stop()
 
     application = FastAPI(title="产品参数校验系统", lifespan=lifespan)
     application.state.engine = get_engine()
     init_db(application.state.engine)
+    application.state.demo = DemoRunner(sessionmaker(bind=application.state.engine))
 
     @application.exception_handler(AppError)
     async def business_error(request: Request, exc: AppError):
@@ -60,7 +69,7 @@ def create_app() -> FastAPI:
         return load_fields()
 
     for router in (contracts.router, records.router, rules.router, validation.router,
-                   export.router, voice.router, events.router):
+                   export.router, voice.router, events.router, evidence.router, demo.router):
         application.include_router(router)
     web_dir = get_settings().web_dir
     if web_dir.exists():
