@@ -1,6 +1,6 @@
 // 完整流程：真实主程序 + 真实 FunASR + Chrome 假麦克风播放录音
 const { chromium } = require('/Users/mac/Desktop/代码解释器/node_modules/playwright');
-const fs = require('fs'); const B = 'http://localhost:8600/'; const SP = process.argv[2]; const A = SP + '/audio/';
+const fs = require('fs'); const B = 'http://localhost:8600/admin.html'; const SP = process.argv[2]; const A = SP + '/audio/';
 const errs = []; const log = (...a) => console.log(...a);
 async function browser(wav) {
   const args = ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'];

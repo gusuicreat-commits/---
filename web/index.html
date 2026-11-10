@@ -1,25 +1,80 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#08080a">
-<title>产品参数校验</title>
-<link rel="stylesheet" href="app.css">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>边测边报 · 产品参数校验</title>
+<style>
+:root{--tx:#f3f3f5;--tx2:#a3a3ad;--tx3:#66666f;--line:rgba(255,255,255,.08);--lime:#c6f43f;
+  --sans:-apple-system,"SF Pro Text","PingFang SC","Helvetica Neue",sans-serif;--disp:"SF Pro Display",-apple-system,"PingFang SC",sans-serif;--mono:"SF Mono",ui-monospace,Menlo,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{background:#08080a;color:var(--tx);font:15px/1.6 var(--sans);-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center;padding:48px 24px}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(900px 500px at 50% 0%,rgba(198,244,63,.07),transparent 65%)}
+.w{position:relative;max-width:1040px;width:100%}
+.micro{font:500 11px/1.2 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--tx3)}
+h1{font:200 clamp(56px,8vw,96px)/1 var(--disp);letter-spacing:-.02em;margin:22px 0 18px}
+h1 b{font-weight:600;color:var(--lime)}
+.lead{font-size:18px;color:var(--tx2);max-width:640px}
+.cards{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px;margin:48px 0 28px}
+a.card{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:20px;padding:30px 30px 26px;background:rgba(255,255,255,.02);transition:border-color .25s,transform .25s,background .25s;position:relative;overflow:hidden}
+a.card:hover{border-color:rgba(198,244,63,.45);transform:translateY(-2px);background:rgba(198,244,63,.03)}
+.card h2{font:600 24px/1.2 var(--disp);margin:14px 0 10px}
+.card p{color:var(--tx2);font-size:14px}
+.card .go{position:absolute;right:28px;top:28px;font:20px var(--mono);color:var(--tx3);transition:color .25s,transform .25s}
+a.card:hover .go{color:var(--lime);transform:translate(3px,-3px)}
+.card .f{margin-top:22px;font:12px var(--mono);color:var(--tx3)}
+.both{display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 22px;border-radius:12px;background:var(--lime);color:#0a0a0b;font-weight:600;font-size:15px;border:0;cursor:pointer}
+.both:hover{filter:brightness(1.06)}
+.row{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.row span{color:var(--tx3);font-size:13px}
+.notes{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:48px;border-top:1px solid var(--line)}
+.notes div{padding:22px 24px 0 0}
+.notes div+div{padding-left:24px;border-left:1px solid var(--line)}
+.notes h3{font-size:14px;font-weight:600;margin:10px 0 6px}
+.notes p{font-size:13px;color:var(--tx2)}
+code{font:12.5px var(--mono);color:var(--lime);background:rgba(198,244,63,.08);padding:2px 6px;border-radius:5px}
+#lan{font:14px var(--mono);color:var(--lime)}
+@media (max-width:760px){.cards,.notes{grid-template-columns:1fr}.notes div+div{padding-left:0;border-left:0}}
+.st{display:flex;gap:18px;flex-wrap:wrap;margin-top:22px;font-size:13px;color:var(--tx3)}.st i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#38383f;margin-right:7px}.st .on i{background:var(--lime)}.st .off i{background:#ffb547}
+@media (max-width:900px){.cards{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-<header class="top">
-  <a class="brand" href="#/"><i><b style="height:7px"></b><b style="height:14px"></b><b style="height:18px"></b><b style="height:10px"></b></i>产品参数校验<small>PARAM QC</small></a>
-  <nav class="nav" id="nav">
-    <a href="#/" data-k="list">合同</a>
-    <a href="#/rules" data-k="rules">规则管理</a>
-    <a href="#/exports" data-k="exports">导出</a>
-  </nav>
-  <div class="sp"></div>
-  <div class="vstat" id="vstat" title="语音识别服务状态"><span class="dot"></span><span class="lbl">检查语音服务…</span></div>
-</header>
-<main id="app"><div class="skeleton"></div></main>
-<div class="toast" id="toast"></div>
-<script src="app.js"></script>
+<div class="w">
+  <div class="micro">Weihua × AI Hackathon · 13 号选题 · 产品参数校验系统 v7</div>
+  <h1>边测边报<b>.</b></h1>
+  <p class="lead">起重机出厂检验的语音录入与参数校验。质检员按住说「参数 + 数值」，本机 FunASR 识别、三层纠错、按规则当场判定；两类参数都合格的合同才能导出 Excel。</p>
+  <div class="st" id="st"><span id="s1"><i></i>主程序</span><span id="s2"><i></i>语音识别</span><span id="s3"><i></i>实时联动</span><span id="s4"></span></div>
+
+  <div class="cards">
+    <a class="card" href="screen.html" target="_blank"><span class="micro">01 · Cockpit</span><span class="go">↗</span><h2>主管驾驶舱</h2><p>投影 / 大屏。实时识别管线、检验表、不合格派单复测、导出闸门、识别纠错、验证看板。</p><div class="f">screen.html · 底部可键入代录</div></a>
+    <a class="card" href="phone.html" target="_blank"><span class="micro">02 · Inspector</span><span class="go">↗</span><h2>质检员手机端</h2><p>现场用。按住说话、大字回读、超范围即时提醒、确认后提交入库。</p><div class="f">phone.html · 电脑上按住空格说话</div></a>
+    <a class="card" href="admin.html" target="_blank"><span class="micro">03 · Admin</span><span class="go">↗</span><h2>管理后台</h2><p>合同增删改、手动录入、历史记录、重新校验、规则配置、导出文件。</p><div class="f">admin.html</div></a>
+  </div>
+  <div class="row"><button class="both" id="both">同时打开大屏和手机端 →</button><span>两端通过主程序的实时事件流联动：手机说一句，大屏立刻看到识别、纠错与判定。</span></div>
+
+  <div class="notes">
+    <div><span class="micro">同一台电脑</span><h3>直接打开即可</h3><p>localhost 下浏览器允许用麦克风，手机端页面在电脑上也能按住空格说话。</p></div>
+    <div><span class="micro">真手机 + 投影</span><h3>运行 <code>tools/run_https.sh</code></h3><p id="lanp">手机浏览器只在 https 下给麦克风权限。脚本会生成本机证书并打印手机地址；手机和电脑连同一 Wi-Fi。</p></div>
+    <div><span class="micro">语音识别</span><h3><code>asr/</code> 独立服务</h3><p>FunASR paraformer-zh + 热词；ClearMic 降噪接口已预留（当前直通）。没有语音服务时两端都能用键盘输入。</p></div>
+  </div>
+</div>
+<script>
+document.getElementById('both').onclick=()=>{
+  const W=screen.availWidth, H=screen.availHeight;
+  window.open('screen.html','qc_screen',`left=0,top=0,width=${Math.round(W*.72)},height=${H}`);
+  window.open('phone.html','qc_phone',`left=${Math.round(W*.72)},top=0,width=${Math.round(W*.28)},height=${H}`);
+};
+const dot=(id,on,t)=>{const e=document.getElementById(id);e.className=on?'on':'off';e.innerHTML='<i></i>'+t};
+(async()=>{
+  try{const h=await (await fetch('/api/health')).json();dot('s1',true,'主程序 · 正常')}catch(e){dot('s1',false,'主程序 · 未连接');return}
+  try{const v=await (await fetch('/api/voice/status')).json();dot('s2',v.available&&v.loaded,v.available?(v.loaded?'语音识别 · 就绪':'语音识别 · 加载中'):'语音识别 · 不可用（可用键盘）')}catch(e){}
+  try{const r=await fetch('/api/events?limit=1');dot('s3',r.ok,r.ok?'实时联动 · 可用':'实时联动 · 不可用')}catch(e){}
+  try{const c=(await (await fetch('/api/contracts')).json()).items;const n=s=>c.filter(x=>x.status===s).length;document.getElementById('s4').textContent=`合同 ${c.length} · 合格 ${n('合格')} · 不合格 ${n('不合格')} · 未录全 ${n('未录全')}`}catch(e){}
+  if(location.protocol==='https:'&&!/localhost|127\.0\.0\.1/.test(location.host)) document.getElementById('lanp').innerHTML=`手机打开：<br><span id="lan">${location.origin}/phone.html</span>`;
+})();
+</script>
 </body>
 </html>

@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>边测边报 · 驾驶舱</title>
+<style>
+:root{
+  --bg:#08080a; --s1:#0e0e11; --s2:#141418; --s3:#1b1b20;
+  --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.13);
+  --tx:#f3f3f5; --tx2:#a3a3ad; --tx3:#66666f; --tx4:#38383f;
+  --lime:#c6f43f; --lime-d:rgba(198,244,63,.10);
+  --red:#ff5a4e;  --red-d:rgba(255,90,78,.11);
+  --amber:#ffb547; --amber-d:rgba(255,181,71,.10);
+  --violet:#aa9cff; --violet-d:rgba(170,156,255,.11);
+  --sans:-apple-system,"SF Pro Text","PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
+  --disp:"SF Pro Display",-apple-system,"PingFang SC","Helvetica Neue",sans-serif;
+  --mono:"SF Mono","JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--tx);font:14px/1.55 var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased;display:grid;grid-template-rows:64px 1fr 52px}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(1100px 520px at 50% -8%,rgba(198,244,63,.055),transparent 62%),
+  linear-gradient(var(--line) 1px,transparent 1px) 0 0/56px 56px,linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/56px 56px;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 30%,#000 10%,transparent 75%);mask-image:radial-gradient(ellipse at 50% 30%,#000 10%,transparent 75%);opacity:.5}
+body>*{position:relative;z-index:1}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select{font:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.micro{font:500 10.5px/1.2 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--tx3)}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:6px}::-webkit-scrollbar-track{background:transparent}
+.c-ok{color:var(--lime)} .c-ng{color:var(--red)} .c-warn{color:var(--amber)} .c-fix{color:var(--violet)} .c-dim{color:var(--tx3)}
+.tag{font:500 10px/1 var(--mono);letter-spacing:.08em;border:1px solid var(--line2);color:var(--tx3);border-radius:4px;padding:3px 6px;white-space:nowrap}
+.tag.amb{color:var(--amber);border-color:rgba(255,181,71,.35)} .tag.vio{color:var(--violet);border-color:rgba(170,156,255,.4)} .tag.lim{color:var(--lime);border-color:rgba(198,244,63,.35)}
+
+/* header */
+.hd{display:flex;align-items:center;gap:28px;padding:0 28px;border-bottom:1px solid var(--line);background:rgba(8,8,10,.7);backdrop-filter:blur(12px)}
+.mark{display:flex;align-items:center;gap:12px;white-space:nowrap}
+.mark b{font:600 17px/1 var(--disp);letter-spacing:.06em}
+.mark b i{font-style:normal;color:var(--lime)}
+.mark .sep{width:1px;height:16px;background:var(--line2)}
+.nav{display:flex;gap:4px;margin-left:12px}
+.nav button,.nav a{position:relative;padding:8px 14px;color:var(--tx3);font-size:13.5px;transition:color .2s}
+.nav button:hover,.nav a:hover{color:var(--tx2)}
+.nav button.on{color:var(--tx)}
+.nav button.on::after{content:"";position:absolute;left:50%;bottom:-13px;width:18px;height:2px;margin-left:-9px;background:var(--lime);border-radius:2px}
+.nav .badge{display:none;margin-left:6px;font:600 10px/16px var(--mono);min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--red);color:#0b0b0d;vertical-align:1px}
+.nav .badge.show{display:inline-block}
+.nav a::after{content:" ↗";color:var(--tx4)}
+.hd-r{margin-left:auto;display:flex;align-items:center;gap:22px;white-space:nowrap}
+.dev{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--tx3)}
+.dev i{width:7px;height:7px;border-radius:50%;background:var(--tx4)}
+.dev.on i{background:var(--lime);box-shadow:0 0 0 3px rgba(198,244,63,.15)} .dev.on{color:var(--tx2)}
+.dev.off i{background:var(--amber)}
+.clock{font-size:15px;color:var(--tx);letter-spacing:.04em}
+
+.views{min-height:0;position:relative}
+.view{display:none;height:100%;min-height:0}
+.view.on{display:grid}
+
+/* live */
+.live{grid-template-columns:minmax(300px,23%) 1fr minmax(330px,25%)}
+.col{min-height:0;display:flex;flex-direction:column;padding:26px 28px}
+.col+.col{border-left:1px solid var(--line)}
+.sec-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px}
+.prog{display:flex;align-items:baseline;gap:10px}
+.big-n{font:200 44px/1 var(--disp);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.big-n small{font-size:20px;color:var(--tx3);font-weight:300;margin-left:2px}
+.prog span:last-child{color:var(--tx3);font-size:12.5px}
+.ctsel{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.ctsel select{flex:1;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:9px;padding:8px 10px;font:500 14px var(--mono);outline:none}
+.ctname{font-size:12.5px;color:var(--tx3);margin:-8px 0 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.segs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;margin:14px 0 16px}
+.segs i{height:4px;border-radius:2px;background:var(--tx4);transition:background .4s}
+.segs i.ok{background:var(--lime)} .segs i.ng{background:var(--red)} .segs i.warn{background:var(--amber)} .segs i.fix{background:var(--violet)}
+.rows{flex:1;min-height:0;overflow:auto;margin:0 -10px;padding:0 10px}
+.grp{margin:14px 0 6px;display:flex;align-items:center;gap:10px}
+.grp::after{content:"";flex:1;height:1px;background:var(--line)}
+.grp:first-child{margin-top:0}
+.grp .q{font-size:11.5px}
+.row{display:grid;grid-template-columns:8px 1fr auto;align-items:center;gap:12px;padding:7px 10px;margin:0 -10px;border-radius:8px;position:relative}
+.row .dot{width:6px;height:6px;border-radius:50%;background:var(--tx4)}
+.row.ok .dot{background:var(--lime)} .row.ng .dot{background:var(--red);box-shadow:0 0 0 3px var(--red-d)} .row.warn .dot{background:var(--amber)} .row.fix .dot{background:var(--violet);box-shadow:0 0 0 3px var(--violet-d)}
+.row .nm{font-size:13.5px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row:not(.pending) .nm{color:var(--tx)}
+.row .nm em{font-style:normal;color:var(--tx3);margin-left:8px;font:11px var(--mono)}
+.row .val{font:400 13.5px/1 var(--mono);text-align:right;white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis}
+.row .val .u{color:var(--tx3);font-size:10.5px;margin-left:3px}
+.row .val .d{color:var(--violet);font-size:10.5px;margin-left:6px}
+.row.ng .val b{color:var(--red);font-weight:500} .row.fix .val b{color:var(--violet);font-weight:500}
+.row .val b{font-weight:400}
+.row.flash{animation:rowflash 2s var(--ease)}
+@keyframes rowflash{0%{background:rgba(198,244,63,.16)}100%{background:transparent}}
+.sheet-foot{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);margin-top:14px;padding-top:14px}
+.sheet-foot div{display:flex;flex-direction:column;gap:2px}
+.sheet-foot b{font:300 22px/1 var(--disp);font-variant-numeric:tabular-nums}
+.sheet-foot span{font-size:11.5px;color:var(--tx3)}
+
+.stage{position:relative;overflow:hidden}
+.stage::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(70% 55% at 50% 58%,var(--glow,transparent),transparent 70%);transition:background .6s}
+.stage.ok{--glow:rgba(198,244,63,.06)} .stage.ng{--glow:rgba(255,90,78,.12)} .stage.warn{--glow:rgba(255,181,71,.09)}
+.stage>*{position:relative;flex-shrink:0}
+.stage>.hero{flex-shrink:1;min-height:0}
+.stg-top{display:flex;align-items:center;gap:14px}
+.live-dot{display:flex;align-items:center;gap:8px;color:var(--tx2)}
+.live-dot::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--tx4);transition:background .2s}
+.stage.busy .live-dot::before{background:var(--violet);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
+.stg-top .r{margin-left:auto;display:flex;gap:10px;align-items:center}
+.pipe{list-style:none;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:22px 0 4px}
+.pipe li{display:flex;flex-direction:column;gap:9px;font:500 11.5px/1 var(--sans);color:var(--tx3);transition:color .3s}
+.pipe li::before{content:"";height:2px;border-radius:2px;background:var(--tx4);transition:background .3s}
+.pipe li span{font-family:var(--mono);font-size:10.5px;margin-right:6px;color:var(--tx4)}
+.pipe li small{font:400 11px var(--mono);color:var(--tx3);min-height:13px}
+.pipe li.done{color:var(--tx2)} .pipe li.done::before{background:var(--tx2)}
+.pipe li.act{color:var(--tx)} .pipe li.act::before{background:linear-gradient(90deg,var(--lime),rgba(198,244,63,.25),var(--lime));background-size:200% 100%;animation:shim 1s linear infinite}
+.pipe li.act span{color:var(--lime)}
+.pipe li.bad::before{background:var(--red)} .pipe li.bad{color:#ff9d95}
+@keyframes shim{to{background-position:-200% 0}}
+#wave{width:100%;height:44px;display:block;margin:14px 0 6px}
+.tr{font:400 clamp(22px,1.9vw,34px)/1.5 var(--sans);letter-spacing:.01em;min-height:2.6em;color:var(--tx)}
+.tr.idle{color:var(--tx4)}
+.tr .caret{display:inline-block;width:2px;height:.95em;background:var(--lime);margin-left:3px;vertical-align:-.1em;animation:blink .8s infinite}
+.tr ruby{ruby-position:over}
+.tr ruby b{color:var(--violet);font-weight:500}
+.tr rt{font-size:.42em;color:var(--red);text-decoration:line-through;letter-spacing:.05em;opacity:.9}
+.tr mark{background:none;color:var(--lime);text-decoration:underline;text-decoration-color:rgba(198,244,63,.35);text-underline-offset:6px}
+.tr .rj{color:var(--amber);text-decoration:underline wavy rgba(255,181,71,.5);text-underline-offset:6px}
+.cn{min-height:22px;font-size:13px;color:var(--tx2);display:flex;flex-wrap:wrap;gap:6px 16px}
+.cn span{display:inline-flex;align-items:center;gap:7px}
+.cn span::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--violet)}
+.cn span.tb::before{background:var(--amber)} .cn span.hm::before{background:var(--tx2)} .cn span.okk::before{background:var(--lime)} .cn span.bad::before{background:var(--red)}
+.strip{display:flex;border:1px solid var(--line);border-radius:12px;margin:16px 0 0;background:rgba(255,255,255,.015);overflow:hidden;transition:opacity .3s}
+.strip>div{flex:1;padding:11px 16px;min-width:0}
+.strip>div+div{border-left:1px solid var(--line)}
+.strip .micro{display:block;margin-bottom:6px}
+.strip b{font:400 15px/1.2 var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.strip b.ng{color:var(--red)} .strip b.amb{color:var(--amber)}
+.strip.empty{opacity:.35}
+.hero{margin-top:auto;padding:8px 0 4px;transition:opacity .35s;overflow:hidden}
+.hero.dimmed{opacity:.18}
+.h-item{font-size:18px;color:var(--tx2);display:flex;align-items:center;gap:10px}
+.h-val{font:200 clamp(80px,min(8.4vw,15vh),168px)/.95 var(--disp);letter-spacing:-.05em;font-variant-numeric:tabular-nums;margin:6px 0 10px -4px;display:flex;align-items:baseline;white-space:nowrap}
+.h-val.word{font-size:clamp(64px,min(6.4vw,12vh),124px);letter-spacing:-.02em}
+.h-val.txt{font-size:clamp(40px,3.6vw,64px);letter-spacing:0;white-space:normal}
+.h-val small{font:300 24px/1 var(--disp);color:var(--tx3);letter-spacing:0;margin-left:12px}
+.hero.ng .h-val span{color:var(--red)} .hero.warn .h-val span{color:var(--amber)} .hero.ok .h-val.word span{color:var(--lime)}
+.h-verdict{display:flex;align-items:center;gap:12px;font:600 26px/1.2 var(--sans)}
+.h-verdict::before{content:"";width:12px;height:12px;border-radius:3px;background:currentColor}
+.hero.ok .h-verdict{color:var(--lime)} .hero.ng .h-verdict{color:var(--red)} .hero.warn .h-verdict{color:var(--amber)} .hero.dim .h-verdict{color:var(--tx2)}
+.hero.dim .h-verdict::before{display:none}
+.h-calc{margin-top:10px;font-size:15px;color:var(--tx2)}
+.h-src{margin-top:6px;font-size:12.5px;color:var(--tx3)}
+.h-alert{margin-top:10px;display:none;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;font-size:13.5px;max-width:680px}
+.h-alert.show{display:inline-flex;animation:rise .4s var(--ease)}
+.h-alert.ng{background:var(--red-d);color:#ffd0cc;border:1px solid rgba(255,90,78,.35)}
+.h-alert.warn{background:var(--amber-d);color:#ffe2b8;border:1px solid rgba(255,181,71,.35)}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.rb{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+.rb .spk{display:flex;gap:3px;align-items:center;height:22px;margin-top:2px}
+.rb .spk i{width:3px;height:6px;border-radius:2px;background:var(--tx4)}
+.rb.on .spk i{background:var(--lime);animation:eq .9s ease-in-out infinite}
+.rb.on .spk i:nth-child(2){animation-delay:.15s}.rb.on .spk i:nth-child(3){animation-delay:.3s}.rb.on .spk i:nth-child(4){animation-delay:.45s}
+@keyframes eq{0%,100%{height:5px}50%{height:20px}}
+.rb p{font-size:17px;line-height:1.6;color:var(--tx)}
+.rb p.idle{color:var(--tx3)}
+.rb .micro{display:block;margin-bottom:6px}
+
+.ex-n{display:flex;align-items:baseline;gap:10px;margin-bottom:18px}
+.ex-n span:last-child{color:var(--tx3);font-size:12.5px}
+.ex-n.hot .big-n{color:var(--red)}
+.cards{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:10px;margin-right:-8px;padding-right:8px}
+.cx{border:1px solid var(--line);border-radius:12px;padding:14px 16px 12px 18px;background:rgba(255,255,255,.018);position:relative;animation:rise .4s var(--ease)}
+.cx::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:2px;border-radius:2px;background:var(--c,var(--tx3))}
+.cx.ng{--c:var(--red)} .cx.warn{--c:var(--amber)} .cx.fix{--c:var(--violet)}
+.cx.cur{border-color:var(--line2);background:rgba(255,255,255,.035)}
+.cx-h{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.cx-h .micro{color:var(--c)}
+.cx-h .t{margin-left:auto;font:11px var(--mono);color:var(--tx3)}
+.cx h4{font:600 15px var(--mono);margin-bottom:3px}
+.cx h4 small{font:400 12px var(--sans);color:var(--tx3);margin-left:8px}
+.cx p{font-size:12.5px;color:var(--tx2);line-height:1.55}
+.cx-a{display:flex;flex-wrap:wrap;margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+.cx-a button{font-size:12.5px;color:var(--tx2);padding:3px 0;transition:color .2s}
+.cx-a button:hover{color:var(--tx)}
+.cx-a button+button{margin-left:14px;padding-left:14px;border-left:1px solid var(--line)}
+.cx-a button.p{color:var(--violet)} .cx-a button.p:hover{color:#cdc4ff}
+.empty-x{color:var(--tx3);font-size:13px;line-height:1.7;padding:6px 0}
+.closed{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);max-height:132px;overflow:hidden;display:flex;flex-direction:column;gap:5px}
+.closed .micro{margin-bottom:4px}
+.closed div{font-size:12px;color:var(--tx3);display:flex;gap:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.closed div::before{content:"✓";color:var(--lime)}
+.closed div.x::before{content:"×";color:var(--red)}
+.gate{margin-top:16px}
+.gate button{width:100%;height:54px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:15px;font-weight:600;transition:all .3s}
+.gate.lock button{background:var(--s2);border:1px solid var(--line2);color:var(--tx3);cursor:not-allowed}
+.gate.open button{background:var(--lime);color:#0a0a0b}
+.gate.open button:hover{filter:brightness(1.06)}
+.gate.done button{background:transparent;border:1px solid rgba(198,244,63,.4);color:var(--lime)}
+.gate p{margin-top:9px;font-size:12px;color:var(--tx3);text-align:center}
+.gate.lock p{color:#ff9d95}
+.gate p a{color:var(--lime);text-decoration:underline;text-underline-offset:3px}
+
+/* panes */
+.pane{padding:30px 32px;overflow:auto;gap:24px;align-content:start}
+.ph{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.ph h3{font:600 15px/1.2 var(--sans)}
+.ph .r{margin-left:auto;display:flex;gap:10px;align-items:center}
+.panel{border:1px solid var(--line);border-radius:16px;padding:22px 24px;background:rgba(255,255,255,.015);min-width:0}
+table{width:100%;border-collapse:collapse}
+th{font:500 10.5px/1 var(--mono);letter-spacing:.12em;color:var(--tx3);text-align:left;padding:0 12px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:11px 12px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.m{font-family:var(--mono);font-variant-numeric:tabular-nums}
+td.t3{color:var(--tx3)} td.t2{color:var(--tx2)}
+tbody tr.click{cursor:pointer} tbody tr.click:hover td{background:rgba(255,255,255,.025)}
+tr.flash td{animation:rowflash 2s}
+.del{color:var(--red);text-decoration:line-through;opacity:.85}
+.ins{color:var(--violet);font-weight:500}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--tx2);white-space:nowrap}
+.chip::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--c,var(--tx3))}
+.chip.py{--c:var(--violet)} .chip.tb{--c:var(--amber)} .chip.ok{--c:var(--lime)} .chip.ng{--c:var(--red)} .chip.warn{--c:var(--amber)} .chip.fix{--c:var(--violet)}
+.btn-s{font-size:12.5px;color:var(--violet);border:1px solid rgba(170,156,255,.4);border-radius:7px;padding:5px 12px;white-space:nowrap}
+.btn-s:hover{background:var(--violet-d)}
+.btn-s.l{color:#0a0a0b;background:var(--lime);border-color:var(--lime);font-weight:600}
+.btn-s:disabled{opacity:.4;cursor:not-allowed}
+.filters{display:flex;gap:6px}
+.filters button{font-size:12.5px;color:var(--tx3);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+.filters button.on{color:var(--tx);border-color:var(--line2);background:rgba(255,255,255,.04)}
+.search{background:var(--s2);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:13px;outline:none;width:200px}
+
+.asr{grid-template-columns:1fr 1fr;grid-auto-rows:min-content}
+.trio{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.trio>div{padding:24px 26px;position:relative}
+.trio>div+div{border-left:1px solid var(--line)}
+.trio .n{font:200 56px/1 var(--disp);letter-spacing:-.03em;margin:16px 0 12px;font-variant-numeric:tabular-nums}
+.trio h4{font-size:15px;font-weight:600}
+.trio p{font-size:12.5px;color:var(--tx2);line-height:1.65;max-width:420px}
+.trio .tag{position:absolute;top:24px;right:24px}
+.fz{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.fz span{font:11px var(--mono);color:var(--tx3);border:1px solid var(--line);border-radius:5px;padding:2px 7px}
+.fz span b{color:var(--red);font-weight:400;text-decoration:line-through;margin-right:4px}
+.span2{grid-column:1/-1}
+
+.ver{grid-template-columns:1fr 1fr;grid-auto-rows:min-content}
+.kpis{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.kpis>div{padding:24px 26px}
+.kpis>div+div{border-left:1px solid var(--line)}
+.kpis .n{font:200 54px/1 var(--disp);letter-spacing:-.03em;margin:18px 0 10px;font-variant-numeric:tabular-nums}
+.kpis .n small{font-size:22px;color:var(--tx3);margin-left:4px}
+.kpis p{font-size:12.5px;color:var(--tx2)}
+.kpis .h{display:flex;justify-content:space-between;align-items:center}
+.lad-r{display:grid;grid-template-columns:140px 1fr 70px;align-items:center;gap:18px;padding:11px 0;border-bottom:1px solid var(--line)}
+.lad-r:last-child{border-bottom:0}
+.lad-r .nm{font-size:13.5px;color:var(--tx2)}
+.lad-r .nm small{display:block;font:11px var(--mono);color:var(--tx3)}
+.lad-r .bar{height:6px;border-radius:3px;background:var(--s3);overflow:hidden}
+.lad-r .bar i{display:block;height:100%;border-radius:3px}
+.lad-r .v{font:300 13px/1.5 var(--mono);text-align:right}
+.stack{display:flex;height:34px;border-radius:9px;overflow:hidden;margin:6px 0 14px}
+.stack i{display:flex;align-items:center;justify-content:center;font:500 12px var(--mono);color:#0a0a0b;min-width:0;overflow:hidden}
+.lgd{display:flex;gap:18px;font-size:12px;color:var(--tx3);flex-wrap:wrap}
+.lgd span::before{content:"";display:inline-block;width:10px;height:3px;border-radius:2px;background:var(--c);margin-right:7px;vertical-align:3px}
+
+/* bottom bar */
+.ctl{display:flex;align-items:center;gap:14px;padding:0 28px;border-top:1px solid var(--line);background:rgba(8,8,10,.85)}
+.ctl .micro{white-space:nowrap}
+.ctl input{flex:1;min-width:0;max-width:560px;background:var(--s2);border:1px solid var(--line);border-radius:9px;height:34px;padding:0 12px;font-size:13.5px;outline:none}
+.ctl input:focus{border-color:var(--line2)}
+.ctl .chips{display:flex;gap:6px;overflow:hidden}
+.ctl .chips button{font-size:12px;color:var(--tx3);border:1px solid var(--line);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.ctl .chips button:hover{color:var(--tx2)}
+.ctl .r{margin-left:auto;display:flex;align-items:center;gap:14px;white-space:nowrap}
+.sw{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--tx3)}
+.sw i{width:28px;height:16px;border-radius:8px;background:var(--tx4);position:relative;transition:background .2s}
+.sw i::after{content:"";position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform .2s}
+.sw.on i{background:var(--lime)} .sw.on i::after{transform:translateX(12px)}
+.toasts{position:fixed;top:78px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:50;pointer-events:none}
+.toast{background:rgba(20,20,24,.95);border:1px solid var(--line2);border-radius:12px;padding:10px 16px;font-size:13.5px;box-shadow:0 20px 50px rgba(0,0,0,.5);animation:rise .3s var(--ease);max-width:640px}
+.toast.ng{border-color:rgba(255,90,78,.5)} .toast.ok{border-color:rgba(198,244,63,.4)} .toast.fix{border-color:rgba(170,156,255,.5)}
+</style>
+</head>
+<body>
+<header class="hd">
+  <div class="mark"><b>边测边报<i>.</i></b><span class="sep"></span><span class="micro">Cockpit · 主管驾驶舱</span></div>
+  <nav class="nav" id="nav">
+    <button data-v="live" class="on">实时检验</button>
+    <button data-v="asr">识别纠错</button>
+    <button data-v="led">合同台账<span class="badge" id="ngBadge"></span></button>
+    <button data-v="ver">验证看板</button>
+    <a href="admin.html" target="_blank">管理后台</a>
+  </nav>
+  <div class="hd-r">
+    <span class="tag amb" title="样例数据，非真实客户">样例数据</span>
+    <span class="dev" id="devPhone"><i></i>质检员手机 · 离线</span>
+    <span class="dev" id="devAsr"><i></i>语音识别</span>
+    <span class="clock mono" id="clock">--:--:--</span>
+  </div>
+</header>
+
+<main class="views">
+  <!-- 实时检验 -->
+  <section class="view live on" id="v-live">
+    <div class="col">
+      <div class="sec-h"><span class="micro">Sheet · 检验表</span><span class="tag" id="sync">—</span></div>
+      <div class="ctsel"><select id="ctSel"></select></div>
+      <div class="ctname" id="ctName"></div>
+      <div class="prog"><span class="big-n" id="sheetN">0<small>/7</small></span><span>项已录</span></div>
+      <div class="segs" id="segs"></div>
+      <div class="rows" id="rows"></div>
+      <div class="sheet-foot" id="sheetFoot"></div>
+    </div>
+    <div class="col stage" id="stage">
+      <div class="stg-top"><span class="live-dot micro" id="liveDot">Live · 现场语音</span><div class="r" id="stgTags"></div></div>
+      <ol class="pipe" id="pipe">
+        <li><b><span>01</span>语音采集</b><small></small></li>
+        <li><b><span>02</span>识别 · 纠错</b><small></small></li>
+        <li><b><span>03</span>结构化解析</b><small></small></li>
+        <li><b><span>04</span>规则判定</b><small></small></li>
+        <li><b><span>05</span>回读 · 入库</b><small></small></li>
+      </ol>
+      <canvas id="wave" width="1400" height="112"></canvas>
+      <div class="tr idle" id="tr">等待质检员说话…</div>
+      <div class="cn" id="cn"></div>
+      <div class="strip empty" id="strip"><div><span class="micro">合同</span><b>—</b></div><div><span class="micro">表单</span><b>—</b></div><div><span class="micro">字段</span><b>—</b></div><div><span class="micro">数值</span><b>—</b></div><div><span class="micro">拒收</span><b>—</b></div></div>
+      <div class="hero dim dimmed" id="hero"></div>
+      <div class="rb" id="rb"><div class="spk"><i></i><i></i><i></i><i></i></div><div><span class="micro">Readback · 回读</span><p class="idle" id="rbp">系统会把识别到的每一个数复述给质检员确认。</p></div></div>
+    </div>
+    <div class="col">
+      <div class="sec-h"><span class="micro">Exceptions · 待处理</span><span class="tag" id="exTag"></span></div>
+      <div class="ex-n" id="exN"><span class="big-n">0</span><span>个合同不合格</span></div>
+      <div class="cards" id="cards"></div>
+      <div class="closed" id="closed"><span class="micro">Today · 本场记录</span></div>
+      <div class="gate lock" id="gate"><button id="gateBtn">导出 Excel</button><p id="gateP">请先选择合同</p></div>
+    </div>
+  </section>
+
+  <!-- 识别纠错 -->
+  <section class="view pane asr" id="v-asr">
+    <div class="trio" id="trio"></div>
+    <div class="panel span2"><div class="ph"><h3>本场识别记录</h3><span class="micro" id="asrN"></span><div class="r"><span class="chip okk ok">命中关键词</span><span class="chip py">拼音纠偏</span><span class="chip tb">纠错表</span><span class="chip ng">拒收</span></div></div>
+      <table><thead><tr><th>时间</th><th>来源</th><th>原话</th><th>纠错后</th><th>解析</th><th>拒收 / 提示</th><th>识别耗时</th></tr></thead><tbody id="asrRows"></tbody></table></div>
+  </section>
+
+  <!-- 合同台账 -->
+  <section class="view pane" id="v-led" style="grid-template-columns:1fr">
+    <div class="panel"><div class="ph"><h3>合同台账</h3><span class="micro" id="ledN"></span>
+      <div class="r"><input class="search" id="ledQ" placeholder="搜合同号 / 客户"><div class="filters" id="ledF"></div><button class="btn-s l" id="expAll">批量导出合格合同</button></div></div>
+      <table><thead><tr><th>合同号</th><th>客户</th><th>录入日期</th><th>状态</th><th>原因</th><th></th></tr></thead><tbody id="ledRows"></tbody></table></div>
+    <div class="panel"><div class="ph"><h3>导出文件</h3><span class="micro" id="expN"></span></div>
+      <table><thead><tr><th>文件</th><th>合同号</th><th>日期</th><th>大小</th><th>生成时间</th><th></th></tr></thead><tbody id="expRows"></tbody></table></div>
+  </section>
+
+  <!-- 验证看板 -->
+  <section class="view pane ver" id="v-ver">
+    <div class="kpis" id="kpis"></div>
+    <div class="panel"><div class="ph"><h3>合同状态分布</h3><span class="micro">按最新记录</span></div><div id="dist"></div></div>
+    <div class="panel"><div class="ph"><h3>不合格参数排行</h3><span class="micro">最新记录中超出范围的次数</span></div><div id="lad"></div></div>
+    <div class="panel span2"><div class="ph"><h3>当前规则</h3><div class="r"><a class="btn-s" href="admin.html#/rules" target="_blank">去修改规则 ↗</a></div></div>
+      <table><thead><tr><th>表</th><th>参数</th><th>下限</th><th>上限</th><th>单位</th><th>状态</th></tr></thead><tbody id="ruleRows"></tbody></table></div>
+  </section>
+</main>
+
+<footer class="ctl">
+  <span class="micro">大屏代录</span>
+  <input id="mInput" placeholder="手机不在身边时，在这里打字代替质检员说话，回车送入识别">
+  <div class="chips" id="mChips"></div>
+  <div class="r">
+    <button class="btn-s" id="mSubmit" disabled title="把质检员手机上的待提交草稿提交入库">提交手机草稿</button>
+    <button class="sw" id="ttsSw"><i></i>回读播报</button>
+  </div>
+</footer>
+<div class="toasts" id="toasts"></div>
+
+<script src="common.js"></script>
+<script>
+"use strict";
+const { esc, KINDS, KIND_LABEL, STATUS_CLS, api, load, store } = QC;
+const $ = id => document.getElementById(id);
+const S = {
+  view: 'live', ht: null, form: 'drum', detail: null, contracts: [], draft: { drum: {}, travel_drive: {} },
+  voices: [], log: [], tts: load('qcs_tts', false), busy: false, phoneOn: false, ledF: '全部', exports: [], lastRaw: null,
+};
+const EX = { drum: ['直径一千二百五十，光段三百', '厚度十二点五毫米', '直径1262'], travel_drive: ['噪音八十二分贝', '电机铭牌 YZR160M2-6'] };
+
+function toast(html, cls = '') { const el = document.createElement('div'); el.className = 'toast ' + cls; el.innerHTML = html; $('toasts').appendChild(el); setTimeout(() => { el.style.transition = 'opacity .4s'; el.style.opacity = 0; setTimeout(() => el.remove(), 400); }, 3600); }
+function view(v) { S.view = v; document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v)); document.querySelectorAll('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v)); store('qcs_view', v); renderView(); }
+function renderView() { ({ live: renderLive, asr: renderASR, led: renderLed, ver: renderVer })[S.view]?.(); }
+
+/* ---------- 数据 ---------- */
+async function loadContracts() { S.contracts = (await api('GET', '/contracts')).items; renderCtSel(); renderEx(); const ng = S.contracts.filter(c => c.status === '不合格').length; $('ngBadge').textContent = ng; $('ngBadge').classList.toggle('show', ng > 0); }
+async function loadDetail() { S.detail = S.ht ? await api('GET', '/contracts/' + encodeURIComponent(S.ht)).catch(() => null) : null; }
+async function focus(ht, form, opts = {}) {
+  const changed = ht !== S.ht;
+  S.ht = ht; if (form && KINDS[form]) S.form = form;
+  if (changed) S.draft = { drum: {}, travel_drive: {} };
+  await loadDetail(); renderLive();
+  if (opts.push) QC.publish('focus', { ht_code: ht, form: S.form, reason: opts.reason }, 'screen');
+}
+
+/* ---------- 左：检验表 ---------- */
+function renderCtSel() {
+  const sel = $('ctSel');
+  sel.innerHTML = '<option value="">— 选择合同 —</option>' + S.contracts.map(c => `<option value="${esc(c.ht_code)}" ${c.ht_code === S.ht ? 'selected' : ''}>${esc(c.ht_code)}　${esc(c.status)}</option>`).join('');
+}
+function cellState(kind, f) {
+  const dv = S.draft[kind][f.name], last = S.detail?.latest?.[kind];
+  if (dv != null && dv !== '') { const j = QC.prejudge(kind, f.name, dv); return { v: dv, cls: j.cls === 'ng' ? 'ng' : 'fix', draft: true }; }
+  if (last && last[f.name] != null && last[f.name] !== '') { const j = QC.prejudge(kind, f.name, last[f.name]); return { v: last[f.name], cls: f.type === 'text' ? 'ok' : (j.cls === 'ng' ? 'ng' : 'ok') }; }
+  return { v: null, cls: '' };
+}
+function renderSheet(flash = []) {
+  const d = S.detail;
+  $('ctName').textContent = d ? `${d.contract.name} · 录入日期 ${d.contract.date}` : '在左上角选择合同，或等待质检员手机端选择';
+  const kinds = ['drum', 'travel_drive'];
+  let filled = 0, total = 0, segs = '', rows = '';
+  const cnt = { ok: 0, ng: 0, fix: 0, none: 0 };
+  kinds.forEach(k => {
+    const last = d?.latest?.[k];
+    const q = last ? (last.is_qualified === 1 ? '<span class="q c-ok">合格</span>' : last.is_qualified === 0 ? '<span class="q c-ng">不合格</span>' : '<span class="q c-warn">待校验</span>') : '<span class="q c-dim">未录入</span>';
+    rows += `<div class="grp"><span class="micro">${KIND_LABEL[k]}${k === S.form ? ' · 当前' : ''}</span>${q}</div>`;
+    QC.fieldsOf(k).forEach(f => {
+      const s = cellState(k, f); total++; if (s.v != null) filled++;
+      cnt[s.cls === 'ok' ? 'ok' : s.cls === 'ng' ? 'ng' : s.cls === 'fix' ? 'fix' : 'none']++;
+      segs += `<i class="${s.cls}"></i>`;
+      const rule = f.type === 'text' ? '不校验' : QC.rangeText(QC.ruleOf(k, f.name));
+      rows += `<div class="row ${s.cls || 'pending'} ${flash.includes(k + '.' + f.name) ? 'flash' : ''}"><i class="dot"></i>
+        <span class="nm">${esc(f.label)}<em>${esc(rule)}</em></span>
+        <span class="val">${s.v == null ? '<span class="c-dim">—</span>' : `<b>${esc(s.v)}</b>${f.unit ? `<span class="u">${esc(f.unit)}</span>` : ''}${s.draft ? '<span class="d">待提交</span>' : ''}`}</span></div>`;
+    });
+  });
+  $('sheetN').innerHTML = `${filled}<small>/${total}</small>`;
+  $('segs').innerHTML = segs; $('rows').innerHTML = rows;
+  $('sheetFoot').innerHTML = `<div><b class="c-ok">${cnt.ok}</b><span>合格</span></div><div><b class="c-ng">${cnt.ng}</b><span>超范围</span></div><div><b class="c-fix">${cnt.fix}</b><span>待提交</span></div><div><b class="c-dim">${cnt.none}</b><span>未录</span></div>`;
+  $('sync').textContent = d ? d.status : '—'; $('sync').className = 'tag ' + (d ? { '合格': 'lim', '不合格': 'amb', '未录全': '', '待校验': 'amb' }[d.status] : '');
+  const dn = Object.keys(S.draft[S.form] || {}).length;
+  $('mSubmit').disabled = !S.ht || !dn; $('mSubmit').textContent = dn ? `提交手机草稿（${KIND_LABEL[S.form]} ${dn} 项）` : '提交手机草稿';
+}
+
+/* ---------- 右：异常 + 导出闸门 ---------- */
+function renderEx() {
+  const ng = S.contracts.filter(c => c.status === '不合格'), part = S.contracts.filter(c => c.status === '未录全' || c.status === '待校验');
+  $('exN').className = 'ex-n' + (ng.length ? ' hot' : ''); $('exN').innerHTML = `<span class="big-n">${ng.length}</span><span>个合同不合格 · ${part.length} 个未完成</span>`;
+  $('exTag').textContent = `共 ${S.contracts.length}`;
+  const list = [...ng.map(c => ({ c, cls: 'ng', lab: 'NG · 不合格' })), ...part.map(c => ({ c, cls: c.status === '待校验' ? 'warn' : 'fix', lab: c.status === '待校验' ? 'Pending · 待校验' : 'Open · 未录全' }))];
+  $('cards').innerHTML = list.slice(0, 30).map(({ c, cls, lab }) => `<div class="cx ${cls} ${c.ht_code === S.ht ? 'cur' : ''}"><div class="cx-h"><span class="micro">${lab}</span><span class="t">${esc(c.date)}</span></div>
+    <h4>${esc(c.ht_code)}<small>${esc(c.name)}</small></h4><p>${esc(c.status_reason || '')}</p>
+    <div class="cx-a"><button data-act="see" data-ht="${esc(c.ht_code)}">在大屏查看</button><button class="p" data-act="push" data-ht="${esc(c.ht_code)}" data-reason="${esc(c.status_reason || '')}">${cls === 'ng' ? '派给质检员复测' : '派给质检员补录'}</button></div></div>`).join('')
+    || '<div class="empty-x">没有不合格或未完成的合同。</div>';
+  document.querySelectorAll('#cards button').forEach(b => b.onclick = () => {
+    const ht = b.dataset.ht, reason = b.dataset.reason;
+    const form = /大车|传动/.test(reason) && !/卷筒/.test(reason) ? 'travel_drive' : 'drum';
+    if (b.dataset.act === 'see') focus(ht, form);
+    else { focus(ht, form, { push: true, reason: /不合格/.test(reason) ? '主管派单：请复测' : '主管派单：请补录' }); toast(`已派给质检员：<b class="mono">${esc(ht)}</b> ${KIND_LABEL[form]}${S.phoneOn ? '' : '（手机当前不在线，上线后会自动切过去）'}`, 'fix'); }
+  });
+}
+function renderClosed() {
+  $('closed').innerHTML = '<span class="micro">Today · 本场记录</span>' + (S.log.slice(0, 6).map(x => `<div class="${x.ok ? '' : 'x'}">${esc(x.t)}　${esc(x.text)}</div>`).join('') || '<div style="opacity:.6">本场还没有提交记录</div>');
+}
+function renderGate() {
+  const g = $('gate'), d = S.detail;
+  if (!d) { g.className = 'gate lock'; $('gateBtn').textContent = '导出 Excel'; $('gateP').textContent = '请先选择合同'; return; }
+  if (d.status === '合格') { g.className = 'gate open'; $('gateBtn').textContent = `导出 ${d.contract.ht_code} Excel →`; $('gateP').textContent = '两类参数最新记录均合格'; }
+  else { g.className = 'gate lock'; $('gateBtn').textContent = '🔒 导出 Excel'; $('gateP').textContent = `不能导出：${d.status_reason}${d.rules.configured < d.rules.total ? `（规则已配置 ${d.rules.configured}/${d.rules.total}）` : ''}`; }
+}
+$('gateBtn').onclick = async () => {
+  if ($('gate').className !== 'gate open') return;
+  $('gateBtn').textContent = '正在导出…';
+  try {
+    const r = await api('POST', `/contracts/${encodeURIComponent(S.ht)}/export?source=screen`);
+    const dd = (r.file.match(/_(\d{8})\.xlsx$/) || [])[1] || '';
+    $('gate').className = 'gate done'; $('gateBtn').textContent = '✓ 已导出 · 点击下载';
+    $('gateBtn').onclick = () => location.href = `/api/exports/${encodeURIComponent(r.ht_code)}/${dd}`;
+    $('gateP').innerHTML = `${esc(r.file)} · ${r.sheets.map(s => s.ok ? esc(s.name) : `<span class="c-ng">${esc(s.name)} 失败</span>`).join(' / ')}`;
+    toast(`已导出 <b class="mono">${esc(r.file)}</b>`, 'ok');
+  } catch (e) { toast(esc(e.message), 'ng'); renderGate(); }
+};
+
+/* ---------- 中：舞台 ---------- */
+function pipe(n, bad, notes = []) { document.querySelectorAll('#pipe li').forEach((li, i) => { li.className = i + 1 < n ? 'done' : (i + 1 === n ? (bad ? 'bad' : 'act') : ''); li.querySelector('small').textContent = notes[i] || ''; }); }
+function trHTML(p) {
+  // 原话 → 纠错后：纠错表命中的词用 ruby 标出原词；命中关键词下划线；拒收的片段标黄
+  const vc = S.vcfg?.corrections || {};
+  let t = esc(p.corrected || p.text || '');
+  Object.entries(vc).forEach(([bad, good]) => { if ((p.text || '').includes(bad) && t.includes(esc(good))) t = t.split(esc(good)).join(`<ruby><b>${esc(good)}</b><rt>${esc(bad)}</rt></ruby>`); });
+  (p.matched || []).forEach(m => { if (m.via === 'exact' && !Object.values(vc).includes(m.keyword)) t = t.split(esc(m.keyword)).join(`<mark>${esc(m.keyword)}</mark>`); });
+  (p.rejected || []).forEach(r => { if (r.said && r.said.length > 1) t = t.split(esc(r.said)).join(`<span class="rj">${esc(r.said)}</span>`); });
+  return t || '（没有识别到内容）';
+}
+function cnHTML(p) {
+  const vc = S.vcfg?.corrections || {}, out = [];
+  Object.entries(vc).forEach(([bad, good]) => { if ((p.text || '').includes(bad)) out.push(`<span class="tb">纠错表 ${esc(bad)}→${esc(good)}</span>`); });
+  (p.matched || []).forEach(m => out.push(`<span class="${m.via === 'pinyin' ? '' : 'okk'}">${m.via === 'pinyin' ? '拼音纠偏' : '命中'} ${esc(m.keyword)} = ${esc(m.value)}</span>`));
+  Object.entries(p.notes || {}).forEach(([k, v]) => out.push(`<span class="hm">${esc(QC.fieldMeta(p.form, k)?.label || k)}：${esc(v)}</span>`));
+  (p.rejected || []).forEach(r => out.push(`<span class="bad">拒收「${esc(r.said || r.field)}」${esc(r.reason)}</span>`));
+  if (p.message) out.push(`<span class="bad">${esc(p.message)}</span>`);
+  return out.join('');
+}
+function stripHTML(p) {
+  const names = Object.keys(p.fields || {}).filter(n => p.form === 'contract' || QC.fieldMeta(p.form, n));
+  const lab = n => p.form === 'contract' ? ({ ht_code: '合同号', name: '客户', date: '日期' }[n] || n) : QC.fieldMeta(p.form, n).label;
+  const bad = n => p.form !== 'contract' && QC.prejudge(p.form, n, p.fields[n])?.cls === 'ng';
+  return `<div><span class="micro">合同</span><b>${esc(p.ht_code || S.ht || '—')}</b></div><div><span class="micro">表单</span><b>${esc(KIND_LABEL[p.form] || p.form)}</b></div>
+    <div><span class="micro">字段</span><b>${names.map(n => esc(lab(n))).join(' · ') || '—'}</b></div>
+    <div style="flex:1.6"><span class="micro">数值</span><b>${names.map(n => `<span class="${bad(n) ? 'c-ng' : ''}">${esc(p.fields[n])}</span>`).join(' · ') || '—'}</b></div>
+    <div><span class="micro">拒收</span><b class="${(p.rejected || []).length ? 'amb' : ''}">${(p.rejected || []).length || '无'}</b></div>`;
+}
+function setHero(o) {
+  const h = $('hero'); h.className = 'hero ' + (o.cls || 'dim');
+  const vcls = o.word ? 'word' : o.txt ? 'txt' : '';
+  h.innerHTML = `<div class="h-item">${esc(o.title)}${o.tag ? `<span class="tag vio">${esc(o.tag)}</span>` : ''}</div>
+    <div class="h-val ${vcls}"><span>${esc(o.big)}</span>${o.unit ? `<small>${esc(o.unit)}</small>` : ''}</div>
+    <div class="h-verdict">${esc(o.verdict)}</div>${o.calc ? `<div class="h-calc mono">${esc(o.calc)}</div>` : ''}${o.src ? `<div class="h-src">${esc(o.src)}</div>` : ''}
+    <div class="h-alert ${o.alert ? 'show ' + o.alert.cls : ''}">${o.alert ? o.alert.html : ''}</div>`;
+  $('stage').className = 'col stage ' + (o.cls && o.cls !== 'dim' ? o.cls : '');
+}
+function idleStage() {
+  pipe(0); $('tr').className = 'tr idle'; $('tr').textContent = S.ht ? '等待质检员说话…' : '等待质检员选择合同…'; $('cn').innerHTML = '';
+  $('strip').className = 'strip empty';
+  if (S.detail) {
+    const d = S.detail;
+    setHero({ title: `${d.contract.ht_code} · 合同状态`, big: d.status, word: true, verdict: d.status_reason, cls: STATUS_CLS[d.status] || 'dim' });
+  } else setHero({ title: '当前没有检验对象', big: '—', verdict: '待开始', cls: 'dim' });
+  $('hero').classList.add('dimmed');
+}
+function readback(text) { $('rbp').className = ''; $('rbp').textContent = text; $('rb').className = 'rb on'; if (S.tts) QC.speak(text); clearTimeout(S.rbT); S.rbT = setTimeout(() => $('rb').className = 'rb', Math.max(1800, text.length * 130)); }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function presentVoice(p, src) {
+  S.busy = true; $('stage').classList.add('busy');
+  const a = p.asr;
+  const n1 = a ? `${Number(a.duration_s || 0).toFixed(1)} 秒 · ${QC.denoiseText(a.denoise)}` : (src === 'screen' ? '大屏键入' : '键盘输入');
+  const n2 = a ? `识别 ${a.elapsed_ms} ms` : '跳过识别';
+  pipe(1, false, [n1]); await sleep(260);
+  pipe(2, false, [n1, n2]);
+  $('tr').className = 'tr'; $('tr').innerHTML = esc(p.text || '') + '<span class="caret"></span>'; await sleep(420);
+  $('tr').innerHTML = trHTML(p); $('cn').innerHTML = cnHTML(p);
+  const nf = Object.keys(p.fields || {}).length;
+  pipe(3, !nf, [n1, n2, `${nf} 个字段 · 拒收 ${(p.rejected || []).length}`]);
+  $('strip').className = 'strip'; $('strip').innerHTML = stripHTML(p); await sleep(300);
+  if (p.form === 'contract') {
+    pipe(5, false, [n1, n2, `${nf} 个字段`, '合同信息', '回填到新建合同']);
+    setHero({ title: '新建合同 · 语音识别', big: p.fields.ht_code || '?', txt: true, verdict: p.fields.ht_code ? '合同号已识别' : '没有听出合同号', cls: p.fields.ht_code ? 'dim' : 'warn', src: p.fields.name ? `客户 ${p.fields.name}` : '' });
+  } else if (!nf) {
+    pipe(3, true, [n1, n2, '没有可填入的字段']);
+    setHero({ title: '未填入参数', big: '?', word: true, verdict: p.message || '没有识别到参数', cls: 'warn', src: (p.rejected || []).map(r => `「${r.said || r.field}」${r.reason}`).join('；') });
+  } else {
+    const names = Object.keys(p.fields), judged = names.map(n => [n, QC.prejudge(p.form, n, p.fields[n])]);
+    const bad = judged.filter(([, j]) => j.cls === 'ng'), show = (bad[0] || judged[judged.length - 1]);
+    const f = QC.fieldMeta(p.form, show[0]), j = show[1];
+    pipe(4, !!bad.length, [n1, n2, `${nf} 个字段`, bad.length ? `${bad.length} 项超范围` : '全部在范围内']);
+    setHero({ title: `${f.label}${names.length > 1 ? `  · 本句共 ${names.length} 项` : ''}`, tag: p.notes?.[show[0]] || '', big: p.fields[show[0]], unit: f.unit, txt: f.type === 'text',
+      verdict: j.cls === 'ok' ? '在范围内 · 待提交' : j.verdict, cls: j.cls === 'ok' ? 'dim' : j.cls, calc: j.calc, src: j.src,
+      alert: bad.length ? { cls: 'ng', html: `<b>超范围</b>${bad.map(([n]) => `${esc(QC.fieldMeta(p.form, n).label)} ${esc(p.fields[n])}`).join('、')} — 已提醒质检员复测，提交后会被判为不合格` } : (p.rejected || []).length ? { cls: 'warn', html: `<b>有内容没有填入</b>${(p.rejected).map(r => esc(`「${r.said || r.field}」${r.reason}`)).join('；')}` } : null });
+    await sleep(250);
+    pipe(5, !!bad.length, [n1, n2, `${nf} 个字段`, bad.length ? `${bad.length} 项超范围` : '全部在范围内', '回读 · 等待提交']);
+  }
+  readback(QC.readbackVoice(p, p.form));
+  S.busy = false; $('stage').classList.remove('busy');
+}
+function presentRecord(d, src) {
+  const v = d.validation, ok = v && v.is_qualified === 1, k = d.kind;
+  pipe(5, !ok, ['', '', '', v ? (ok ? '全部合格' : `${v.failures.length} 项不合格`) : '校验未完成', `已入库 #${d.record.id}`]);
+  setHero({ title: `${d.ht_code} · ${KIND_LABEL[k]}参数 · 记录 #${d.record.id}`, tag: src === 'screen' ? '大屏提交' : '手机提交', big: v ? (ok ? '合格' : '不合格') : '待校验', word: true,
+    verdict: `合同状态：${d.contract_status.status}`, cls: v ? (ok ? 'ok' : 'ng') : 'warn', src: d.contract_status.reason,
+    alert: v && !ok ? { cls: 'ng', html: `<b>不合格</b>${v.failures.map(esc).join('；')}` } : !v ? { cls: 'warn', html: esc(d.warning || '校验未完成') } : null });
+  readback(QC.readbackRecord(d, k));
+  S.log.unshift({ t: QC.hhmmss().slice(0, 5), ok, text: `${d.ht_code} ${KIND_LABEL[k]} #${d.record.id} ${v ? (ok ? '合格' : '不合格') : '待校验'}` });
+  renderClosed();
+}
+function renderLive(flash) { renderSheet(flash); renderGate(); renderCtSel(); renderEx(); renderClosed(); if (!S.busy && !S.shown) idleStage(); }
+
+/* 舞台波形：识别过程中跳动，平时静止 */
+let wseed = Array.from({ length: 120 }, (_, i) => (0.15 + 0.85 * Math.random()) * Math.sin(Math.PI * (i + .5) / 120) ** .6);
+function waveLoop(t) {
+  const cv = $('wave'), g = cv.getContext('2d'), W = cv.width, H = cv.height, n = wseed.length, w = W / n;
+  g.clearRect(0, 0, W, H);
+  for (let i = 0; i < n; i++) {
+    const a = S.busy ? wseed[i] * (0.55 + 0.45 * Math.abs(Math.sin(t / 110 + i * .45))) : wseed[i] * 0.18;
+    const h = Math.max(3, a * H * .92);
+    g.fillStyle = S.busy ? 'rgba(198,244,63,.85)' : 'rgba(255,255,255,.12)';
+    g.fillRect(i * w + 2, (H - h) / 2, Math.max(1, w - 4), h);
+  }
+  requestAnimationFrame(waveLoop);
+}
+
+/* ---------- 识别纠错 ---------- */
+function renderASR() {
+  const vc = S.vcfg || { corrections: {}, hotwords: [], retract_words: [], forms: {} };
+  const kws = Object.values(vc.forms || {}).flatMap(f => Object.values(f).flatMap(x => x.keywords || []));
+  $('trio').innerHTML = `
+    <div><span class="micro">Layer 1</span><span class="tag">识别</span><div class="n">${(vc.hotwords || []).length}</div><h4>热词增强（FunASR SeACo）</h4><p>把行业词提前告诉识别模型，降低「光段→光端」这类同音错。</p><div class="fz">${(vc.hotwords || []).map(w => `<span>${esc(w)}</span>`).join('')}</div></div>
+    <div><span class="micro">Layer 2</span><span class="tag amb">纠错表</span><div class="n">${Object.keys(vc.corrections || {}).length}</div><h4>固定纠错表</h4><p>常见误识别直接替换；车间实测后持续补充。</p><div class="fz">${Object.entries(vc.corrections || {}).map(([a, b]) => `<span><b>${esc(a)}</b>${esc(b)}</span>`).join('')}</div></div>
+    <div><span class="micro">Layer 3</span><span class="tag vio">拼音</span><div class="n">${kws.length}</div><h4>关键词 + 拼音模糊匹配</h4><p>精确匹配不到时按拼音（含多音字）找参数名；单字关键词必须紧跟数字。撤回词：${(vc.retract_words || []).map(esc).join('、')}。</p><div class="fz">${kws.map(w => `<span>${esc(w)}</span>`).join('')}</div></div>`;
+  $('asrN').textContent = `${S.voices.length} 条`;
+  $('asrRows').innerHTML = S.voices.map(({ ev, p }) => {
+    const changed = p.corrected && p.corrected.toLowerCase() !== (p.text || '').normalize('NFKC').toLowerCase();
+    return `<tr><td class="m t3">${esc(ev.ts.slice(11))}</td><td class="t2">${ev.source === 'screen' ? '大屏' : ev.source === 'phone' ? '手机' : '—'}</td>
+      <td>${esc(p.text)}</td><td>${changed ? `<span class="ins">${esc(p.corrected)}</span>` : '<span class="c-dim">无变化</span>'}</td>
+      <td>${(p.matched || []).map(m => `<span class="chip ${m.via === 'pinyin' ? 'py' : 'ok'}">${esc(m.keyword)} ${esc(m.value)}</span>`).join(' ') || '<span class="c-dim">—</span>'}</td>
+      <td>${[...(p.rejected || []).map(r => `<span class="chip ng">「${esc(r.said || r.field)}」${esc(r.reason)}</span>`), p.message ? `<span class="chip ng">${esc(p.message)}</span>` : ''].join(' ') || '<span class="c-dim">—</span>'}</td>
+      <td class="m t3">${p.asr ? `${p.asr.elapsed_ms} ms / ${Number(p.asr.duration_s || 0).toFixed(1)} s` : '键入'}</td></tr>`;
+  }).join('') || '<tr><td colspan="7" class="t3">本场还没有识别记录。质检员在手机上说话，或在下方「大屏代录」输入后，这里会实时出现。</td></tr>';
+}
+
+/* ---------- 合同台账 ---------- */
+async function renderLed() {
+  const fs = ['全部', '不合格', '未录全', '待校验', '合格'], q = $('ledQ').value.trim();
+  $('ledF').innerHTML = fs.map(f => `<button class="${f === S.ledF ? 'on' : ''}">${f}${f === '全部' ? '' : ' ' + S.contracts.filter(c => c.status === f).length}</button>`).join('');
+  document.querySelectorAll('#ledF button').forEach((b, i) => b.onclick = () => { S.ledF = fs[i]; renderLed(); });
+  const items = S.contracts.filter(c => (S.ledF === '全部' || c.status === S.ledF) && (!q || c.ht_code.includes(q) || c.name.includes(q)));
+  $('ledN').textContent = `${items.length} / ${S.contracts.length}`;
+  $('ledRows').innerHTML = items.map(c => `<tr class="click" data-ht="${esc(c.ht_code)}"><td class="m">${esc(c.ht_code)}</td><td>${esc(c.name)}</td><td class="m t3">${esc(c.date)}</td>
+    <td><span class="chip ${STATUS_CLS[c.status]}">${esc(c.status)}</span></td><td class="t2">${esc(c.status_reason || '')}</td><td style="text-align:right"><a class="btn-s" href="admin.html#/c/${encodeURIComponent(c.ht_code)}" target="_blank" onclick="event.stopPropagation()">详情 ↗</a></td></tr>`).join('')
+    || '<tr><td colspan="6" class="t3">没有符合条件的合同</td></tr>';
+  document.querySelectorAll('#ledRows tr.click').forEach(tr => tr.onclick = () => { focus(tr.dataset.ht); view('live'); });
+  try { S.exports = (await api('GET', '/exports')).items; } catch (e) { S.exports = []; }
+  $('expN').textContent = `${S.exports.length} 个`;
+  $('expRows').innerHTML = S.exports.map(x => `<tr><td class="m">${esc(x.rel.split('/').pop())}</td><td class="m">${esc(x.ht_code)}</td><td class="m t3">${esc(x.date)}</td><td class="m t3">${(x.size / 1024).toFixed(1)} KB</td><td class="m t3">${esc(x.mtime)}</td>
+    <td style="text-align:right"><a class="btn-s" href="/api/exports/${encodeURIComponent(x.ht_code)}/${esc(x.date.replace(/-/g, ''))}">下载</a></td></tr>`).join('') || '<tr><td colspan="6" class="t3">还没有导出文件</td></tr>';
+}
+$('ledQ').oninput = () => renderLed();
+$('expAll').onclick = async () => {
+  $('expAll').disabled = true;
+  try { const r = await api('POST', '/export/all?source=screen'); toast(`批量导出：成功 ${r.succeeded ?? r.summary?.succeeded ?? '?'}，失败 ${r.failed ?? r.summary?.failed ?? 0}，跳过 ${r.skipped ?? r.summary?.skipped ?? 0}`, 'ok'); renderLed(); }
+  catch (e) { toast(esc(e.message), 'ng'); }
+  $('expAll').disabled = false;
+};
+
+/* ---------- 验证看板 ---------- */
+async function renderVer() {
+  const cs = S.contracts, n = cs.length, by = s => cs.filter(c => c.status === s).length;
+  const ok = by('合格'), ng = by('不合格'), part = by('未录全'), pend = by('待校验');
+  const vs = S.voices.filter(x => x.p.asr), avg = vs.length ? Math.round(vs.reduce((a, x) => a + x.p.asr.elapsed_ms, 0) / vs.length) : null;
+  const hit = S.voices.length ? Math.round(100 * S.voices.filter(x => Object.keys(x.p.fields || {}).length).length / S.voices.length) : null;
+  $('kpis').innerHTML = `
+    <div><div class="h"><span class="micro">合同</span><span class="tag">共 ${n}</span></div><div class="n">${ok}<small>/${n}</small></div><p>可导出（两类参数最新记录均合格）</p></div>
+    <div><div class="h"><span class="micro">不合格</span><span class="tag amb">需复测</span></div><div class="n c-ng">${ng}</div><p>${part} 个未录全 · ${pend} 个待校验</p></div>
+    <div><div class="h"><span class="micro">识别耗时</span><span class="tag">本场 ${vs.length} 段语音</span></div><div class="n">${avg ?? '—'}<small>${avg != null ? 'ms' : ''}</small></div><p>FunASR 本机识别，平均每段</p></div>
+    <div><div class="h"><span class="micro">一次填入率</span><span class="tag">本场 ${S.voices.length} 句</span></div><div class="n">${hit ?? '—'}<small>${hit != null ? '%' : ''}</small></div><p>说一句至少填入一个字段的比例</p></div>`;
+  const seg = (v, c, l) => v ? `<i style="flex:${v};background:${c}" title="${l} ${v}">${v}</i>` : '';
+  $('dist').innerHTML = `<div class="stack">${seg(ok, 'var(--lime)', '合格')}${seg(ng, 'var(--red)', '不合格')}${seg(pend, 'var(--amber)', '待校验')}${seg(part, 'var(--tx3)', '未录全')}</div>
+    <div class="lgd"><span style="--c:var(--lime)">合格 ${ok}</span><span style="--c:var(--red)">不合格 ${ng}</span><span style="--c:var(--amber)">待校验 ${pend}</span><span style="--c:var(--tx3)">未录全 ${part}</span></div>`;
+  // 规则表
+  $('ruleRows').innerHTML = (QC.G.rules?.items || []).map(r => { const f = QC.fieldMeta(r.table_name === 'drum_param' ? 'drum' : 'travel_drive', r.name); return `<tr><td class="t2">${r.table_name === 'drum_param' ? '卷筒' : '大车传动'}</td><td>${esc(f?.label || r.name)}</td><td class="m">${esc(r.min ?? '—')}</td><td class="m">${esc(r.max ?? '—')}</td><td class="t3">${esc(f?.unit || '')}</td><td>${QC.configured(r) ? '<span class="chip ok">已配置</span>' : '<span class="chip warn">未配置</span>'}</td></tr>`; }).join('');
+  // 不合格参数排行：取每个合同的最新记录
+  $('lad').innerHTML = '<div class="empty-x">统计中…</div>';
+  const det = await Promise.all(cs.map(c => api('GET', '/contracts/' + encodeURIComponent(c.ht_code)).catch(() => null)));
+  const cnt = {};
+  det.filter(Boolean).forEach(d => ['drum', 'travel_drive'].forEach(k => { const r = d.latest[k]; if (!r) return; QC.fieldsOf(k).forEach(f => { if (f.type === 'text') return; if (QC.prejudge(k, f.name, r[f.name])?.cls === 'ng') cnt[k + '.' + f.name] = (cnt[k + '.' + f.name] || 0) + 1; }); }));
+  const rows = Object.entries(cnt).sort((a, b) => b[1] - a[1]), max = rows[0]?.[1] || 1;
+  $('lad').innerHTML = rows.map(([key, v]) => { const [k, nme] = key.split('.'), f = QC.fieldMeta(k, nme); return `<div class="lad-r"><span class="nm">${esc(f.label)}<small>${KIND_LABEL[k]} · ${esc(QC.rangeText(QC.ruleOf(k, nme)))}</small></span><div class="bar"><i style="width:${100 * v / max}%;background:var(--red)"></i></div><span class="v">${v} 个合同</span></div>`; }).join('') || '<div class="empty-x">最新记录中没有超出范围的参数。</div>';
+}
+
+/* ---------- 大屏代录 ---------- */
+function renderChips() { $('mChips').innerHTML = EX[S.form].map(x => `<button>${esc(x)}</button>`).join(''); document.querySelectorAll('#mChips button').forEach(b => b.onclick = () => { $('mInput').value = b.textContent; $('mInput').focus(); }); }
+$('mInput').addEventListener('keydown', async e => {
+  if (e.key !== 'Enter') return;
+  const t = $('mInput').value.trim(); if (!t) return;
+  if (!S.ht) { toast('请先在左上角选择合同', 'ng'); return; }
+  $('mInput').value = '';
+  try { const p = await QC.sendText(t, S.form, S.ht, 'screen'); if (!S.hasBus) handleVoice({ id: 0, ts: QC.todayStr() + ' ' + QC.hhmmss(), source: 'screen', data: { ...p, form: S.form, ht_code: S.ht } }); }
+  catch (e2) { toast(esc(e2.message), 'ng'); }
+});
+$('mSubmit').onclick = async () => {
+  const d = S.draft[S.form], last = S.detail?.latest?.[S.form] || {}, body = {};
+  QC.fieldsOf(S.form).forEach(f => { const v = d[f.name]; body[f.name] = v == null || v === '' ? (last[f.name] ?? null) : v; });
+  try { const r = await api('POST', `/contracts/${encodeURIComponent(S.ht)}/records/${S.form}?source=screen`, body); if (!S.hasBus) handleRecord({ source: 'screen', data: { ...r, kind: S.form, ht_code: S.ht } }); }
+  catch (e) { toast(esc(e.message + (e.fields ? '：' + Object.values(e.fields).join('；') : '')), 'ng'); }
+};
+$('ttsSw').onclick = () => { S.tts = !S.tts; store('qcs_tts', S.tts); $('ttsSw').classList.toggle('on', S.tts); if (S.tts) QC.speak('回读播报已打开'); };
+$('ctSel').onchange = () => focus($('ctSel').value || null, null, { push: false });
+document.querySelectorAll('#nav button').forEach(b => b.onclick = () => view(b.dataset.v));
+
+/* ---------- 事件 ---------- */
+async function handleVoice(ev) {
+  const p = ev.data; S.voices.unshift({ ev, p }); if (S.voices.length > 200) S.voices.pop();
+  if (S.view === 'asr') renderASR();
+  if (p.ht_code && p.ht_code !== S.ht) await focus(p.ht_code, p.form);
+  if (p.form && KINDS[p.form] && p.form !== S.form) { S.form = p.form; renderChips(); }
+  if (p.form !== 'contract') { Object.entries(p.fields || {}).forEach(([k, v]) => S.draft[p.form][k] = v); renderSheet(Object.keys(p.fields || {}).map(n => p.form + '.' + n)); }
+  S.shown = true; await presentVoice(p, ev.source);
+}
+async function handleRecord(ev) {
+  const d = ev.data;
+  if (d.ht_code !== S.ht) await focus(d.ht_code, d.kind);
+  if (d.validation?.is_qualified === 1) S.draft[d.kind] = {};
+  await loadDetail(); S.shown = true;
+  renderSheet(QC.fieldsOf(d.kind).map(f => d.kind + '.' + f.name)); renderGate();
+  presentRecord(d, ev.source);
+  loadContracts();
+  if (S.view === 'ver') renderVer();
+}
+QC.onEvent(async ev => {
+  const d = ev.data || {};
+  try {
+    if (ev.type === 'voice') await handleVoice(ev);
+    else if (ev.type === 'record') await handleRecord(ev);
+    else if (ev.type === 'draft' && ev.source === 'phone') {
+      if (d.ht_code && d.ht_code !== S.ht) await focus(d.ht_code, d.form);
+      if (d.form && KINDS[d.form]) { S.draft[d.form] = { ...(d.fields || {}) }; if (d.form !== S.form) { S.form = d.form; renderChips(); } }
+      renderSheet();
+    }
+    else if (ev.type === 'focus' && ev.source === 'phone') {
+      if (d.ht_code && (d.ht_code !== S.ht || d.form !== S.form)) { S.shown = false; await focus(d.ht_code, d.form); renderChips(); toast(`质检员切到 <b class="mono">${esc(d.ht_code)}</b> · ${KIND_LABEL[d.form] || ''}`, 'fix'); }
+    }
+    else if (ev.type === 'contract') { await loadContracts(); if (d.contract?.ht_code === S.ht) { if (d.action === 'deleted') await focus(null); else { await loadDetail(); renderLive(); } } if (d.action === 'created') toast(`新合同 <b class="mono">${esc(d.contract.ht_code)}</b> · ${esc(d.contract.name)}`, 'ok'); if (S.view === 'led') renderLed(); }
+    else if (ev.type === 'rules') { await QC.loadRules(); await loadDetail(); await loadContracts(); renderView(); toast('规则已更新，看板按新规则显示', 'fix'); }
+    else if (ev.type === 'export') { if (S.view === 'led') renderLed(); if (d.action === 'one' && ev.source !== 'screen') toast(`已导出 <b class="mono">${esc(d.file || '')}</b>`, 'ok'); }
+  } catch (e) { console.error(e); }
+});
+QC.bus.onState = m => { S.hasBus = m === 'live' || m === 'poll'; };
+
+/* ---------- 在线状态 ---------- */
+function setDev(el, on, text) { el.className = 'dev ' + (on ? 'on' : 'off'); el.innerHTML = `<i></i>${text}`; }
+async function tickStatus() {
+  const vs = await QC.voiceStatus();
+  setDev($('devAsr'), vs.available && vs.loaded, vs.available ? (vs.loaded ? '语音识别 · 就绪' : '语音识别 · 加载中') : '语音识别 · 不可用');
+  $('clock').textContent = QC.hhmmss();
+}
+QC.presence('screen', p => {
+  if (!p) { setDev($('devPhone'), false, '质检员手机 · 未知'); return; }
+  S.phoneOn = p.phone.online;
+  setDev($('devPhone'), p.phone.online, p.phone.online ? `质检员手机 · 在线${p.phone.clients > 1 ? ' ×' + p.phone.clients : ''}` : '质检员手机 · 离线');
+});
+
+/* ---------- 启动 ---------- */
+(async () => {
+  try { await Promise.all([QC.loadFields(), QC.loadRules()]); }
+  catch (e) { toast('连不上主程序：' + esc(e.message), 'ng'); return; }
+  S.vcfg = await api('GET', '/voice/config').catch(() => null);
+  if (!S.vcfg) { try { S.vcfg = { forms: {}, corrections: {}, hotwords: [], retract_words: [] }; } catch (e) {} }
+  await loadContracts();
+  // 恢复：优先跟手机最近一次 focus
+  try { const r = await api('GET', '/events?after=0&limit=500'); const f = [...r.items].reverse().find(x => x.type === 'focus' && x.data?.ht_code); if (f) { S.ht = f.data.ht_code; S.form = f.data.form && KINDS[f.data.form] ? f.data.form : 'drum'; } r.items.filter(x => x.type === 'voice').forEach(x => S.voices.unshift({ ev: x, p: x.data })); } catch (e) {}
+  if (!S.ht) S.ht = load('qcs_ht', null);
+  await loadDetail(); if (!S.detail) S.ht = null;
+  $('ttsSw').classList.toggle('on', S.tts);
+  renderChips(); renderLive(); idleStage();
+  view(load('qcs_view', 'live'));
+  QC.connect();
+  tickStatus(); setInterval(tickStatus, 1000 * 5); setInterval(() => $('clock').textContent = QC.hhmmss(), 1000);
+  setInterval(() => store('qcs_ht', S.ht), 3000);
+  requestAnimationFrame(waveLoop);
+})();
+</script>
+</body>
+</html>
