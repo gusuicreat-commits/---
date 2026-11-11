@@ -1,4 +1,4 @@
-/* 质检实时录入 · 管理后台前端（无框架，hash 路由） */
+/* 质检资料一体化 · 管理后台前端（无框架，hash 路由） */
 'use strict';
 
 const $ = (s, el = document) => el.querySelector(s);
