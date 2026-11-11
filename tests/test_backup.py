@@ -29,7 +29,7 @@ def test_backup_database_rows(client, contract):
 
 
 def test_backup_overwrites_atomically(client, contract):
-    day = date(2026, 11, 10)
+    day = backup.today_bj()
     path = backup.backup_now(day)
     client.post("/api/contracts", json={"ht_code": "20261110-20", "name": "第二位客户"})
     assert backup.backup_now(day) == path
