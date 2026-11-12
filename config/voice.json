@@ -65,6 +65,7 @@
       "reducer_nameplate": {
         "label": "减速机铭牌",
         "type": "text",
+        "code": true,
         "keywords": [
           "减速机铭牌",
           "减速机"
@@ -76,6 +77,7 @@
       "motor_nameplate": {
         "label": "电机铭牌",
         "type": "text",
+        "code": true,
         "keywords": [
           "电机铭牌",
           "电机"
@@ -160,6 +162,7 @@
     }
   },
   "corrections": {
+    "兆o": "兆欧",
     "光端": "光段",
     "直经": "直径",
     "直井": "直径",

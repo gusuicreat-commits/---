@@ -1,4 +1,4 @@
-"""文本字段保留大小写，匹配和数值解析继续忽略大小写。"""
+"""铭牌字段规整型号，其他文本及纠错后的原句保留大小写。"""
 
 from copy import deepcopy
 from datetime import date
@@ -18,25 +18,25 @@ def test_nameplate_case_in_parse_text_api(client):
     result = response.json()
     assert result["text"] == text
     assert result["fields"] == {
-        "reducer_nameplate": "ZQ500 样例", "motor_nameplate": "YZR160M2-6 样例",
+        "reducer_nameplate": "ZQ500样例", "motor_nameplate": "YZR160M2-6样例",
     }
     assert result["corrected"] == "减速机铭牌 ZQ500 样例,电机铭牌 YZR160M2-6 样例"
     assert "zq500" not in result["corrected"]
-    assert [match["value"] for match in result["matched"]] == ["ZQ500 样例", "YZR160M2-6 样例"]
+    assert [match["value"] for match in result["matched"]] == ["ZQ500样例", "YZR160M2-6样例"]
 
 
 @pytest.mark.parametrize(("text", "field", "value"), [
     ("减速机铭牌 ＺＱ５００", "reducer_nameplate", "ZQ500"),
     ("电机铭牌 ＹＺＲ１６０Ｍ２－６", "motor_nameplate", "YZR160M2-6"),
-    ("减速机铭牌 zQ500 样例", "reducer_nameplate", "zQ500 样例"),
-    ("电机铭牌 yZr160M2-6 样例", "motor_nameplate", "yZr160M2-6 样例"),
+    ("减速机铭牌 zQ500 样例", "reducer_nameplate", "ZQ500样例"),
+    ("电机铭牌 yZr160M2-6 样例", "motor_nameplate", "YZR160M2-6样例"),
     ("减速机ZQ500，噪声78", "reducer_nameplate", "ZQ500"),
     ("电机YZR", "motor_nameplate", "YZR"),
 ])
-def test_nameplates_preserve_case_and_normalize_width(text, field, value):
+def test_nameplates_normalize_case_width_and_spaces(text, field, value):
     result = parser.parse_text(text, "travel_drive", TODAY)
     assert result["fields"][field] == value
-    assert value in result["corrected"]
+    assert result["corrected"] == parser.unicodedata.normalize("NFKC", text)
 
 
 @pytest.mark.parametrize(("text", "value"), [
