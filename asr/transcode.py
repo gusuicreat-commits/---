@@ -9,7 +9,7 @@ class TranscodeError(Exception):
     pass
 
 
-def to_wav16k(src: Path, dst: Path, max_seconds: int) -> float:
+def to_wav(src: Path, dst: Path, max_seconds: int, rate: int) -> float:
     executable = shutil.which("ffmpeg")
     if executable is None:
         raise TranscodeError("找不到 ffmpeg")
@@ -17,7 +17,7 @@ def to_wav16k(src: Path, dst: Path, max_seconds: int) -> float:
     try:
         result = subprocess.run(
             [executable, "-nostdin", "-hide_banner", "-loglevel", "error", "-y",
-             "-i", str(src), "-t", str(max_seconds), "-ac", "1", "-ar", "16000",
+             "-i", str(src), "-t", str(max_seconds), "-ac", "1", "-ar", str(rate),
              "-sample_fmt", "s16", "-f", "wav", str(dst)],
             capture_output=True, timeout=60,
         )
@@ -35,3 +35,7 @@ def to_wav16k(src: Path, dst: Path, max_seconds: int) -> float:
         raise TranscodeError(f"音频转码超时：{detail[-300:]}") from exc
     except Exception as exc:
         raise TranscodeError(f"音频转码失败：{exc}；{stderr[-300:]}") from exc
+
+
+def to_wav16k(src: Path, dst: Path, max_seconds: int) -> float:
+    return to_wav(src, dst, max_seconds, 16000)
