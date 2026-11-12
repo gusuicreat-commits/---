@@ -16,6 +16,8 @@ class Config:
     max_seconds: int
     log_dir: Path
     fake_text: str
+    punc_gate: bool
+    punc_gap_ms: int
 
 
 def _env_path(name: str, default: Path) -> Path:
@@ -33,4 +35,6 @@ def get_config() -> Config:
         max_seconds=int(os.environ.get("ASR_MAX_SECONDS", "60")),
         log_dir=_env_path("ASR_LOG_DIR", ROOT_DIR / "logs"),
         fake_text=os.environ.get("ASR_FAKE_TEXT", "直径一千二百五十"),
+        punc_gate=os.environ.get("ASR_PUNC_GATE", "1") == "1",
+        punc_gap_ms=int(os.environ.get("ASR_PUNC_GAP_MS", "150")),
     )

@@ -94,6 +94,7 @@ def create_app(engine=None) -> FastAPI:
             "frontend_available": denoise.load_frontend(config.frontend_dir) is not None,
             "load_error": application.state.load_error,
             "denoiser": denoise.status(config.frontend_dir),
+            "punc_gate": {"enabled": config.punc_gate, "min_gap_ms": config.punc_gap_ms},
         }
 
     @application.post("/transcribe")
@@ -103,6 +104,7 @@ def create_app(engine=None) -> FastAPI:
         directory = None
         duration = 0.0
         text = ""
+        punc_gate = None
         decision = {
             "enabled": config.denoise, "available": False,
             "action": "passthrough" if config.denoise else "off",
@@ -132,9 +134,17 @@ def create_app(engine=None) -> FastAPI:
                 config.denoise, config.frontend_dir, src48=src48,
             )
             words = (HOTWORDS_FILE.read_text(encoding="utf-8") if hotwords is None else hotwords).split()
-            text = recognizer.transcribe(wav, words)
+            if hasattr(recognizer, "transcribe_detail"):
+                detail = recognizer.transcribe_detail(wav, words)
+                text = detail["text"]
+                text_model = detail["text_model"]
+                punc_gate = detail["punc_gate"]
+            else:
+                text = recognizer.transcribe(wav, words)
+                text_model = text
             return {
                 "text": text, "duration_s": round(duration, 2),
+                "text_model": text_model, "punc_gate": punc_gate,
                 "elapsed_ms": int((time.perf_counter() - started) * 1000),
                 "denoise": decision,
                 "truncated": original_duration is not None and original_duration > config.max_seconds,
@@ -156,6 +166,7 @@ def create_app(engine=None) -> FastAPI:
                         "duration_s": round(duration, 2),
                         "elapsed_ms": int((time.perf_counter() - started) * 1000),
                         "denoise": decision, "text_length": len(text),
+                        "punc_gate": punc_gate,
                     }
                     with (config.log_dir / "asr.jsonl").open("a", encoding="utf-8") as log:
                         log.write(json.dumps(entry, ensure_ascii=False) + "\n")

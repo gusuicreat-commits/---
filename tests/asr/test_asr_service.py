@@ -35,6 +35,8 @@ def environment(monkeypatch, tmp_path):
     monkeypatch.setenv("ASR_LOG_DIR", str(tmp_path / "logs"))
     monkeypatch.setenv("ASR_MAX_SECONDS", "60")
     monkeypatch.setenv("ASR_FAKE_TEXT", "直径一千二百五十")
+    monkeypatch.setenv("ASR_PUNC_GATE", "1")
+    monkeypatch.setenv("ASR_PUNC_GAP_MS", "150")
 
 
 @pytest.fixture
@@ -78,6 +80,7 @@ def test_missing_frontend_passthrough(audio_bytes):
         "ok": True, "engine": "fake", "loaded": True,
         "denoise_enabled": True, "frontend_available": False,
         "load_error": None, "denoiser": None,
+        "punc_gate": {"enabled": True, "min_gap_ms": 150},
     }
 
 
@@ -217,7 +220,7 @@ def test_decision_log_without_text(tmp_path, audio_bytes):
     assert entry["duration_s"] == 1.0
     assert entry["text_length"] == len("直径一千二百五十")
     assert entry["denoise"]["action"] == "passthrough"
-    assert set(entry) == {"timestamp", "duration_s", "elapsed_ms", "denoise", "text_length"}
+    assert set(entry) == {"timestamp", "duration_s", "elapsed_ms", "denoise", "text_length", "punc_gate"}
 
 
 def test_failed_requests_also_append_log(tmp_path):
