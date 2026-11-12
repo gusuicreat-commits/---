@@ -408,3 +408,10 @@ zsh $T/run.sh <任务>               # 拼接 common.md + <任务>.md 喂给 cod
 - **运行**：正式服务 `https://<本机地址>:8443`（`data/e2e.sqlite3`，`tools/run_https.sh`），识别服务 8601。
 
 留待后续阶段（未做）：管理后台合同列表「说明」列改为状态小格；合同多时由后端在列表接口直接返回四类状态；正式工艺规则与面漆/附着力单位待业务确认；ClearMic 真实降噪接入；真实河南口音录音的识别效果实测。
+
+## DeepFilterNet 降噪（2026-11-12，B10，已合并 main，默认关闭）
+- 识别服务 `asr/` 流程：上传录音 → 转 48kHz → DeepFilterNet3 → 转 16kHz → FunASR。复用 `asr/denoise.py` 前置模块接口，`asr/deepfilter/asr_frontend.py` 管理常驻子进程 `worker.py`（运行在独立环境 `.venv-df`，Python 3.11 + torch 2.0.1 + deepfilternet 0.5.6 + numpy<2，与 `.venv` 不兼容；`sh asr/deepfilter/setup_env.sh` 重建）。模型启动时只加载一次；失败/超时/崩溃/未就绪自动回退未降噪音频并后台重启；原始录音不被覆盖（主系统在调用识别服务前已存档原始录音）。
+- **默认关闭**（`ASR_DENOISE=1` 开启），衰减上限默认 6 dB（`ASR_DF_ATTEN_LIM_DB`，off 不限）。用户 2026-11-12 依据实测选择默认关闭。
+- 实测（`tools/asr_bench.py`，报告在 `logs/asr-bench*`）：合成语音 24 句 × 合成噪声。不限衰减在宽频噪声下明显变差（打磨 -5 dB 整句全对 11→3，字错率 11.5%→34.1%）；限 6 dB 基本持平（干净录音不变，字错率略降，整句 ±1～2）；40 条真实手机录音 14 条文字改变，有好有坏；每条多约 0.23 秒。**没有真实车间噪声样本**，结论不能代表车间实际。
+- 顺带发现（与降噪无关、未改）：FunASR 加标点会把逗号插进关键词（「控制线，力矩」「底漆，厚度」「厚度，二十」），解析器因此漏取；铭牌「ZQ500」常被识别成「ZQ五百」。干净合成语音 24 句只有 14 句字段全对，主要是这两类原因。
+- 测试：1011 通过 1 跳过；`ASR_DF_REAL=1` 时 `tests/asr/test_deepfilter_real.py` 用真实模型。
