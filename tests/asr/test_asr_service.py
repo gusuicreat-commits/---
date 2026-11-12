@@ -72,11 +72,12 @@ def test_missing_frontend_passthrough(audio_bytes):
     assert body["denoise"] == {
         "enabled": True, "available": False, "action": "passthrough",
         "snr_db": None, "applied": False, "error": None,
+        "engine": None, "elapsed_ms": None,
     }
     assert health == {
         "ok": True, "engine": "fake", "loaded": True,
         "denoise_enabled": True, "frontend_available": False,
-        "load_error": None,
+        "load_error": None, "denoiser": None,
     }
 
 

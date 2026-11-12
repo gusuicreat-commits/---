@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 from asr import denoise
 from asr.config import get_config
 from asr.engine import make_engine
-from asr.transcode import TranscodeError, to_wav16k
+from asr.transcode import TranscodeError, to_wav, to_wav16k
 
 
 logger = logging.getLogger(__name__)
@@ -66,7 +66,14 @@ def create_app(engine=None) -> FastAPI:
                 application.state.load_error = str(exc)
                 logger.exception("识别模型加载失败")
         threading.Thread(target=load_model, daemon=True, name="asr-model-loader").start()
-        yield
+        config = get_config()
+        if config.denoise:
+            threading.Thread(target=denoise.warmup, args=(config.frontend_dir,),
+                             daemon=True, name="asr-denoiser-loader").start()
+        try:
+            yield
+        finally:
+            denoise.shutdown(config.frontend_dir)
 
     application = FastAPI(lifespan=lifespan)
     application.state.engine = recognizer
@@ -86,6 +93,7 @@ def create_app(engine=None) -> FastAPI:
             "denoise_enabled": config.denoise,
             "frontend_available": denoise.load_frontend(config.frontend_dir) is not None,
             "load_error": application.state.load_error,
+            "denoiser": denoise.status(config.frontend_dir),
         }
 
     @application.post("/transcribe")
@@ -99,6 +107,7 @@ def create_app(engine=None) -> FastAPI:
             "enabled": config.denoise, "available": False,
             "action": "passthrough" if config.denoise else "off",
             "snr_db": None, "applied": False, "error": None,
+            "engine": None, "elapsed_ms": None,
         }
         try:
             if not recognizer.loaded:
@@ -111,9 +120,16 @@ def create_app(engine=None) -> FastAPI:
                 return _error(422, "BAD_AUDIO", "音频无法解析")
             original_duration = _source_duration(source)
             duration = to_wav16k(source, directory / "converted.wav", config.max_seconds)
+            src48 = None
+            if config.denoise and denoise.input_rate(config.frontend_dir) == 48000:
+                try:
+                    to_wav(source, directory / "converted48k.wav", config.max_seconds, 48000)
+                    src48 = directory / "converted48k.wav"
+                except Exception:
+                    logger.exception("48kHz 音频转码失败，使用 16kHz 音频降噪")
             wav, decision = denoise.apply(
                 directory / "converted.wav", directory / "denoised.wav",
-                config.denoise, config.frontend_dir,
+                config.denoise, config.frontend_dir, src48=src48,
             )
             words = (HOTWORDS_FILE.read_text(encoding="utf-8") if hotwords is None else hotwords).split()
             text = recognizer.transcribe(wav, words)
