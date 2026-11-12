@@ -15,7 +15,7 @@ from app import htcode
 from app.dec import fmt
 from app.readings import normalize_readings
 
-from .numbers import cn_digits_to_ascii, find_number, parse_cn_number
+from .numbers import cn_digits_to_ascii, find_number, normalize_code, parse_cn_number
 
 
 _learned_corrections: dict[str, str] = {}
@@ -68,6 +68,44 @@ _NEGATIVE_PREFIX = re.compile(r"(?:没有|木有|冇|没)\s*(?:测|量)?\s*$")
 _NEGATIVE_SUFFIX = re.compile(r"^\s*(?:还没测|没测|没量)")
 _SPOKEN_DIGITS = re.compile(r"[0-9零〇一幺二两三四五六七八九]+")
 _UNCERTAIN_NUMBER = re.compile(r"[\d零〇一幺二两三四五六七八九十百千万点.]+[几多来]")
+_ALLOWED_UNITS = {
+    "length": {"毫米", "厘米", "公分", "mm", "cm", "米", "m"},
+    "noise": {"分贝", "db"},
+    "resistance": {"兆欧姆", "兆欧", "千欧姆", "千欧", "欧姆", "mohm", "kohm", "ohm", "mω", "kω", "ω"},
+    "torque": {"牛米", "牛顿米", "牛顿·米", "牛顿・米", "nm", "n·m", "n・m", "n.m", "n*m"},
+    "percent": {"%"},
+}
+
+
+def _remove_value_separators(text: str, fields: dict) -> tuple[str, set[int]]:
+    """移除精确关键词内部、数字与允许单位之间的逗号，并记录分隔符序号。"""
+    keywords = [keyword.lower() for definition in fields.values() for keyword in definition["keywords"]]
+    units = set().union(*(_ALLOWED_UNITS.get(definition["type"], set()) for definition in fields.values()))
+    removed = set()
+    # 在去掉逗号的视图中定位边界，使一个关键词内的多个分隔符也能一并消除。
+    compact = re.sub(r"\s*[,，、]\s*", "", text).lower()
+    positions = []
+    cursor = 0
+    for match in re.finditer(r"\s*[,，、]\s*", text):
+        cursor += len(text[positions[-1][1] if positions else 0:match.start()])
+        positions.append((match.start(), match.end(), cursor))
+    spans = []
+    for start, end, position in positions:
+        crosses_keyword = any(
+            compact[max(0, position - split):position - split + len(keyword)] == keyword
+            for keyword in keywords for split in range(1, len(keyword)) if position >= split
+        )
+        unit = _UNIT.match(text.lower(), end)
+        joins_unit = (start > 0 and re.fullmatch(r"[\d零〇一幺二两三四五六七八九十百千万点.]", text[start - 1])
+                      and unit and re.sub(r"\s+", "", unit[1]) in units)
+        if crosses_keyword or joins_unit:
+            spans.append((start, end))
+    for index, match in enumerate(re.finditer(r"[，,。；;！!？?、\n]", text)):
+        if any(start <= match.start() < end for start, end in spans):
+            removed.add(index)
+    for start, end in reversed(spans):
+        text = text[:start] + text[end:]
+    return text, removed
 
 
 @lru_cache(maxsize=4096)
@@ -91,7 +129,7 @@ def _dialect_pronunciations(ch: str) -> frozenset[str]:
     return frozenset(sounds)
 
 
-def _keyword_hits(clause: str, forms: dict) -> list[dict]:
+def _keyword_hits(clause: str, forms: dict, allow_empty: bool = False) -> list[dict]:
     """依次选取精确、普通同音、口音模糊命中，后者不得覆盖前者。"""
     definitions = [
         (form, field, keyword)
@@ -111,11 +149,27 @@ def _keyword_hits(clause: str, forms: dict) -> list[dict]:
                 if re.search(r"(?:噪声|噪音)(?:\s|是|为|:|：)*$", prefix):
                     continue
             if (len(keyword) == 1 and not _NUMBER_START.match(clause, match.end())
+                    and not (allow_empty and not clause[match.end():].strip())
                     and not _NEGATIVE_PREFIX.search(clause[:match.start()])
                     and not _NEGATIVE_SUFFIX.match(clause[match.end():])):
                 continue
             exact.append({"form": form, "field": field, "keyword": keyword,
                           "start": match.start(), "end": match.end(), "via": "exact"})
+
+    for hit in exact:
+        definition = forms[hit["form"]][hit["field"]]
+        if definition.get("exact_only"):
+            continue
+        for keyword in sorted(definition["keywords"], key=len, reverse=True):
+            if len(keyword) <= len(hit["keyword"]):
+                continue
+            tail = clause[hit["start"]:hit["start"] + len(keyword)]
+            if len(tail) == len(keyword) and all(
+                _pronunciations(char) & _pronunciations(expected)
+                for char, expected in zip(tail, keyword)
+            ):
+                hit.update(keyword=keyword, end=hit["start"] + len(keyword), via="pinyin")
+                break
 
     def select(candidates: list[dict], occupied: list[dict]) -> list[dict]:
         selected = []
@@ -156,6 +210,51 @@ def _keyword_hits(clause: str, forms: dict) -> list[dict]:
                                    "start": start, "end": end, "via": via})
         hits += select(candidates, hits)
     return sorted(hits, key=lambda item: item["start"])
+
+
+def _unfinished_keyword_hit(clause: str, form: str, fields: dict, hits: list[dict]) -> dict | None:
+    """逗号前只说了唯一字段的关键词前缀时，仍保留缺少数值的提示。"""
+    candidates = []
+    stripped = clause.rstrip()
+    for field, definition in fields.items():
+        for keyword in definition["keywords"]:
+            for size in range(2, len(keyword)):
+                if not stripped.lower().endswith(keyword[:size].lower()):
+                    continue
+                start = len(stripped) - size
+                if any(start < hit["end"] and hit["start"] < len(clause) for hit in hits):
+                    continue
+                candidates.append({"form": form, "field": field, "keyword": keyword,
+                                   "start": start, "end": len(clause), "via": "exact"})
+    if not candidates:
+        return None
+    start = min(hit["start"] for hit in candidates)
+    candidates = [hit for hit in candidates if hit["start"] == start]
+    if len({hit["field"] for hit in candidates}) != 1:
+        return None
+    return max(candidates, key=lambda hit: len(hit["keyword"]))
+
+
+def _numeric_suffix_hit(clause: str, form: str, fields: dict, hits: list[dict]) -> dict | None:
+    """数值前省略了参数名前半段时，仅接受当前表单内归属唯一的精确后缀。"""
+    candidates = []
+    for field, definition in fields.items():
+        if definition["type"] not in _ALLOWED_UNITS or definition.get("exact_only"):
+            continue
+        for keyword in definition["keywords"]:
+            for start in range(1, len(keyword) - 1):
+                suffix = keyword[start:]
+                if not clause.lower().startswith(suffix.lower()):
+                    continue
+                if not _NUMBER_START.match(_VALUE_FILLERS.sub("", clause[len(suffix):])):
+                    continue
+                if any(hit["start"] < len(suffix) for hit in hits):
+                    continue
+                candidates.append({"form": form, "field": field, "keyword": keyword,
+                                   "start": 0, "end": len(suffix), "via": "exact"})
+    if len({hit["field"] for hit in candidates}) == 1:
+        return max(candidates, key=lambda hit: hit["end"])
+    return None
 
 
 def _clean_value(s: str) -> str:
@@ -230,6 +329,8 @@ def _parse_value(s: str, field: str, definition: dict, keyword: str, today: date
         if not s or (strict and keyword not in strict
                      and not re.search(r"[a-z0-9]", s, flags=re.IGNORECASE)):
             return None, None, "没有内容"
+        if definition.get("code"):
+            s = normalize_code(s)
         return s[:128 if field == "name" else 255], None, None
     # 仅对非文本字段统一大小写，沿用合同号、日期和数值的解析行为。
     s = s.lower()
@@ -260,14 +361,7 @@ def _parse_value(s: str, field: str, definition: dict, keyword: str, today: date
     unit = unit_match[1] if unit_match else None
     unit = re.sub(r"\s+", "", unit) if unit else None
     value_end = unit_match.end() if unit_match else end
-    length_units = {"毫米", "厘米", "公分", "mm", "cm", "米", "m"}
-    allowed_units = {
-        "length": length_units, "noise": {"分贝", "db"},
-        "resistance": {"兆欧姆", "兆欧", "千欧姆", "千欧", "欧姆", "mohm", "kohm", "ohm", "mω", "kω", "ω"},
-        "torque": {"牛米", "牛顿米", "牛顿·米", "牛顿・米", "nm", "n·m", "n・m", "n.m", "n*m"},
-        "percent": {"%"},
-    }
-    if unit is not None and unit not in allowed_units[kind]:
+    if unit is not None and unit not in _ALLOWED_UNITS[kind]:
         return None, None, "单位不对"
     factor, note = 1, None
     if kind == "resistance" and unit in {"千欧姆", "千欧", "kohm", "kω"}:
@@ -314,6 +408,7 @@ def parse_text(text: str, form: str, today: date) -> dict:
             return right
         corrected = re.sub(re.escape(unicodedata.normalize("NFKC", wrong)),
                            replace, corrected, flags=re.IGNORECASE)
+    corrected, removed_separators = _remove_value_separators(corrected, config["forms"][form])
     result = {"text": text, "corrected": corrected, "fields": {}, "notes": {},
               "matched": [], "rejected": [], "message": None}
     if form == 'travel_paint':
@@ -323,7 +418,7 @@ def parse_text(text: str, form: str, today: date) -> dict:
     last_field = None
     last_keyword = ""
     retract_pending = False
-    pending_paint = None
+    pending_field = None
 
     def assign(field: str, keyword: str, said: str, via: str) -> bool:
         value, note, reason = _parse_value(said, field, config["forms"][form][field], keyword, today)
@@ -345,14 +440,21 @@ def parse_text(text: str, form: str, today: date) -> dict:
     clause_pattern = r"[，,。；;！!？?、\n]"
     # 按规范化后的分隔符切分原文，保留否定子句里的原字、空格和全角数字。
     original_clauses = [""]
+    separator_index = 0
     for char in text:
         if re.fullmatch(clause_pattern, unicodedata.normalize("NFKC", char)):
-            original_clauses.append("")
+            if separator_index not in removed_separators:
+                original_clauses.append("")
+            separator_index += 1
         else:
             original_clauses[-1] += char
+    # 自定义纠错若增删了分隔符，改用处理后的子句，仍保证否定提示逐段对应。
+    clauses = re.split(clause_pattern, corrected)
+    if len(original_clauses) != len(clauses):
+        original_clauses = clauses
     replacements = []
     clause_offset = 0
-    for clause_index, clause in enumerate(re.split(clause_pattern, corrected)):
+    for clause_index, clause in enumerate(clauses):
         offset = clause_offset
         clause_offset += len(clause) + 1
         if not clause.strip():
@@ -361,11 +463,28 @@ def parse_text(text: str, form: str, today: date) -> dict:
                     if re.search(re.escape(word), clause, flags=re.IGNORECASE)]
         if retracts:
             retract_pending = True
-        hits = _keyword_hits(clause, config["forms"])
+        separator = corrected[offset + len(clause):offset + len(clause) + 1]
+        hits = _keyword_hits(clause, config["forms"], allow_empty=separator in {',', '，', '、'})
+        suffix_hit = _numeric_suffix_hit(clause, form, config["forms"][form], hits)
+        if suffix_hit:
+            hits = [suffix_hit] + hits
+        if separator in {',', '，', '、'}:
+            unfinished = _unfinished_keyword_hit(clause, form, config["forms"][form], hits)
+            if unfinished:
+                hits = sorted(hits + [unfinished], key=lambda hit: hit["start"])
+        consumed_pending = False
+        if pending_field:
+            field, keyword, via = pending_field
+            pending_field = None
+            prefix = clause[:hits[0]["start"]] if hits else clause
+            said = _VALUE_FILLERS.sub("", prefix).strip()
+            if _NUMBER_START.match(said):
+                if assign(field, keyword, said, via):
+                    last_field, last_keyword = field, keyword
+            else:
+                result['rejected'].append({'field': field, 'said': keyword, 'reason': '没有说出数值'})
+            consumed_pending = True
         if hits:
-            if pending_paint:
-                result['rejected'].append({'field': pending_paint[0], 'said': pending_paint[1], 'reason': '没有说出数值'})
-                pending_paint = None
             for index, hit in enumerate(hits):
                 if hit["form"] != form:
                     continue
@@ -381,19 +500,14 @@ def parse_text(text: str, form: str, today: date) -> dict:
                 if hit["via"] == "fuzzy":
                     replacements.append((offset + hit["start"], offset + hit["end"], hit["keyword"]))
                 said = _clean_value(clause[hit["end"]:end])
-                separator = corrected[offset + len(clause):offset + len(clause) + 1]
-                if (form == 'travel_paint' and not said and hit['field'] in
-                        {'primer_thickness_ratio', 'total_thickness_ratio'} and separator in {',', '，', '、'}):
-                    pending_paint = (hit['field'], hit['keyword'])
-                    continue  # ASR 可在“面漆，九十九”中补逗号，值属于紧邻下一片段。
+                if not said and end == len(clause) and separator in {',', '，', '、'}:
+                    pending_field = (hit['field'], hit['keyword'], hit['via'])
+                    continue  # 参数名后的逗号可由 ASR 插入，值属于紧邻下一片段。
                 if assign(hit["field"], hit["keyword"], said, hit["via"]):
                     last_field, last_keyword = hit["field"], hit["keyword"]
             retract_pending = False
-        elif pending_paint:
-            field, keyword = pending_paint
-            pending_paint = None
-            if assign(field, keyword, _clean_value(clause), 'exact'):
-                last_field, last_keyword = field, keyword
+        elif consumed_pending:
+            retract_pending = False
         elif retract_pending and last_field and find_number(clause) is not None:
             said = clause
             for word in sorted(config["retract_words"], key=len, reverse=True):
@@ -412,8 +526,8 @@ def parse_text(text: str, form: str, today: date) -> dict:
             retract_pending = False
     for start, end, keyword in reversed(replacements):
         result["corrected"] = result["corrected"][:start] + keyword + result["corrected"][end:]
-    if pending_paint:
-        result['rejected'].append({'field': pending_paint[0], 'said': pending_paint[1], 'reason': '没有说出数值'})
+    if pending_field:
+        result['rejected'].append({'field': pending_field[0], 'said': pending_field[1], 'reason': '没有说出数值'})
     if not result["fields"]:
         result["message"] = "未识别到参数"
     return result

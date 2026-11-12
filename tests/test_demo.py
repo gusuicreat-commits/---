@@ -42,8 +42,8 @@ def test_script_real_workflow(configured, session, tmp_path, demo_environment):
     submissions = [item["data"] for item in all_events if item["type"] == "record"]
     assert [item["record"]["is_qualified"] for item in submissions] == [1, 0, 1, 1, 1]
     assert [len(item["voice_ids"]) for item in submissions] == [4, 1, 2, 1, 1]
-    assert submissions[2]["record"]["reducer_nameplate"] == "ZQ500 样例"
-    assert submissions[2]["record"]["motor_nameplate"] == "YZR160M2-6 样例"
+    assert submissions[2]["record"]["reducer_nameplate"] == "ZQ500样例"
+    assert submissions[2]["record"]["motor_nameplate"] == "YZR160M2-6样例"
     assert any(item["type"] == "export" for item in all_events)
     drafts = [item["data"] for item in all_events if item["type"] == "draft"]
     assert drafts[0]["fields"]["diameter"] == "1262"

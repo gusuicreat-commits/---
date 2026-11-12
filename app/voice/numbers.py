@@ -1,6 +1,7 @@
 """中文位值数字、逐位读数和合同号字符转换。"""
 
 import re
+import unicodedata
 from decimal import Decimal
 
 
@@ -97,3 +98,25 @@ def cn_digits_to_ascii(s: str) -> str:
     s = s.replace("横杠", "-")
     digits = {**_DIGITS, "洞": "0", "杠": "-", "横": "-", "减": "-"}
     return "".join(digits.get(c, c) for c in s if not c.isspace())
+
+
+def normalize_code(s: str) -> str:
+    """规整型号，只转换与型号字符相邻的中文数字，保留普通中文说明。"""
+    s = re.sub(r"\s+", "", unicodedata.normalize("NFKC", s))
+    s = re.sub(r"[a-z]", lambda match: match.group().upper(), s)
+    digits = "零〇一幺二两三四五六七八九十百千万洞"
+    neighbor = rf"[A-Z0-9{digits}]"
+    s = re.sub(rf"(?<={neighbor})(?:横杠|杠|横|减)|(?:横杠|杠|横|减)(?={neighbor})", "-", s)
+
+    def convert(match: re.Match) -> str:
+        before = s[match.start() - 1:match.start()] if match.start() else ""
+        after = s[match.end():match.end() + 1]
+        if not any(re.fullmatch(r"[A-Z0-9-]", char) for char in (before, after)):
+            return match.group()
+        number = match.group().replace("洞", "零")
+        if any(char in number for char in "十百千万"):
+            value = parse_cn_number(number)
+            return str(value) if value is not None else match.group()
+        return cn_digits_to_ascii(number)
+
+    return re.sub(rf"[{digits}]+", convert, s)
